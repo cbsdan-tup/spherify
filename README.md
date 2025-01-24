@@ -3,14 +3,18 @@
 
 ## Installatiom
 1. Clone the repository
-   `git clone https://github.com/cbsdan-tup/spherify.git`
-2. Install node modules
+   ```
+   git clone https://github.com/cbsdan-tup/spherify.git
+   ```
+3. Install node modules
    Make sure the current directory is 'Spherify' or this repository.
-   `cd backend`
-   `npm install`
-   `cd ../frontend`
-   `npm install` 
-3. Create **firebase-adminsdk.json** inside **config/** directory
+   ```
+   cd backend
+   npm install
+   cd ../frontend
+   npm install
+   ```
+4. Create **firebase-adminsdk.json** inside **config/** directory
    copy this code and paste inside firebase-adminsdk.json
    ```
    {
@@ -26,11 +30,13 @@
     "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40spherify-d19a5.iam.gserviceaccount.com",
     "universe_domain": "googleapis.com"}
    ```
-4. Run the application
-   `cd backend`
-   `npm start`
-   `cd ../frontend`
-   `npm run dev`
+5. Run the application
+   ```
+   cd backend
+   npm start
+   cd ../frontend
+   npm run dev
+   ```
    
 ## Technologies Used
 - MERN (MongoDB, Express, React.js and Node.js)
