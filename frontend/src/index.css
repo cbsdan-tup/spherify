@@ -1,0 +1,957 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap'); /* Import Inter font */
+
+body {
+  font-family: 'Inter', sans-serif; /* Use Inter font */
+  margin: 0;
+  padding: 0;
+  background-color: #f9f9f9;
+}
+
+/* Navbar */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  background-color: #001f3f;
+  color: #EAD8B1;
+  display: flex;
+  justify-content: space-between; /* Align logo and links */
+  align-items: center;
+  padding: 10px 20px; /* Adjust padding to move content inward */
+  z-index: 1000;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.nav-links {
+  display: flex;
+  gap: 15px;
+  margin-right: 20px; /* Move all links inward */
+}
+
+.nav-links a {
+  color: #EAD8B1;
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.nav-links a {
+  color: #EAD8B1; /* Default text color */
+  text-decoration: none; /* No underline */
+  font-size: 1rem;
+  padding: 5px 10px; /* Add padding for a button-like appearance */
+  border-radius: 5px; /* Rounded corners for hover background */
+  transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition */
+}
+
+.nav-links a:hover {
+  background-color: rgba(217, 217, 217, 0.25); /* Background color with 25% transparency */
+  color: #EAD8B1; /* Change text color on hover */
+}
+
+
+
+.nav-links a:last-child {
+  margin-right: 20px; /* Add extra space for the last link */
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #EAD8B1;
+}
+.logo:hover {
+  color: #EAD8B1;
+}
+
+/* Landing Page Styling */
+.landing-page {
+  padding-top: 60px; /* Space for fixed navbar */
+  background-color: #f9f9f9; /* Light background */
+  font-family: "Inter", sans-serif; /* Modern font */
+  position: relative; /* For decorative elements */
+ 
+}
+
+/* Main Content Layout */
+.main-content {
+  position: relative; /* Ensure child elements are positioned relative to this */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 50px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  z-index: 1; /* Ensure main content is above the decorative elements */
+}
+
+/* Text Section Styling */
+.text-section {
+  flex: 1;
+  max-width: 600px; /* Limit text section width */
+}
+
+.text-section h1 {
+  font-size: 3rem;
+  color: #FADA7A;
+  font-weight: bold;
+  line-height: 1.2; /* Improve readability */
+}
+
+.text-section span {
+  color: #001F3F; /* Bright green highlight color */
+}
+
+.text-section p {
+  font-size: 1.2rem;
+  color: #333;
+  margin: 15px 0; /* Add spacing between paragraphs */
+}
+
+
+/* Call-to-Action Buttons */
+.cta-buttons {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px; /* Add spacing between buttons */
+}
+
+.cta-buttons button {
+  font-size: 1rem;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cta-buttons .login-button {
+  background-color: #001f3f; /* Dark blue */
+  color: #fff;
+}
+
+.cta-buttons .login-button:hover {
+  background-color: #004080; /* Slightly lighter blue */
+}
+
+/* Illustration Section Styling */
+.illustration-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  position: relative;
+}
+
+.illustration-video {
+  max-width: 100%; /* Make the video responsive */
+  height: auto; /* Maintain aspect ratio */
+  
+  
+}
+
+.highlighted-text {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #fff;
+  padding: 10px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* Decorative Elements */
+.decorative-elements {
+  position: absolute; /* Ensure elements are inside the main content */
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Prevent interaction interference */
+  z-index: -1; /* Ensure they are behind main content */
+}
+
+
+.green-circle {
+  background: rgba(0, 255, 0, 0.5); /* Solid green to test */
+}
+
+.decorative-elements .green-circle {
+  position: absolute;
+  background: radial-gradient(circle, rgba(250, 218, 122, 0.5) 30%, transparent);
+  border-radius: 50%;
+}
+
+/* Top Left Circle */
+.decorative-elements .green-circle.top-left {
+  width: 150px;
+  height: 150px;
+  top: 10%;
+  left: 5%;
+  opacity: 0.7;
+}
+
+/* Center Top Circle */
+.decorative-elements .green-circle.top-center {
+  width: 200px;
+  height: 200px;
+  top: 15%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0.6;
+}
+
+/* Bottom Right Circle */
+.decorative-elements .green-circle.bottom-right {
+  width: 100px;
+  height: 100px;
+  bottom: 10%;
+  right: 10%;
+  opacity: 0.8;
+}
+
+/* Center Circle */
+.decorative-elements .green-circle.center {
+  width: 300px;
+  height: 300px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.5;
+}
+
+/* About Page */
+/* About Section Styling */
+.about-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 50px 20px;
+  background-color: #f9f9f9; /* Light background to match the style */
+}
+
+/* About Content Wrapper */
+.about-content {
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
+  max-width: 1200px;
+  width: 100%;
+  align-items: center;
+}
+
+/* Image Styling */
+.about-image {
+  flex: 1; /* Allow the image to take up equal space with the text */
+  display: flex;
+  justify-content: center;
+}
+
+.about-img {
+  max-width: 90%; /* Ensure the image doesn't take up the full width */
+  height: auto;
+  border-radius: 10px; /* Rounded corners for the image */
+}
+
+/* Text Styling */
+.about-text {
+  flex: 1; /* Equal space as the image */
+  text-align: left;
+}
+
+.about-text h2 {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #001f3f;
+  margin-bottom: 20px;
+  position: relative;
+}
+
+.about-text h2::before {
+  content: "";
+  position: absolute;
+  width: 50px;
+  height: 4px;
+  background-color: #caa472; /* Match the color from the design */
+  top: 0;
+  left: 0;
+  transform: translateY(-150%);
+}
+
+.about-text h3 {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #001f3f;
+  margin-bottom: 15px;
+  line-height: 1.4;
+}
+
+.about-text p {
+  font-size: 1.1rem;
+  color: #555;
+  line-height: 1.8;
+}
+
+
+.developers-section {
+  text-align: center;
+  padding: 50px 20px;
+  background-color: #f9f9f9;
+}
+
+.developers-section h2 {
+  font-size: 2rem; /* Make the section heading engaging */
+  margin-bottom: 30px; /* Add spacing below the heading */
+  color: #001f3f;
+  text-transform: uppercase; /* Optional: Add emphasis to heading */
+  letter-spacing: 1px; /* Add letter spacing for style */
+}
+
+.developers-grid {
+  display: flex; /* Change to flex layout for horizontal alignment */
+  justify-content: center; /* Center the items horizontally */
+  gap: 40px; /* Add space between developer cards */
+  flex-wrap: nowrap; /* Prevent wrapping to a new line */
+}
+
+.developer-card {
+  text-align: center;
+  padding: 20px; /* Add padding for better spacing inside the card */
+  background-color: #fff; /* Add a card background */
+  border-radius: 10px; /* Add rounded corners to the card */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Add a shadow for depth */
+  max-width: 250px; /* Optional: Limit the width of each card */
+  width: 100%;
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth hover effect */
+}
+
+.developer-card:hover {
+  transform: scale(1.05); /* Slightly enlarge the card */
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2); /* Increase shadow on hover */
+}
+
+.developer-card img {
+  width: 150px; /* Adjust image size */
+  height: 150px; /* Ensure the image remains square */
+  border-radius: 50%; /* Make the image circular */
+  border: 3px solid #001f3f; /* Add a border to the image */
+  object-fit: cover; /* Ensure the image fits properly inside the circle */
+  margin-bottom: 15px; /* Add spacing below the image */
+  transition: transform 0.3s ease, border-color 0.3s ease; /* Smooth hover effect */
+}
+
+.developer-card:hover img {
+  transform: scale(1.1); /* Enlarge the image on hover */
+  border-color: #EAD8B1; /* Change the border color */
+}
+
+.developer-card p {
+  font-size: 1.1rem; /* Increase font size for better readability */
+  color: #001f3f;
+  font-weight: bold; /* Add emphasis to the name */
+  transition: color 0.3s ease; /* Smooth text color transition */
+}
+
+.developer-card:hover p {
+  color: #EAD8B1; /* Change the text color on hover */
+}
+
+
+/* Features Page */
+.features-section {
+  padding: 80px 20px;
+  text-align: center;
+  background-color: #f9f9f9;
+}
+
+.features-heading {
+  font-size: 2rem; /* Increase font size */
+  color: #001f3f; /* Dark blue for primary text */
+  margin-bottom: 20px; /* Add spacing below the heading */
+  font-weight: 700; /* Make the text bold */
+  position: relative; /* Enable positioning for pseudo-elements */
+  text-transform: uppercase; /* Optional: Transform text to uppercase */
+}
+
+.features-heading .highlight {
+  color: #EAD8B1; /* Highlight color */
+  background-color: #133E87; /* Background behind the highlighted text */
+  padding: 0 8px; /* Add padding to the highlighted text */
+  border-radius: 5px; /* Rounded corners for the background */
+}
+
+.features-heading::after {
+  content: "";
+  display: block;
+  width: 50px; /* Set the width of the decorative line */
+  height: 4px; /* Set the thickness of the decorative line */
+  background-color: #001f3f; /* Dark blue line color */
+  margin: 10px auto 0; /* Center the line */
+  border-radius: 2px; /* Round the edges of the line */
+}
+
+.section-divider {
+  width: 80%; /* Adjust the width of the line */
+  margin: 20px auto; /* Center the line and add spacing */
+  border: none; /* Remove the default border style */
+  height: 2px; /* Set the thickness of the line */
+  background-color: #001f3f; /* Set the color of the line */
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3 columns */
+  grid-template-rows: repeat(2, auto); /* 2 rows */
+  gap: 20px; /* Space between grid items */
+  justify-items: center; /* Center items horizontally */
+  align-items: center; /* Center items vertically */
+}
+
+.features-grid .feature-item {
+  text-align: center;
+}
+
+.feature-video {
+  width: 250px; /* Match the width for a circular appearance */
+  height: 250px; /* Match the height for a square */
+  border-radius: 50%; /* Make the video circular */
+  border: 10px solid #133E87; /* Add a border around the video */
+  object-fit: cover; /* Ensure the video fits properly inside the circle */
+  display: block; /* Remove inline spacing */
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover effect */
+}
+
+.features-grid .feature-item:hover .feature-video {
+  transform: scale(1.1); /* Slightly enlarge the video */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Add a shadow effect */
+  border-color: #EAD8B1; /* Change the border color on hover */
+}
+
+.features-grid p {
+  margin-top: 10px; /* Add spacing between video and text */
+  font-size: 1rem;
+  color: #001f3f; /* Dark blue for consistency */
+  font-weight: bold;
+  text-transform: capitalize; /* Optional: Capitalize text */
+  transition: color 0.3s ease; /* Smooth text color transition */
+}
+
+.features-grid .feature-item:hover p {
+  color: #EAD8B1; /* Change the text color on hover */
+}
+
+
+/* Login Page Container */
+.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding-top: 70px;
+  background-color: #f9f9f9;
+}
+
+/* Login Container */
+.login-container {
+  display: flex;
+  flex-direction: row;
+  background: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 900px;
+  width: 100%;
+}
+
+/* Logo Section */
+.login-logo-section {
+  flex: 1;
+  background: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+}
+
+/* Form Section */
+.login-form-section {
+  flex: 1;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login-form-section h2 {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  color: #001f3f;
+  font-weight: bolder;
+}
+
+.login-form-section p {
+  font-size: 1rem;
+  margin-bottom: 20px;
+  color: #3A6D8C;
+}
+
+/* Form Inputs */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.login-input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-input-group label {
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.login-input-group input {
+  padding: 10px;
+  border: 1px solid #000000;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border 0.3s ease;
+  background-color: rgba(122, 178, 211, 0.4);
+}
+
+.login-input-group input:focus {
+  border: 1px solid #007bff;
+  outline: none;
+}
+
+/* Forgot Password */
+.login-forgot-password {
+  text-align: right;
+  margin-bottom: 10px;
+}
+
+.login-forgot-password a {
+  font-size: 0.9rem;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.login-forgot-password a:hover {
+  text-decoration: underline;
+}
+
+/* Sign-In Button */
+.login-sign-in-button {
+  background-color: #001f3f;
+  color: #fff;
+  padding: 12px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.login-sign-in-button:hover {
+  background-color: #004080;
+}
+
+/* Divider */
+.login-divider {
+  text-align: center;
+  margin: 20px 0;
+  position: relative;
+}
+
+.login-divider span {
+  background: #fff;
+  padding: 0 10px;
+  color: #666;
+}
+
+.login-divider:before,
+.login-divider:after,
+.register-divider:before,
+.register-divider:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: #ccc;
+}
+
+.login-divider:before, .register-divider:before {
+  left: 10%;
+}
+
+.login-divider:after, .register-divider:after {
+  right: 10%;
+}
+
+/* Google Sign-In Button */
+.login-google-sign-in {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 12px;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: box-shadow 0.3s ease;
+}
+
+.login-google-sign-in:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.login-google-sign-in img {
+  width: 20px;
+  height: 20px;
+}
+
+/* Sign-Up Link */
+.login-signup-text {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.login-signup-text a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.login-signup-text a:hover {
+  text-decoration: underline;
+}
+
+.user-name-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.user-name-error  * {
+  flex: 1;
+}
+.input-icon {
+  display: flex;
+  align-items: center;
+  background: #f9f9f9;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 5px; /* Adjust as needed for consistent height */
+  height: auto;
+}
+
+.input-icon i {
+  margin-right: 10px;
+  color: #001f3f;
+}
+
+.input-icon input {
+  border: none;
+  outline: none;
+  flex: 1;
+  background: transparent;
+  font-size: 1rem;
+}
+
+.input-icon input::placeholder {
+  color: #ccc;
+}
+.login-logo {
+  max-width: 400px; /* Adjust the width as needed */
+  height: auto; /* Maintain aspect ratio */
+  margin: 0 auto; /* Center the logo if necessary */
+}
+
+.login-logo-section {
+  flex: 1;
+  background: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+
+/* Register Form */
+/* Register Page Styling */
+.register-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 70px;
+  background-color: #f9f9f9;
+}
+
+.register-container {
+  display: flex;
+  flex-direction: row;
+  background: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 1000px;
+  width: 100%;
+}
+
+.register-form-section {
+  flex: 1;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.register-form-section h2 {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  color: #001f3f;
+  font-weight: bolder;
+}
+
+.register-form-section p {
+  font-size: 1rem;
+  margin-bottom: 20px;
+  color: #3A6D8C; 
+}
+
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.register-input-group label {
+  font-size: 0.9rem;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.input-icon {
+  display: flex;
+  align-items: center;
+  background: rgba(122, 178, 211, 0.4); /* Apply the same background color to the whole container */
+  border: 1px solid #000000; /* Optional: Adjust the border if needed */
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.input-icon i {
+  margin-right: 10px;
+  color: #001f3f; /* Keep the icon color unchanged */
+}
+
+.input-icon input {
+  border: none;
+  outline: none;
+  flex: 1;
+  background: transparent; /* Ensure the input blends with the container background */
+  font-size: 1rem;
+}
+
+
+.input-icon input::placeholder {
+  color: #7c7c7c;
+}
+
+
+.register-forgot-password {
+  text-align: right;
+  margin-bottom: 10px;
+}
+
+.register-forgot-password a {
+  font-size: 0.9rem;
+  color: #007bff;
+  text-decoration: none;
+}
+
+.register-sign-up-button {
+  background-color: #001f3f;
+  color: #fff;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.register-sign-up-button:hover {
+  background-color: #004080;
+}
+
+.register-divider {
+  text-align: center;
+  margin: 20px 0;
+  position: relative;
+}
+
+.register-divider span {
+  background: #fff;
+  padding: 0 10px;
+  color: #666;
+}
+
+.register-google-sign-up {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.register-google-sign-up img {
+  width: 20px;
+  height: 20px;
+}
+
+.register-login-text {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.register-login-text a {
+  color: #007bff;
+  text-decoration: none;
+}
+
+.register-logo {
+  max-width: 400px; /* Adjust the width as needed */
+  height: auto; /* Maintain aspect ratio */
+  margin: 0 auto; /* Center the logo if necessary */
+}
+
+.register-logo-section {
+  flex: 1;
+  background: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+
+
+@media (max-width: 768px) {
+  .main-content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .text-section {
+    margin-right: 0;
+    margin-bottom: 20px;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
+  }
+
+  .illustration-img {
+    max-width: 80%; /* Reduce size on smaller screens */
+  }
+
+  .decorative-elements .green-circle {
+    display: none; /* Hide decorative elements on small screens */
+  }
+
+  /* Features Page */
+  .features-grid {
+    grid-template-columns: repeat(1, 1fr); /* Single column layout */
+    gap: 30px; /* Add space between items */
+  }
+
+  .features-heading {
+    font-size: 1.8rem; /* Adjust heading size */
+  }
+
+  /* About Us Page */
+  .about-content {
+    flex-direction: column; /* Stack image and text vertically */
+    text-align: center; /* Center-align text */
+  }
+
+  .about-image {
+    width: 100%; /* Ensure the image takes full width */
+  }
+
+  .about-img {
+    max-width: 100%; /* Scale the image properly */
+    margin-bottom: 20px; /* Add spacing below the image */
+  }
+
+  .about-text {
+    text-align: center; /* Center-align the text */
+  }
+
+  .about-text h2 {
+    font-size: 1.6rem; /* Adjust heading size */
+  }
+
+  .about-text p {
+    font-size: 1rem; /* Adjust paragraph font size */
+  }
+
+  /* Developers Section */
+  .developers-grid {
+    flex-direction: column; /* Stack developer cards */
+    gap: 20px;
+  }
+
+  .developer-card {
+    max-width: 100%; /* Allow the card to take full width */
+  }
+
+  /* Login and Register Pages */
+  .login-container,
+  .register-container {
+    flex-direction: column; /* Stack elements */
+    padding: 20px; /* Adjust padding */
+  }
+
+  .login-logo-section,
+  .register-logo-section {
+    display: none; /* Hide the logo section for smaller screens */
+  }
+
+  .login-form-section,
+  .register-form-section {
+    width: 100%; /* Take full width */
+    padding: 0;
+  }
+
+  .login-form-section h2,
+  .register-form-section h2 {
+    font-size: 1.5rem; /* Adjust heading size */
+    text-align: center; /* Center-align text */
+  }
+
+  .login-form-section p,
+  .register-form-section p {
+    text-align: center; /* Center-align description */
+  }
+}
+

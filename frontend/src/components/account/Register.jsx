@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import SignWithGoogle from "./SignWithGoogle";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import "../../index.css";
 
 const Register = () => {
   const [loading, setLoading] = useState(false);
@@ -97,95 +98,108 @@ const Register = () => {
   };
 
   return (
-    <div>
-      <Formik
-        initialValues={initialValues}
-        validationSchema={validationSchema}
-        onSubmit={handleSubmit}
-      >
-        {({ setFieldValue, isSubmitting, errors }) => (
-          <Form >
-            <h1>Create Account</h1>
-            <div>
-              <Field
-                type="text"
-                name="firstName"
-                placeholder="First Name"
-              />
-              <ErrorMessage
-                name="firstName"
-                component="div"
-                className="text-danger"
-              />
-            </div>
+    <div className="register-page">
+      <div className="register-container">
+        <div className="register-form-section">
+          <h2>Register your account!</h2>
+          <p>Together We Build, Together We Innovate.</p>
+          <Formik
+            initialValues={initialValues}
+            validationSchema={validationSchema}
+            onSubmit={handleSubmit}
+          >
+            {({ setFieldValue, isSubmitting, errors }) => (
+              <Form className="register-form">
+                <div className="register-input-group">
+                  <label htmlFor="name">Name</label>
+                  <div className="input-icon">
+                    <i className="fas fa-user"></i> {/* User Icon */}
+                    <Field
+                      type="text"
+                      name="firstName"
+                      placeholder="First Name"
+                    />
+                    <Field
+                      type="text"
+                      name="lastName"
+                      placeholder="Last Name"
+                    />
+                  </div>
+                  <div className="user-name-error">
+                    <ErrorMessage
+                      name="firstName"
+                      component="div"
+                      className="text-danger"
+                    />
+                    <ErrorMessage
+                      name="lastName"
+                      component="div"
+                      className="text-danger"
+                    />
+                  </div>
+                </div>
 
-            <div>
-              <Field
-                type="text"
-                name="lastName"
-                placeholder="Last Name"
-              />
-              <ErrorMessage
-                name="lastName"
-                component="div"
-                className="text-danger"
-              />
-            </div>
+                <div className="register-input-group">
+                  <label htmlFor="email">Email</label>
+                  <div className="input-icon">
+                    <i className="fas fa-envelope"></i>
+                    <Field
+                      type="email"
+                      name="email"
+                      placeholder="Example@email.com"
+                    />
+                  </div>
+                  <ErrorMessage
+                    name="email"
+                    component="div"
+                    className="text-danger"
+                  />
+                </div>
 
-            <div>
-              <Field
-                type="email"
-                name="email"
-                placeholder="Email"
-              />
-              <ErrorMessage
-                name="email"
-                component="div"
-                className="text-danger"
-              />
-            </div>
+                <div className="register-input-group">
+                  <label htmlFor="password">Password</label>
+                  <div className="input-icon">
+                    <i className="fas fa-lock"></i>
+                    <Field
+                      type="password"
+                      name="password"
+                      placeholder="Password"
+                    />
+                  </div>
+                  <ErrorMessage
+                    name="password"
+                    component="div"
+                    className="text-danger"
+                  />
+                </div>
 
-            <div>
-              <Field
-                type="password"
-                name="password"
-                placeholder="Password"
-              />
-              <ErrorMessage
-                name="password"
-                component="div"
-                className="text-danger"
-              />
-            </div>
+                <button
+                  type="submit"
+                  className="register-sign-up-button"
+                  disabled={isSubmitting || loading}
+                >
+                  {loading ? "Loading..." : "Sign Up"}
+                </button>
+              </Form>
+            )}
+          </Formik>
 
-            <div>
-              <input
-                type="file"
-                name="avatar"
-                accept="image/jpeg, image/jpg, image/png"
-                onChange={(event) =>
-                  setFieldValue("avatar", event.currentTarget.files[0])
-                }
-              />
-              <ErrorMessage
-                name="avatar"
-                component="div"
-                className="text-danger"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isSubmitting || loading}
-            >
-              {loading ? "Loading..." : "Sign Up"}
-            </button>
-          </Form>
-        )}
-      </Formik>
-      <SignWithGoogle method="Sign Up" />
-      <p>
-        Have an account? <Link to="/login">Login here</Link>
-      </p>
+          <div className="register-divider">
+            <span>Or</span>
+          </div>
+          <SignWithGoogle method="Sign Up" />
+          <p className="register-login-text">
+            Already have an account? <Link to="/login">Sign In</Link>
+          </p>
+        </div>
+        <div className="register-logo-section">
+          <img
+            src="/images/Logo 1.png"
+            alt="Spherify Logo"
+            className="register-logo"
+          />
+        </div>
+      </div>
     </div>
   );
 };

@@ -1,9 +1,10 @@
-import React, {useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getUser, logout } from "../../utils/helper";
+import "../../index.css";
 
 const Header = () => {
   const [user, setUser] = useState({});
@@ -24,34 +25,33 @@ const Header = () => {
   useEffect(() => {
     setUser(getUser());
     if (user) {
-        console.log(user);
+      console.log(user);
     }
   }, []);
 
   return (
-    <header className="header">
-      <div className="brand">
-        <h1>
-          <Link to="/">Spherify</Link>
-        </h1>
-        {user ? (
-          <Link
-            className="text-danger"
-            style={{ textDecoration: "none" }}
-            to="/"
-            onClick={logoutHandler}
-          >
-            Logout
-          </Link>
-        ) : (
-          <>
+    <>
+      <header className="navbar">
+        <Link className="logo" to="/" style={{textDecoration: 'none'}}>Spherify</Link>
+        <nav className="nav-links">
+          <Link to="/">Home</Link>
+          <Link to="/features">Features</Link>
+          <Link to="/about">About</Link>
+          {user ? (
+            <Link
+              className="text-danger"
+              style={{ textDecoration: "none" }}
+              to="/"
+              onClick={logoutHandler}
+            >
+              Logout
+            </Link>
+          ) : (
             <Link to="/login">Login</Link>
-            <br />
-            <Link to="/register">Register</Link>
-          </>
-        )}
-      </div>
-    </header>
+          )}
+        </nav>
+      </header>
+    </>
   );
 };
 
