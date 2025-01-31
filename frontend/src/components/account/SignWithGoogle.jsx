@@ -35,7 +35,7 @@ function SignWithGoogle({ method }) {
                 user: response.user,
               };
               succesMsg("Login Successfully!");
-              authenticate(userInfo, () => (window.location = "/"));
+              authenticate(userInfo, () => (window.location = "/main"));
             } else {
               console.log("No user found, proceeding to registration...");
               // Proceed with registration logic if user is not found
@@ -73,7 +73,7 @@ function SignWithGoogle({ method }) {
                   };
                   authenticate(
                     userInfo,
-                    () => (window.location = "/")
+                    () => (window.location = "/main")
                   );
                 }
               } catch (registerError) {
@@ -117,7 +117,7 @@ function SignWithGoogle({ method }) {
                   token: idToken,
                   user: newUser,
                 };
-                authenticate(userInfo, () => (window.location = "/"));
+                authenticate(userInfo, () => (window.location = "/main"));
               }
             } catch (registerError) {
               console.error("Error during registration:", registerError);

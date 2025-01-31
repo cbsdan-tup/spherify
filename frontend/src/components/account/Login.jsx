@@ -50,7 +50,7 @@ const Login = () => {
           user: response.user,
         };
         succesMsg("Login Successfully!");
-        authenticate(userInfo, () => (window.location = "/"));
+        authenticate(userInfo, () => (window.location = "/main"));
       } else {
         errMsg("Login Failed");
       }
