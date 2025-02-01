@@ -6,13 +6,20 @@ import NotFound404 from "./components/NotFound404";
 import Header from "./components/layout/Header";
 import FeaturesPage from "./components/FeaturesPage";
 import AboutPage from "./components/AboutPage";
-import { isAuthenticated } from "./utils/helper";
+import { isAuthenticated, getToken, getUser } from "./utils/helper";
 import Main from "./components/Main";
 import "./App.css";
 import "./Main.css";
 import { Navigate } from "react-router";
+import { useEffect } from "react";
 
 function App() {
+  useEffect(() => {
+    if (isAuthenticated()) {
+      console.log(getToken());
+      console.log(getUser());
+    }
+  }, []);
   const LandingRoutes = () => {
     return (
       <>
