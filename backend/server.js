@@ -16,6 +16,7 @@ const PORT = process.env.PORT || 8000
 const cloudinary = require('cloudinary')
 
 const account = require('./routes/account');
+const teamRoutes = require('./routes/teamRoutes');
 
 console.log(process.env.NODE_ENV) 
 
@@ -40,6 +41,7 @@ app.use(errorHandler)
 // Routes
 app.use('/', require('./routes/root'))
 app.use('/api/v1', account);
+app.use('/api/v1', teamRoutes);
 
 //404 not found routes
 app.all('*', (req, res) => {
