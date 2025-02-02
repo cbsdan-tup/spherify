@@ -95,7 +95,7 @@ exports.getTeamByUser = async (req, res) => {
     const { userId } = req.params;
     const teams = await Team.find({
       $or: [{ createdBy: userId }, { "members.user": userId }],
-    }).populate("members.user", "name email");
+    }).populate("members.user", "fname lname email");
 
     res.status(200).json(teams);
   } catch (error) {
@@ -103,27 +103,45 @@ exports.getTeamByUser = async (req, res) => {
   }
 };
 
-exports.deleteTeamById = async (req, res) => {
-    try {
-      const { teamId } = req.params;
-  
-      if (!teamId) {
-        return res.status(400).json({ message: "Team ID is required" });
-      }
-  
-      const team = await Team.findById(teamId);
-      if (!team) {
-        return res.status(404).json({ message: "Team not found" });
-      }
-  
-      if (team.logo.logoPublicId) {
-        await cloudinary.uploader.destroy(team.logo.logoPublicId);
-      }
-  
-      await Team.findByIdAndDelete(teamId);
-      res.status(200).json({ message: "Team deleted successfully" });
-    } catch (error) {
-      res.status(500).json({ message: "Error deleting team", error });
+exports.getTeamById = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+
+    const team = await Team.findById(teamId).populate(
+      "members.user",
+      "fname lname email"
+    );
+
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
     }
-  };
-  
+
+    res.status(200).json(team);
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+exports.deleteTeamById = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+
+    if (!teamId) {
+      return res.status(400).json({ message: "Team ID is required" });
+    }
+
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+
+    if (team.logo.logoPublicId) {
+      await cloudinary.uploader.destroy(team.logo.logoPublicId);
+    }
+
+    await Team.findByIdAndDelete(teamId);
+    res.status(200).json({ message: "Team deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting team", error });
+  }
+};

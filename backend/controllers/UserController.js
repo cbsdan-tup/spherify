@@ -111,6 +111,30 @@ exports.getUser = async (req, res, next) => {
   }
 };
 
+exports.getUserByEmail = async (req, res, next) => {
+  const { email } = req.params;
+
+  if (!email) {
+    return res.status(400).json({ message: "Please provide an email" });
+  }
+
+  try {
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 exports.getUserDetails = async (req, res, next) => {
   const user = await User.findById(req.params.id);
   if (!user) {
