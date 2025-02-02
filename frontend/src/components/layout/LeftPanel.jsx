@@ -1,13 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { logout } from "../../utils/helper";
+import { errMsg, getUser, logout, succesMsg } from "../../utils/helper";
 import AddTeamForm from "../main/AddTeamForm";
 import { getToken } from "../../utils/helper";
+import axios from "axios";
 
 const LeftPanel = () => {
   const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
+
+  const [teams, setTeams] = useState([]);
 
   const initialData = {
     nickname: "",
@@ -29,51 +32,67 @@ const LeftPanel = () => {
   const handleShow = () => setShowPopup(true);
   const handleClose = () => setShowPopup(false);
 
-  const handleSubmit = (data) => {
+  const handleSubmit = async (data) => {
     console.log("Form Data:", data);
-    const handleSubmit = async (data) => {
-      try {
-        const token = getToken(); // Assuming getToken() retrieves the auth token
 
-        const formData = new FormData();
-        formData.append("name", data.teamName);
-        formData.append("description", data.description);
-        formData.append("nickname", data.nickname);
-        if (data.logo) {
-          formData.append("logo", data.logo); 
-        }
+    try {
+      const token = getToken();
+      const userId = getUser()?._id;
 
-        if (data.membersEmail)  {
-          formData.append("members", JSON.stringify(data.membersEmail));
-        }
+      const formData = new FormData();
+      formData.append("name", data.name);
+      formData.append("description", data.description);
+      formData.append("nickname", data.nickname);
+      formData.append("createdBy", userId);
 
-        const response = await fetch("http://localhost:4000/api/v1/addTeam", {
-          method: "POST",
+      if (data.logo) {
+        formData.append("logo", data.logo);
+      }
+
+      if (data.membersEmail) {
+        formData.append("members", JSON.stringify(data.membersEmail));
+      }
+
+      const response = await axios.post(`${import.meta.env.VITE_API}/addTeam`, 
+        formData,
+        {
           headers: {
-            "Authorization": `Bearer ${token}`, 
+            Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
-          body: formData, 
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.message || "Failed to create team");
         }
+      );
+      
+      console.log("Team created successfully:", response);
+      succesMsg("Team created successfully!");  
+      fetchTeams();
 
-        console.log("Team created successfully:", result);
-        alert("Team created successfully!");
-
-        handleClose();
-      } catch (error) {
-        console.error("Error submitting form:", error);
-        alert(`Error: ${error.message}`);
-      }
-    };
+      handleClose();
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      errMsg(`Error: ${error.message}`);
+    }
 
     handleClose();
   };
+  const fetchTeams = async () => {
+    try {
+      console.log(getUser());
+      const userId = getUser()._id;
+      console.log(userId);
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API}/getTeamByUser/${userId}`
+      );
+      console.log(data);
+      setTeams(data);
+    } catch (error) {
+      console.log(`Error fetching teams: ${error}`);
+    }
+  };
+  useEffect(() => {
+
+    fetchTeams();
+  }, []);
 
   return (
     <div className="left-panel-container">
@@ -85,15 +104,41 @@ const LeftPanel = () => {
         />
       </Link>
       <hr className="divider" />
-      <button className="add-button" onClick={handleShow}>
-        <i className="fa-solid fa-plus plus-icon"></i>
-      </button>
+      <div className="teams-container">
+        <div className="teams">
+          <button className="add-button" onClick={handleShow}>
+            <i className="fa-solid fa-plus plus-icon"></i>
+          </button>
+          {teams &&
+            Array.isArray(teams) &&
+            teams.map((team) => (
+              <Link
+                to={`/main/${team._id}`}
+                className="team-link"
+                key={team._id}
+              >
+                <div key={team._id} className="team">
+                  {team.logo.url !== "" ? (
+                    <img
+                      src={team.logo.url || "/images/default-team-logo.png"}
+                      alt="Team Logo"
+                      className="team-logo"
+                    />
+                  ) : (
+                    <span className="team-name">{team?.name[0]}</span>
+                  )}
+                </div>
+              </Link>
+            ))}
+        </div>
+      </div>
+      <hr className="divider" />
       <div className="bottom-section">
-        <button className="button settings-button">
+        <Link className="button settings-button mb-0" to="/main/settings">
           <img className="icon" src="images/settings-icon.png" />
           Settings
-        </button>
-        <button className="button logout-button" onClick={logoutHandler}>
+        </Link>
+        <button className="button logout-button mb-0" onClick={logoutHandler}>
           <img className="icon" src="images/logout-icon.png" />
           Logout
         </button>

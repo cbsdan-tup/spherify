@@ -1,24 +1,45 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
+import axios from "axios";
+import { getUser } from "../../utils/helper";
 
 const PopupForm = ({ show, handleClose, handleSubmit }) => {
+  const [isEmailValid, setIsEmailValid] = React.useState(false);
+  const [isSearching, setIsSearching] = React.useState(false);
+  const [memberInfo, setMemberInfo] = React.useState(null);
+
   if (!show) return null;
 
   const validationSchema = Yup.object({
     name: Yup.string().required("Team name is required"),
     description: Yup.string(),
     logo: Yup.mixed().nullable(),
-    membersEmail: Yup.array()
-      .of(Yup.string().email("Invalid email"))
+    membersEmail: Yup.array().of(Yup.object().shape({
+      user: Yup.string().required(),
+      nickname: Yup.string().required(),
+    })),
   });
+
+  const searchUser = async (email) => {
+    try {
+      setIsSearching(true);
+      const response = await axios.get(`${import.meta.env.VITE_API}/getUserByEmail/${email}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error searching user:", error);
+      return false;
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   return (
     <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
       <div className="modal-dialog">
         <div className="modal-content">
-          <div className="modal-header">
-            <h5 className="modal-title">Add Your Team</h5>
+          <div className="modal-header custom-primary-bg custom-text-white">
+            <h5 className="modal-title fw-bold">Add Your Team</h5>
             <button type="button" className="btn-close" onClick={handleClose} aria-label="Close"></button>
           </div>
           <Formik
@@ -27,7 +48,10 @@ const PopupForm = ({ show, handleClose, handleSubmit }) => {
               description: "",
               logo: null,
               emailInput: "",
-              membersEmail: [],
+              membersEmail: [{
+                user: getUser()?._id,
+                nickname: `${getUser()?.firstName} ${getUser()?.lastName}`,
+              }],
             }}
             validationSchema={validationSchema}
             onSubmit={(values, { resetForm }) => {
@@ -35,83 +59,102 @@ const PopupForm = ({ show, handleClose, handleSubmit }) => {
               resetForm();
             }}
           >
-            {({ values, setFieldValue }) => (
-              <Form>
-                <div className="modal-body">
-                  {/* Team Name */}
-                  <div className="mb-3">
-                    <label htmlFor="name" className="form-label">
-                      Team Name
-                    </label>
-                    <Field type="text" id="name" name="name" className="form-control" placeholder="Enter team name" />
-                    <ErrorMessage name="name" component="div" className="text-danger" />
-                  </div>
+            {({ values, setFieldValue }) => {
+              useEffect(() => {
+                const timer = setTimeout(async () => {
+                  if (values.emailInput.includes("@")) {
+                    const {user} = await searchUser(values.emailInput);
+                    setIsEmailValid(!!user);
+                    setMemberInfo(user);
+                  } else {
+                    setIsEmailValid(false);
+                  }
+                }, 1000);
 
-                  {/* Description */}
-                  <div className="mb-3">
-                    <label htmlFor="description" className="form-label">
-                      Description
-                    </label>
-                    <Field as="textarea" id="description" name="description" className="form-control" placeholder="Enter team description" />
-                  </div>
+                return () => clearTimeout(timer);
+              }, [values.emailInput]);
 
-                  {/* Logo */}
-                  <div className="mb-3">
-                    <label htmlFor="logo" className="form-label">
-                      Logo (File Upload)
-                    </label>
-                    <input
-                      type="file"
-                      className="form-control"
-                      onChange={(event) => setFieldValue("logo", event.currentTarget.files[0])}
-                    />
-                  </div>
-
-                  {/* Members Email Input */}
-                  <div className="mb-3">
-                    <label htmlFor="emailInput" className="form-label">
-                      Add Member (Email)
-                    </label>
-                    <div className="d-flex">
-                      <Field type="email" id="emailInput" name="emailInput" className="form-control" placeholder="Enter member's email" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (values.emailInput && !values.membersEmail.includes(values.emailInput)) {
-                            setFieldValue("membersEmail", [...values.membersEmail, values.emailInput]);
-                            setFieldValue("emailInput", ""); // Clear input after adding
-                          }
-                        }}
-                        className="btn btn-success ms-2"
-                      >
-                        Add
-                      </button>
+              return (
+                <Form>
+                  <div className="modal-body">
+                    {/* Team Name */}
+                    <div className="mb-3">
+                      <label htmlFor="name" className="form-label custom-text-header">
+                        Team Name (*)
+                      </label>
+                      <Field type="text" id="name" name="name" className="form-control" placeholder="Enter team name" />
+                      <ErrorMessage name="name" component="div" className="text-danger" />
                     </div>
-                    <ErrorMessage name="membersEmail" component="div" className="text-danger" />
-                  </div>
 
-                  {/* Display added members */}
-                  <div className="mb-3">
-                    <label className="form-label">Members</label>
-                    <ul className="list-group">
-                      {values.membersEmail.map((email, index) => (
-                        <li key={index} className="list-group-item">
-                          {email}
-                        </li>
-                      ))}
-                    </ul>
+                    {/* Description */}
+                    <div className="mb-3">
+                      <label htmlFor="description" className="form-label custom-text-header">
+                        Description
+                      </label>
+                      <Field as="textarea" id="description" name="description" className="form-control" placeholder="Enter team description" />
+                    </div>
+
+                    {/* Logo */}
+                    <div className="mb-3">
+                      <label htmlFor="logo" className="form-label custom-text-header">
+                        Logo (File Upload)
+                      </label>
+                      <input
+                        type="file"
+                        className="form-control"
+                        style={{height: "auto"}}
+                        onChange={(event) => setFieldValue("logo", event.currentTarget.files[0])}
+                      />
+                    </div>
+
+                    {/* Members Email Input */}
+                    <div className="mb-3">
+                      <label htmlFor="emailInput" className="form-label custom-text-header">
+                        Add Member (Email)
+                      </label>
+                      <div className="d-flex">
+                        <Field type="email" id="emailInput" name="emailInput" className="form-control" placeholder="Enter valid member's email" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (values.emailInput && !values.membersEmail.some(member => member.user === memberInfo?._id)) {
+                              setFieldValue("membersEmail", [...values.membersEmail, { user: memberInfo?._id, nickname: `${memberInfo?.firstName} ${memberInfo?.lastName}`, email: memberInfo?.email }]);
+                              setFieldValue("emailInput", "");
+                            }
+                          }}
+                          className="btn btn-success mx-2 me-0"
+                          disabled={!isEmailValid || isSearching}
+                        >
+                          {isSearching ? "Searching..." : "Add"}
+                        </button>
+                      </div>
+                      <ErrorMessage name="membersEmail" component="div" className="text-danger" />
+                    </div>
+
+                    {/* Display added members */}
+                    <div className="mb-3">
+                      <label className="form-label custom-text-header">Members</label>
+                      <ul className="list-group">
+                        {values.membersEmail.map((member, index) => (
+                          <li key={index} className="list-group-item">
+                            {member.nickname}
+                            {member.email}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
                   </div>
-                </div>
-                <div className="modal-footer">
-                  <button type="button" className="btn btn-secondary" onClick={handleClose}>
-                    Cancel
-                  </button>
-                  <button type="submit" className="btn btn-primary">
-                    Create Team
-                  </button>
-                </div>
-              </Form>
-            )}
+                  <div className="modal-footer custom-primary-bg custom-text-white">
+                    <button type="button" className="btn btn-secondary" onClick={handleClose}>
+                      Cancel
+                    </button>
+                    <button type="submit" className="btn btn-primary custom-secondary-bg ">
+                      Create Team
+                    </button>
+                  </div>
+                </Form>
+              );
+            }}
           </Formik>
         </div>
       </div>

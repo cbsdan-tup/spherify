@@ -43,7 +43,7 @@ function App() {
 
     return (
       <Routes>
-        <Route path="/" element={<Main />} />
+        <Route path="/*" element={<Main />} />
         <Route path="*" element={<NotFound404 />} />
       </Routes>
     );

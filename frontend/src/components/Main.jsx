@@ -1,26 +1,37 @@
-import React from "react";
+import React, {useEffect} from "react";
+import { Routes, Route, useLocation  } from "react-router-dom";
 import LeftPanel from "./layout/LeftPanel";
 import RightMainPanel from "./layout/RightMainPanel";
+import RightToolPanel from "./layout/RightToolPanel";
+import Home from "./main/Home";
+import Settings from "./main/Settings";
+import Team from "./main/Team";
 
 function Main() {
-  
+  const location = useLocation();
+
+  useEffect(() => {
+    
+  }, [location.pathname]); 
+
   return (
     <>
       <LeftPanel />
       <div className="main-container">
-        <div className="main">
-          <h1 className="title">Welcome to Spherify!</h1>
-          <span className="text">
-            Open a team on the left side panel
-            <br />
-            or
-            <br />
-            Create a new team
-          </span>
-          <img className="spherify-logo" src="images/kamay.png" />
+        <div className="content">
+          <Routes>
+            <Route index element={<Home />} /> 
+            <Route path="settings" element={<Settings />} /> 
+            <Route path=":teamId" element={<Team />} /> 
+
+          </Routes>
         </div>
       </div>
-      <RightMainPanel />
+      {location.pathname == "/main" || location.pathname == "/main/settings" ? (
+        <RightMainPanel />
+      ) : (
+        <RightToolPanel />
+      )}
     </>
   );
 }
