@@ -2,8 +2,11 @@ import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../../config/firebase-config";
 import { authenticate, succesMsg, errMsg } from "../../utils/helper";
 import axios from "axios";
+import { useDispatch } from "react-redux";
 
 function SignWithGoogle({ method }) {
+  const dispatch = useDispatch();
+
   function googleLogin() {
     try {
       const provider = new GoogleAuthProvider();
@@ -35,7 +38,8 @@ function SignWithGoogle({ method }) {
                 user: response.user,
               };
               succesMsg("Login Successfully!");
-              authenticate(userInfo, () => (window.location = "/main"));
+
+              authenticate(userInfo, dispatch, () => {window.location = "/main"});
             } else {
               console.log("No user found, proceeding to registration...");
               // Proceed with registration logic if user is not found
@@ -71,8 +75,10 @@ function SignWithGoogle({ method }) {
                     token: idToken,
                     user: newUser,
                   };
+
                   authenticate(
                     userInfo,
+                    dispatch,
                     () => (window.location = "/main")
                   );
                 }
@@ -117,7 +123,7 @@ function SignWithGoogle({ method }) {
                   token: idToken,
                   user: newUser,
                 };
-                authenticate(userInfo, () => (window.location = "/main"));
+                authenticate(userInfo, dispatch, () => (window.location = "/main"));
               }
             } catch (registerError) {
               console.error("Error during registration:", registerError);

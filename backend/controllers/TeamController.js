@@ -1,4 +1,4 @@
-const Team = require("../models/Team");
+const {Team} = require("../models/Team");
 const cloudinary = require("cloudinary").v2;
 
 exports.addTeam = async (req, res) => {
@@ -100,6 +100,23 @@ exports.getTeamByUser = async (req, res) => {
     res.status(200).json(teams);
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
+  }
+};
+
+exports.getTeamMembers = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+
+    const team = await Team.findById(teamId).populate("members.user", "fname lname email"); 
+
+    if (!team) {
+      return res.status(404).json({ error: "Team not found" });
+    }
+
+    res.status(200).json({ members: team.members });
+  } catch (error) {
+    console.error("Error fetching team members:", error);
+    res.status(500).json({ error: "Server error" });
   }
 };
 

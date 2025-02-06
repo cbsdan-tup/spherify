@@ -5,6 +5,8 @@ import { errMsg, getUser, logout, succesMsg } from "../../utils/helper";
 import AddTeamForm from "../main/AddTeamForm";
 import { getToken } from "../../utils/helper";
 import axios from "axios";
+import { useDispatch, useSelector } from 'react-redux';
+import { setTeamId, clearTeamId } from "../../redux/teamSlice";
 
 const LeftPanel = () => {
   const [showPopup, setShowPopup] = useState(false);
@@ -18,12 +20,15 @@ const LeftPanel = () => {
     isAdmin: false,
   };
 
+  const dispatch = useDispatch();
+  const authState = useSelector((state) => state.auth);
+
   const logoutHandler = () => {
     console.log("logout");
     toast.success("Log out successfully", {
       position: "bottom-right",
     });
-    logout(() => {
+    logout(dispatch, () => {
       navigate("/");
       window.location.reload();
     });
@@ -36,8 +41,9 @@ const LeftPanel = () => {
     console.log("Form Data:", data);
 
     try {
-      const token = getToken();
-      const userId = getUser()?._id;
+
+      const token = getToken(authState);
+      const userId = getUser(authState)?._id;
 
       const formData = new FormData();
       formData.append("name", data.name);
@@ -77,8 +83,8 @@ const LeftPanel = () => {
   };
   const fetchTeams = async () => {
     try {
-      console.log(getUser());
-      const userId = getUser()._id;
+      console.log(getUser(authState));
+      const userId = getUser(authState)._id;
       console.log(userId);
       const { data } = await axios.get(
         `${import.meta.env.VITE_API}/getTeamByUser/${userId}`
@@ -96,7 +102,7 @@ const LeftPanel = () => {
 
   return (
     <div className="left-panel-container">
-      <Link className="spherify-logo-container" to="/main">
+      <Link className="spherify-logo-container" to="/main" onClick={() => dispatch(clearTeamId())}>
         <img
           src="/images/white-logo.png"
           alt="Spherify"
@@ -116,6 +122,7 @@ const LeftPanel = () => {
                 to={`/main/${team._id}`}
                 className="team-link"
                 key={team._id}
+                onClick={() => dispatch(setTeamId(team._id))}
               >
                 <div key={team._id} className="team">
                   {team.logo.url !== "" ? (
@@ -134,12 +141,12 @@ const LeftPanel = () => {
       </div>
       <hr className="divider" />
       <div className="bottom-section">
-        <Link className="button settings-button mb-0" to="/main/settings">
-          <img className="icon" src="images/settings-icon.png" />
+        <Link className="button settings-button mb-0" to="/main/settings" onClick={() => dispatch(clearTeamId())}>
+          <img className="icon" src="/images/settings-icon.png" />
           Settings
         </Link>
-        <button className="button logout-button mb-0" onClick={logoutHandler}>
-          <img className="icon" src="images/logout-icon.png" />
+        <button className="button logout-button mb-0" onClick={()=>{logoutHandler(); dispatch(clearTeamId())}}>
+          <img className="icon" src="/images/logout-icon.png" />
           Logout
         </button>
       </div>
@@ -148,6 +155,7 @@ const LeftPanel = () => {
         handleClose={handleClose}
         handleSubmit={handleSubmit}
         initialData={initialData}
+        authState={authState}
       />
     </div>
   );

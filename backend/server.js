@@ -17,6 +17,7 @@ const cloudinary = require('cloudinary')
 
 const account = require('./routes/account');
 const teamRoutes = require('./routes/teamRoutes');
+const messageRoutes = require('./routes/messageRoutes')
 
 console.log(process.env.NODE_ENV) 
 
@@ -42,6 +43,7 @@ app.use(errorHandler)
 app.use('/', require('./routes/root'))
 app.use('/api/v1', account);
 app.use('/api/v1', teamRoutes);
+app.use('/api/v1', messageRoutes);
 
 //404 not found routes
 app.all('*', (req, res) => {

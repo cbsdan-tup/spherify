@@ -9,9 +9,12 @@ import { Link } from "react-router-dom";
 import SignInwithGoogle from "./SignWithGoogle";
 import { toast } from "react-toastify";
 import "../../index.css";
+import { useDispatch } from "react-redux";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
+
+  const dispatch = useDispatch();
 
   const initialValues = {
     email: "",
@@ -50,7 +53,7 @@ const Login = () => {
           user: response.user,
         };
         succesMsg("Login Successfully!");
-        authenticate(userInfo, () => (window.location = "/main"));
+        authenticate(userInfo, dispatch, () => (window.location = "/main"));
       } else {
         errMsg("Login Failed");
       }

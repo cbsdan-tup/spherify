@@ -8,17 +8,21 @@ import FeaturesPage from "./components/FeaturesPage";
 import AboutPage from "./components/AboutPage";
 import { isAuthenticated, getToken, getUser } from "./utils/helper";
 import Main from "./components/Main";
+import "./Variables.css";
+
 import "./App.css";
 import "./Main.css";
+import "./TextChats.css";
 import { Navigate } from "react-router";
 import { useEffect } from "react";
 
+import { useSelector } from "react-redux";
+
 function App() {
+  const authState = useSelector((state) => state.auth);
+
   useEffect(() => {
-    if (isAuthenticated()) {
-      console.log(getToken());
-      console.log(getUser());
-    }
+    console.log("Auth State: ", authState);
   }, []);
   const LandingRoutes = () => {
     return (
@@ -37,7 +41,8 @@ function App() {
   };
 
   const MainRoutes = () => {
-    if (!isAuthenticated()) {
+    if (!isAuthenticated(authState)) {
+      console.log("not login", authState)
       return <Navigate to="/login" />;
     }
 

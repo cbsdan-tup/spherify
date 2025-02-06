@@ -1,16 +1,4 @@
-:root {
-  --primary-color: #001f3f;
-  --secondary-color: #7ab2d3;
-  --tertiary-color: #cbdceb;
 
-  --header-text-color: #1d559e;
-  --text-white: #e3e3e3;
-  --active-color: #0fbd43;
-  --inactive-color: #dc2b2b;
-  --danger-color: #ff4136;
-  --dark-grey: #333;
-  --chart-bg-color: #cbdceb;
-}
 .custom-primary-bg {
   background-color: var(--primary-color);
 }
@@ -28,6 +16,12 @@
 }
 .custom-text-primary {
   color: var(--primary-color)
+}
+.custom-text-secondary {
+  color: var(--secondary-color)
+}
+.custom-text-dark-grey {
+  color: var(--dark-grey);
 }
 .fw-bold {
   font-weight: bold;
@@ -450,7 +444,29 @@
 
   border-radius: 50%;;
 }
-
+.modal-dialog {
+  max-width: 1000px !important;
+}
 .modal-body {
+  max-height: 80vh; /* Adjust the height to fit the modal */
   overflow-y: auto !important;
+  display: flex;
+  align-items: start;
+  justify-content: center;
+  gap: 1rem;
+}
+.member-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+  border: none
+}
+.member-info .member-avatar {
+  width: 40px;
+  height: 40px;
+}
+.delete {
+  color: var(--danger-color);
+  cursor: pointer;
 }

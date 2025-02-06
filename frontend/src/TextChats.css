@@ -1,0 +1,49 @@
+.tool-container {
+    display: flex;
+    user-select: none; 
+    flex-direction: column;
+    margin-bottom: 0.3rem;
+}
+.tool-container .header {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+    gap: 0.5rem;
+
+}
+.tool-container .header .arrow {
+    font-size: 0.7rem;
+}
+.tool-content {
+    margin-left: 1.5rem;
+}
+.tool-content .add {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.3rem;
+    cursor: pointer;
+    color: var(--white-grey)
+}
+.tool-content .add:hover {
+    color: var(--secondary-color);
+}
+.tool-content .add .icon {
+    font-size: 0.7rem;
+}
+
+.tool-content .chat {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0.3rem 0;
+    cursor: pointer;
+}
+
+.tool-content .chat:hover {
+    color: var(--secondary-color);
+}
+
+.tool-content .chat .icon {
+    font-size: 0.7rem;
+}

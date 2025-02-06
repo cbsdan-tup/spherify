@@ -1,8 +1,11 @@
 import React from "react";
 import { getUser } from "../../utils/helper";
+import { useSelector } from "react-redux";
 
 function Settings() {
-  const user = getUser();
+  const authState = useSelector((state) => state.auth);
+
+  const user = getUser(authState);
 
   return (
     <>
