@@ -6,7 +6,8 @@ const {
     createMessageGroup,
     getMessageGroupsByTeam,
     editMessageGroup,
-    deleteMessageGroup
+    deleteMessageGroup,
+    getMessages
 } = require('../controllers/MessageController');
 
 
@@ -14,5 +15,7 @@ router.get('/getMessageGroups/:teamId', isAuthenticatedUser, getMessageGroupsByT
 router.post('/createMessageGroup', createMessageGroup);
 router.put('/editMessageGroup/:messageGroupId', isAuthenticatedUser, editMessageGroup);
 router.delete('/deleteMessageGroup/:messageGroupId', isAuthenticatedUser, deleteMessageGroup);
+
+router.get("/messages/:groupId", getMessages);
 
 module.exports = router

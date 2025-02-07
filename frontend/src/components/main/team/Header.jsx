@@ -3,6 +3,7 @@ import ActiveStatus from "./ActiveStatus";
 import { Link } from "react-router-dom";
 
 function Header(teamInfo) {
+  const currentTeamId = teamInfo._id;
   return (
     <div className="header">
       <div className="logo-name">
@@ -20,7 +21,7 @@ function Header(teamInfo) {
         <div className="team-name">{teamInfo.name}</div>
       </div>
       <ActiveStatus />
-      <Link className="dashboard active">
+      <Link className="dashboard active" to={`/main/${currentTeamId}`}>
           Dashboard
       </Link>
     </div>

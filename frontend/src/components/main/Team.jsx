@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Route, Routes, useParams } from "react-router-dom";
 import axios from "axios";
 import Header from "./team/Header";
 import LoadingSpinner from "../layout/LoadingSpinner";
 import Dashboard from "./team/Dashboard";
+import MessageGroup from "./textchats/MessageGroup";
 
 function Team() {
   const { teamId } = useParams();
@@ -20,7 +21,7 @@ function Team() {
     } catch (error) {
       console.log(`Error fetching teams: ${error}`);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -32,10 +33,13 @@ function Team() {
       {teamInfo && teamInfo.name ? (
         <div className="team-container">
           <Header {...teamInfo} />
-          <Dashboard />
+          <Routes>
+            <Route index element={<Dashboard />} />
+            <Route path="/message-group/:groupId" element={<MessageGroup />} />
+          </Routes>
         </div>
       ) : (
-        <LoadingSpinner message={"Loading Team..."}/>
+        <LoadingSpinner message={"Loading Team..."} />
       )}
     </>
   );

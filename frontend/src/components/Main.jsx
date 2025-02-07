@@ -6,6 +6,7 @@ import RightToolPanel from "./layout/RightToolPanel";
 import Home from "./main/Home";
 import Settings from "./main/Settings";
 import Team from "./main/Team";
+import MessageGroup from "./main/textchats/MessageGroup";
 
 function Main() {
   const location = useLocation();
@@ -22,8 +23,7 @@ function Main() {
           <Routes>
             <Route index element={<Home />} /> 
             <Route path="settings" element={<Settings />} /> 
-            <Route path=":teamId" element={<Team />} /> 
-
+            <Route path=":teamId/*" element={<Team />} /> 
           </Routes>
         </div>
       </div>

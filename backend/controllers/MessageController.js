@@ -117,3 +117,14 @@ exports.deleteMessageGroup = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };
+
+exports.getMessages = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const group = await MessageGroup.findById(groupId).populate("messages.sender", "firstName lastName email");
+    if (!group) return res.status(404).json({ error: "Group not found" });
+    res.json(group.messages);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching messages" });
+  }
+};

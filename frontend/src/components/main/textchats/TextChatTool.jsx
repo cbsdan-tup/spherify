@@ -4,6 +4,7 @@ import { getToken } from "../../../utils/helper";
 import axios from "axios";
 import AddMessageGroupForm from "./AddMessageGroupForm";
 import { addMessageGroup } from "../../../functions/TeamFunctions";
+import { Link } from "react-router-dom";
 
 const TextChatTool = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -79,10 +80,10 @@ const TextChatTool = () => {
               )}
               {groupChats &&
                 groupChats.map((chat) => (
-                  <div className="chat" key={chat._id}>
+                  <Link className="chat" key={chat._id} to={`/main/${currentTeamId}/message-group/${chat._id}`}>
                     <i className="fa-solid fa-comments icon"></i>
                     <span className="label">{chat.name}</span>
-                  </div>
+                  </Link>
                 ))}
             </div>
           </>
