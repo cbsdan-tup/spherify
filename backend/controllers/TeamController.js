@@ -1,21 +1,15 @@
-const {Team} = require("../models/Team");
+const { Team } = require("../models/Team");
 const cloudinary = require("cloudinary").v2;
+const { ensureBoardConfig } = require('./kanban/boardController');
 
 exports.addTeam = async (req, res) => {
   try {
     const { name, description, createdBy, members } = req.body;
 
-    // Validate required fields
     if (!name || !createdBy) {
-      return res
-        .status(400)
-        .json({ message: "Name and CreatedBy are required." });
+      return res.status(400).json({ message: "Name and CreatedBy are required." });
     }
-    if (req.body.members) {
-      console.log("Received members:", req.body.members);
-      console.log("Type of members:", typeof req.body.members);
-      console.log("Is members an array?", Array.isArray(req.body.members));
-    }
+
     // Handle logo upload
     let logoData = { publicId: "", url: "" };
     if (req.file) {
@@ -24,8 +18,7 @@ exports.addTeam = async (req, res) => {
         if (!fileTypes.includes(req.file.mimetype)) {
           return res.status(400).json({
             success: false,
-            message:
-              "Unsupported file type! Please upload a JPEG, JPG, or PNG image.",
+            message: "Unsupported file type! Please upload a JPEG, JPG, or PNG image.",
           });
         }
 
@@ -43,23 +36,10 @@ exports.addTeam = async (req, res) => {
       }
     }
 
-    // Parse members correctly
-    let parsedMembers = [];
+    // Parse members from JSON string if needed
+    let parsedMembers = typeof members === 'string' ? JSON.parse(members) : members;
 
-    if (typeof members === "string") {
-      try {
-        parsedMembers = JSON.parse(members);
-      } catch (error) {
-        return res
-          .status(400)
-          .json({ message: "Invalid members format. Should be an array." });
-      }
-    } else if (Array.isArray(members)) {
-      parsedMembers = members;
-    } else {
-      return res.status(400).json({ message: "Members should be an array." });
-    }
-
+    // Map member data
     parsedMembers = parsedMembers.map((member) => ({
       user: member.user,
       nickname: member.nickname || "",
@@ -77,16 +57,17 @@ exports.addTeam = async (req, res) => {
       createdBy,
     });
 
-    // Save to DB
-    await newTeam.save();
-    res
-      .status(201)
-      .json({ message: "Team created successfully", team: newTeam });
+    // Save team and initialize boards
+    const savedTeam = await newTeam.save();
+    await ensureBoardConfig(savedTeam._id, savedTeam.name);
+
+    res.status(201).json({ 
+      message: "Team created successfully", 
+      team: savedTeam 
+    });
   } catch (error) {
     console.error("Error creating team:", error);
-    res
-      .status(500)
-      .json({ message: "Internal Server Error", error: error.message });
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };
 

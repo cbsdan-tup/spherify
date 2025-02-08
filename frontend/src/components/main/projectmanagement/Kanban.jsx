@@ -1,16 +1,35 @@
 import React from 'react';
-import Header from '../team/Header';
+import KanbanBoard from '../../Board/KanbanBoard';
+import { useFetchBoards } from '../../../hooks/useFetchData';
+import { Container, ErrorMessage, LoadingMessage } from '../../common/styles';
 
-function Kanban() {
+const Kanban = ({ teamId }) => {
+    const { boards, loading, error, refresh } = useFetchBoards(teamId);
 
-  return (
-    <div className="kanban-container">
-  
-      <div className="pm-content">
-        Kanban Content
-      </div>
-    </div>
-  );
-}
+    const handleDragEnd = (result) => {
+        if (!result.destination) return;
+        // Implement drag and drop logic here
+        console.log(result);
+    };
+
+    if (loading) {
+        return <LoadingMessage>Loading boards...</LoadingMessage>;
+    }
+
+    if (error) {
+        return (
+            <ErrorMessage>
+                {error}
+                <button onClick={refresh}>Retry</button>
+            </ErrorMessage>
+        );
+    }
+
+    return (
+        <Container>
+            <KanbanBoard boards={boards} onDragEnd={handleDragEnd} />
+        </Container>
+    );
+};
 
 export default Kanban;
