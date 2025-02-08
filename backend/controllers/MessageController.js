@@ -1,5 +1,6 @@
 const { MessageGroup, Team } = require("../models/Team");
 const mongoose = require("mongoose");
+const cloudinary = require("cloudinary").v2;
 
 // Create a new message group
 exports.createMessageGroup = async (req, res) => {

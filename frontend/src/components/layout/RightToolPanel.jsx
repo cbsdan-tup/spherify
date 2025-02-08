@@ -7,7 +7,6 @@ function RightToolPanel() {
   useEffect(() => {
     console.log("Current team ID:", currentTeamId);
   }, [currentTeamId]);
-
   return (
     <div className="right-tool-panel d-lg-block d-none">
       <h3>Tools</h3>

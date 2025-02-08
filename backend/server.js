@@ -84,26 +84,43 @@ io.on("connection", (socket) => {
     socket.join(groupId);
     console.log(`User joined group: ${groupId}`);
   });
-
-  socket.on("sendMessage", async ({ groupId, sender, content }) => {
+  socket.on("sendMessage", async ({ groupId, sender, content, images }) => {
     try {
       const messageGroup = await MessageGroup.findById(groupId);
       if (!messageGroup) return;
-
+  
       const senderDetails = await User.findById(sender).select(
         "firstName lastName email"
       );
       if (!senderDetails) return console.log("Sender not found");
-
+  
+      let uploadedImages = [];
+  
+      // If there are images, upload them directly to Cloudinary
+      if (Array.isArray(images) && images.length > 0) {
+        uploadedImages = await Promise.all(
+          images.map(async (image) => {
+            const uploadResponse = await cloudinary.uploader.upload(image, {
+              folder: "group_images",
+            });
+            return {
+              publicId: uploadResponse.public_id,
+              url: uploadResponse.secure_url,
+            };
+          })
+        );
+      }
+  
       const newMessage = {
         sender: senderDetails._id,
         content,
         createdAt: new Date(),
+        images: uploadedImages,
       };
-
+  
       messageGroup.messages.push(newMessage);
       await messageGroup.save();
-
+  
       // Emit the message with populated sender details
       io.to(groupId).emit("receiveMessage", {
         ...newMessage,
@@ -115,9 +132,10 @@ io.on("connection", (socket) => {
         },
       });
     } catch (error) {
-      console.error(error);
+      console.error("Error sending message:", error);
     }
   });
+  
 
   socket.on("disconnect", () => {
     console.log("User Disconnected:", socket.id);

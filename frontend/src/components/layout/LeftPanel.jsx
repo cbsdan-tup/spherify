@@ -6,7 +6,7 @@ import AddTeamForm from "../main/AddTeamForm";
 import { getToken } from "../../utils/helper";
 import axios from "axios";
 import { useDispatch, useSelector } from 'react-redux';
-import { setTeamId, clearTeamId } from "../../redux/teamSlice";
+import { setTeamId, clearTeamId, clearMsgGroupId } from "../../redux/teamSlice";
 
 const LeftPanel = () => {
   const [showPopup, setShowPopup] = useState(false);
@@ -102,7 +102,7 @@ const LeftPanel = () => {
 
   return (
     <div className="left-panel-container">
-      <Link className="spherify-logo-container" to="/main" onClick={() => dispatch(clearTeamId())}>
+      <Link className="spherify-logo-container" to="/main" onClick={() => {dispatch(clearTeamId()); dispatch(clearMsgGroupId())}}>
         <img
           src="/images/white-logo.png"
           alt="Spherify"
@@ -141,11 +141,11 @@ const LeftPanel = () => {
       </div>
       <hr className="divider" />
       <div className="bottom-section">
-        <Link className="button settings-button mb-0" to="/main/settings" onClick={() => dispatch(clearTeamId())}>
+        <Link className="button settings-button mb-0" to="/main/settings" onClick={() => {dispatch(clearTeamId()); dispatch(clearMsgGroupId())}}>
           <img className="icon" src="/images/settings-icon.png" />
           Settings
         </Link>
-        <button className="button logout-button mb-0" onClick={()=>{logoutHandler(); dispatch(clearTeamId())}}>
+        <button className="button logout-button mb-0" onClick={()=>{logoutHandler(); dispatch(clearTeamId()); dispatch(clearMsgGroupId())}}>
           <img className="icon" src="/images/logout-icon.png" />
           Logout
         </button>

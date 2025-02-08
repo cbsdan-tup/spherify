@@ -23,7 +23,19 @@ const Message = ({ msg, user, index }) => {
                 : "chat-content other"
             }
           >
-            {msg.content}
+            <div className="msg-text">{msg.content}</div>
+            {Array.isArray(msg.images) && msg.images.length > 0 ? (
+              <div className="msg-images">
+                {msg.images.map((image, index) => (
+                  <img
+                    key={index}
+                    src={image.url}
+                    alt={`Uploaded ${index}`}
+                    width="100"
+                  />
+                ))}
+              </div>
+            ) : null}
           </div>
           <div className="chat-time">
             {new Date(msg.createdAt).toLocaleString("en-US", {

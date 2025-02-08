@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { getToken } from "../../../utils/helper";
 import axios from "axios";
 import AddMessageGroupForm from "./AddMessageGroupForm";
 import { addMessageGroup } from "../../../functions/TeamFunctions";
 import { Link } from "react-router-dom";
-
+import {setMsgGroupId} from "../../../redux/teamSlice"
 const TextChatTool = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [groupChats, setGroupChats] = useState([]);
 
+  const dispatch = useDispatch();
   const handleToolClick = () => {
     setIsExpanded(!isExpanded);
   };
@@ -20,8 +21,12 @@ const TextChatTool = () => {
     console.log("Add new chat clicked");
   };
 
+  const handleNewMsgGroupId = (id) => {
+    dispatch(setMsgGroupId(id));
+  } 
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const authState = useSelector((state) => state.auth);
+  const currentMessageGroupId = useSelector((state) => state.team.currentMessageGroupId);
 
   const handleCloseForm = () => {
     setIsFormVisible(false);
@@ -51,6 +56,9 @@ const TextChatTool = () => {
     fetchGroupChats();
   }, [currentTeamId]);
 
+  useEffect(() => {
+    console.log("Message group id:", currentMessageGroupId);
+  }, [currentMessageGroupId]);
   return (
     <>
       <div className="tool-container custom-text-white">
@@ -80,7 +88,7 @@ const TextChatTool = () => {
               )}
               {groupChats &&
                 groupChats.map((chat) => (
-                  <Link className="chat" key={chat._id} to={`/main/${currentTeamId}/message-group/${chat._id}`}>
+                  <Link className={currentMessageGroupId === chat._id ? "chat btn btn-primary" : "chat"} key={chat._id} to={`/main/${currentTeamId}/message-group/${chat._id}`} onClick = {() => handleNewMsgGroupId(chat._id)}>
                     <i className="fa-solid fa-comments icon"></i>
                     <span className="label">{chat.name}</span>
                   </Link>

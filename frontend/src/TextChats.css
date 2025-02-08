@@ -35,12 +35,14 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0 0.5rem;
   margin: 0.3rem 0;
   cursor: pointer;
 }
 
 .tool-content .chat:hover {
   color: var(--secondary-color);
+  text-decoration: none;
 }
 
 .tool-content .chat .icon {
@@ -69,48 +71,65 @@
   margin-bottom: 0;
 }
 .team-container .message-group-container .message.other p {
-    margin-right: auto;
+  margin-right: auto;
 }
 .team-container .message-group-container .message.you p {
-    margin-left: auto;
+  margin-left: auto;
 }
 .team-container .message-group-container .message.you .message-content .sender {
   display: flex;
   flex: 1;
-    justify-content: flex-end;
-    user-select: none;
-margin-bottom: 3px;
+  justify-content: flex-end;
+  user-select: none;
+  margin-bottom: 3px;
 }
-.team-container .message-group-container .message.other .message-content .sender {
+.team-container
+  .message-group-container
+  .message.other
+  .message-content
+  .sender {
   display: flex;
   flex: 1;
-    justify-content: flex-start;
-    user-select: none;
-margin-bottom: 3px;
+  justify-content: flex-start;
+  user-select: none;
+  margin-bottom: 3px;
 }
 .team-container .message-group-container .message.you p .chat-content {
-    border-top-left-radius: 10px;
-    border-top-right-radius: 10px;
-    border-bottom-left-radius: 10px;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  border-bottom-left-radius: 10px;
 }
 .team-container .message-group-container .message.other p .chat-content {
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+  border-bottom-right-radius: 5px;
 }
 
 .team-container .message-group-container .message.you p .chat-time {
-    text-align: right;
-
+  text-align: right;
 }
 .team-container .message-group-container .message .chat-content {
-padding: 0.5rem;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.team-container
+  .message-group-container
+  .message
+  .chat-content
+  .msg-images
+  img {
+  height: 200px;
+  width: auto;
+  object-fit: cover;
+  padding: 0.3rem;
 }
 .team-container .message-group-container .message .chat-time {
-    font-size: 0.6rem;
-    color: var(--white-grey);
-    user-select: none;
-    margin-top: 3px;
+  font-size: 0.6rem;
+  color: var(--white-grey);
+  user-select: none;
+  margin-top: 3px;
 }
 .team-container .message-group-container .input-message-container {
   position: fixed;
@@ -140,19 +159,22 @@ padding: 0.5rem;
   border: 1px solid var(--primary-color);
   border-radius: 0.5rem;
   outline: none;
-    flex: 11;
+  flex: 11;
 }
-.team-container .message-group-container .input-message-container .emoji-picker {
-    flex: 1;
-    font-size: 1.6rem;
-    max-width: 80px;
-    padding-left: 15px;
-} 
+.team-container
+  .message-group-container
+  .input-message-container
+  .emoji-picker {
+  flex: 1;
+  font-size: 1.6rem;
+  max-width: 80px;
+  padding-left: 15px;
+}
 .team-container .message-group-container .emoji-picker-container {
-    position: absolute;
-    bottom: 60px;
-    right: 5px;
-    z-index: 100;
+  position: absolute;
+  bottom: 60px;
+  right: 5px;
+  z-index: 1000;
 }
 
 .team-container .message-group-container .input-message-container button {
@@ -163,5 +185,55 @@ padding: 0.5rem;
   font-weight: bold;
   flex: 1;
   max-width: 70px;
-  color: var(--primary-color)
+  color: var(--primary-color);
+}
+
+.team-container
+  .message-group-container
+  .input-message-container
+  .image-preview-container {
+  position: absolute;
+  bottom: 60px;
+  background: var(--white-grey);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
+  z-index: 100;
+}
+.team-container
+  .message-group-container
+  .input-message-container
+  .image-preview-container
+  .image-preview {
+  position: relative;
+}
+.team-container
+  .message-group-container
+  .input-message-container
+  .image-preview-container
+  img {
+  height: 100px;
+  width: 100px;
+  object-fit: cover;
+  padding: 0.3rem;
+}
+.team-container
+  .message-group-container
+  .input-message-container
+  .image-preview-container
+  button.exit {
+  font-size: 1rem;
+  color: var(--danger-color);
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+.more-images {
+  height: 100px;
+  width: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color);
 }
