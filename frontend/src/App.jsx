@@ -17,6 +17,7 @@ import { Navigate } from "react-router";
 import { useEffect } from "react";
 
 import { useSelector } from "react-redux";
+import axios from "axios";
 
 function App() {
   const authState = useSelector((state) => state.auth);

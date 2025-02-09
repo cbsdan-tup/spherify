@@ -74,14 +74,23 @@ app.post("/api/v1/generate-signature", (req, res) => {
     const { meetingNumber, role } = req.body;
 
     const timestamp = new Date().getTime() - 30000;
-    const msg = Buffer.from(`${ZOOM_API_KEY}${meetingNumber}${timestamp}${role}`).toString("base64");
-    const hash = crypto.createHmac("sha256", ZOOM_API_SECRET).update(msg).digest("base64");
-    const signature = Buffer.from(`${ZOOM_API_KEY}.${meetingNumber}.${timestamp}.${role}.${hash}`).toString("base64");
+    const msg = Buffer.from(
+      `${ZOOM_API_KEY}${meetingNumber}${timestamp}${role}`
+    ).toString("base64");
+    const hash = crypto
+      .createHmac("sha256", ZOOM_API_SECRET)
+      .update(msg)
+      .digest("base64");
+    const signature = Buffer.from(
+      `${ZOOM_API_KEY}.${meetingNumber}.${timestamp}.${role}.${hash}`
+    ).toString("base64");
 
     res.json({ success: true, signature });
   } catch (error) {
     console.error("Signature Error:", error);
-    res.status(500).json({ success: false, message: "Error generating signature" });
+    res
+      .status(500)
+      .json({ success: false, message: "Error generating signature" });
   }
 });
 
@@ -111,13 +120,20 @@ app.post("/create-meeting", async (req, res) => {
           participant_video: true,
         },
       },
-      { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
     );
 
     res.json({ success: true, meeting: response.data });
   } catch (error) {
     console.error("Zoom API Error:", error.response?.data || error.message);
-    res.status(500).json({ success: false, message: "Failed to create meeting" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to create meeting" });
   }
 });
 
@@ -146,14 +162,14 @@ io.on("connection", (socket) => {
     try {
       const messageGroup = await MessageGroup.findById(groupId);
       if (!messageGroup) return;
-  
+
       const senderDetails = await User.findById(sender).select(
-        "firstName lastName email"
+        "firstName lastName email avatar"
       );
       if (!senderDetails) return console.log("Sender not found");
-  
+
       let uploadedImages = [];
-  
+
       // If there are images, upload them directly to Cloudinary
       if (Array.isArray(images) && images.length > 0) {
         uploadedImages = await Promise.all(
@@ -168,17 +184,19 @@ io.on("connection", (socket) => {
           })
         );
       }
-  
+
       const newMessage = {
         sender: senderDetails._id,
         content,
         createdAt: new Date(),
         images: uploadedImages,
       };
-  
+
       messageGroup.messages.push(newMessage);
       await messageGroup.save();
-  
+
+      // Notify sender that message is sent
+      socket.emit("messageSentConfirmation");
       // Emit the message with populated sender details
       io.to(groupId).emit("receiveMessage", {
         ...newMessage,
@@ -187,13 +205,14 @@ io.on("connection", (socket) => {
           firstName: senderDetails.firstName,
           lastName: senderDetails.lastName,
           email: senderDetails.email,
+          avatar: senderDetails.avatar,
         },
       });
+
     } catch (error) {
       console.error("Error sending message:", error);
     }
   });
-  
 
   socket.on("disconnect", () => {
     console.log("User Disconnected:", socket.id);
