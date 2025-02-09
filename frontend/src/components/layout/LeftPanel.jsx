@@ -22,6 +22,7 @@ const LeftPanel = () => {
 
   const dispatch = useDispatch();
   const authState = useSelector((state) => state.auth);
+  const currentTeamId = useSelector((state) => state.team.currentTeamId);
 
   const logoutHandler = () => {
     console.log("logout");
@@ -112,15 +113,17 @@ const LeftPanel = () => {
       <hr className="divider" />
       <div className="teams-container">
         <div className="teams">
-          <button className="add-button" onClick={handleShow}>
-            <i className="fa-solid fa-plus plus-icon"></i>
-          </button>
+          <div className="team-link">
+            <button className="add-button" onClick={handleShow}>
+              <i className="fa-solid fa-plus plus-icon"></i>
+            </button>
+          </div>
           {teams &&
             Array.isArray(teams) &&
             teams.map((team) => (
               <Link
                 to={`/main/${team._id}`}
-                className="team-link"
+                className={`team-link ${team._id === currentTeamId ? "active" : ""}`}
                 key={team._id}
                 onClick={() => dispatch(setTeamId(team._id))}
               >
