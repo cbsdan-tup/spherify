@@ -9,6 +9,9 @@ const User = require("./models/User");
 
 const app = express();
 const path = require("path");
+const axios = require("axios");
+const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 
 const { logger, logEvents } = require("./middleware/logger");
 const errorHandler = require("./middleware/errorHandler");
@@ -35,6 +38,9 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+const ZOOM_API_KEY = process.env.ZOOM_API_KEY;
+const ZOOM_API_SECRET = process.env.ZOOM_API_SECRET;
+
 //middleware
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
@@ -60,6 +66,58 @@ app.all("*", (req, res) => {
     res.json({ message: "404 Not Found" });
   } else {
     res.type("txt").send("404 Not Found");
+  }
+});
+
+app.post("/api/v1/generate-signature", (req, res) => {
+  try {
+    const { meetingNumber, role } = req.body;
+
+    const timestamp = new Date().getTime() - 30000;
+    const msg = Buffer.from(`${ZOOM_API_KEY}${meetingNumber}${timestamp}${role}`).toString("base64");
+    const hash = crypto.createHmac("sha256", ZOOM_API_SECRET).update(msg).digest("base64");
+    const signature = Buffer.from(`${ZOOM_API_KEY}.${meetingNumber}.${timestamp}.${role}.${hash}`).toString("base64");
+
+    res.json({ success: true, signature });
+  } catch (error) {
+    console.error("Signature Error:", error);
+    res.status(500).json({ success: false, message: "Error generating signature" });
+  }
+});
+
+// Generate JWT Token for Zoom API Authentication
+const generateZoomToken = () => {
+  return jwt.sign(
+    { iss: ZOOM_API_KEY, exp: Math.floor(Date.now() / 1000) + 3600 },
+    ZOOM_API_SECRET
+  );
+};
+
+// API to Create a Zoom Meeting
+app.post("/create-meeting", async (req, res) => {
+  try {
+    const { topic, duration } = req.body;
+
+    const token = generateZoomToken();
+    const response = await axios.post(
+      `https://api.zoom.us/v2/users/me/meetings`,
+      {
+        topic,
+        type: 2, // Scheduled meeting
+        duration,
+        timezone: "Asia/Manila", // Change as needed
+        settings: {
+          host_video: true,
+          participant_video: true,
+        },
+      },
+      { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+    );
+
+    res.json({ success: true, meeting: response.data });
+  } catch (error) {
+    console.error("Zoom API Error:", error.response?.data || error.message);
+    res.status(500).json({ success: false, message: "Failed to create meeting" });
   }
 });
 

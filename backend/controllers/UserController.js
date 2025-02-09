@@ -226,7 +226,8 @@ exports.updateUser = async (req, res, next) => {
     if (req.body.firstName) newUserData.firstName = req.body.firstName;
     if (req.body.lastName) newUserData.lastName = req.body.lastName;
     if (req.body.email) newUserData.email = req.body.email;
-    if (req.body.permissionToken) newUserData.permissionToken = req.body.permissionToken;
+    if (req.body.permissionToken)
+      newUserData.permissionToken = req.body.permissionToken;
 
     const user = await User.findByIdAndUpdate(req.params.id, newUserData, {
       new: true,
@@ -254,8 +255,8 @@ exports.deletePermissionToken = async (req, res) => {
   try {
     const user = await User.findByIdAndUpdate(
       userId,
-      { permissionToken: null }, 
-      { new: true } 
+      { permissionToken: null },
+      { new: true }
     );
 
     if (!user) {
@@ -289,19 +290,25 @@ exports.updateUserAvatar = async (req, res) => {
       });
     }
 
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: "avatars",
-      width: 150,
-      crop: "scale",
-    });
-
     const user = await User.findById(req.params.id);
+
     if (!user) {
       return res.status(404).json({
         success: false,
         message: `User not found with id: ${req.params.id}`,
       });
     }
+    
+    if (user.avatar && user.avatar.public_id) {
+      await cloudinary.uploader.destroy(user.avatar.public_id);
+    }
+
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: "avatars",
+      width: 150,
+      crop: "scale",
+    });
+
 
     user.avatar = {
       public_id: result.public_id,
@@ -323,5 +330,3 @@ exports.updateUserAvatar = async (req, res) => {
     });
   }
 };
-
-

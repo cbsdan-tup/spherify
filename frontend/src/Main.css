@@ -125,6 +125,44 @@
   color: var(--secondary-color);
 }
 
+.settings .profile-image {
+  position: relative;
+}
+.settings .profile-image img {
+  width: 70px !important;
+  height: 70px !important;
+  object-fit: cover;
+  border-radius: 50%;
+}
+.settings .profile-image .edit{
+  height: 30px;
+  width: 30px;
+  padding: 0.2rem;
+  border: none;
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  background-color: var(--danger-color);
+  color: var(--text-white);
+  border-radius: 50%;
+  padding: 0.2rem;
+  cursor: pointer;
+}
+.settings .profile-image .save{
+  width: 80px;
+  padding: 0.3rem 0.7rem;
+  border: none;
+  position: absolute;
+  bottom: -45px;
+  background-color: var(--success-color);
+  color: var(--text-white);
+  border-radius: 7px;
+  padding: 0.2rem;
+  cursor: pointer;
+}
+.settings .profile-image .edit:focus, .settings .profile-image .save:focus {
+  outline: none
+}
 .settings-button:focus {
   outline: none;
   border: none;
@@ -407,21 +445,28 @@
   margin: 10px 0;
   background-color: var(--secondary-color);
 }
+.settings .account {
+  margin-top: 20px;
+}
+
 .settings .profile-card {
   display: flex;
   flex-direction: row;
   align-items: center;
   padding: 1rem;
   border-radius: 10px;
+  height: 200px;
+
 }
 .settings .profile {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   height: 100%;
   width: 100%;
-
+  margin-bottom: 1rem;
 }
 .settings .profile-image {
   display: flex;
@@ -436,6 +481,40 @@
   height: 100%;
   object-fit: cover;
   border-radius: 50%;
+}
+.settings .settings-form {
+  position: relative
+}
+.settings .settings-form .edit {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  border: none;
+  background-color: var(--danger-color);
+  color: var(--text-white);
+  padding: 0.2rem 0.9rem;
+  font-size: 1rem;
+  border-radius: 5px;
+}
+.settings .settings-form .button-group {
+  margin-top: 1rem;
+  margin-left: auto;
+  display: flex;
+  width: 100%;
+  justify-content: flex-end;
+}
+.settings .settings-form .button-group button {
+  border: none;
+  background-color: var(--active-color);
+  color: #fff;
+  padding: 0.3rem 0.7rem;
+  border-radius: 5px;
+}
+.settings .settings-form .button-group button:focus {
+  outline: none;
+}
+.settings .settings-form .edit:focus {
+  outline: none;
 }
 .settings .default-profile {
   font-size: 3rem;

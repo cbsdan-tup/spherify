@@ -1,6 +1,5 @@
 const { MessageGroup, Team } = require("../models/Team");
 const mongoose = require("mongoose");
-const cloudinary = require("cloudinary").v2;
 
 // Create a new message group
 exports.createMessageGroup = async (req, res) => {
@@ -122,7 +121,7 @@ exports.deleteMessageGroup = async (req, res) => {
 exports.getMessages = async (req, res) => {
   try {
     const { groupId } = req.params;
-    const group = await MessageGroup.findById(groupId).populate("messages.sender", "firstName lastName email");
+    const group = await MessageGroup.findById(groupId).populate("messages.sender", "firstName lastName email avatar");
     if (!group) return res.status(404).json({ error: "Group not found" });
     res.json(group.messages);
   } catch (error) {

@@ -13,6 +13,8 @@ const MessageGroup = () => {
   const [messages, setMessages] = useState([]);
   const [newImages, setNewImages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
   const authState = useSelector((state) => state.auth);
   const user = getUser(authState);
 
@@ -43,7 +45,9 @@ const MessageGroup = () => {
   }, [groupId]);
 
   const sendMessage = async () => {
-    if (newMessage.trim()) {
+    if (newMessage.trim() || newImages.length > 0) {
+      setIsSending(true);
+
       // Convert images to base64 before sending
       const convertToBase64 = (file) =>
         new Promise((resolve, reject) => {
@@ -52,21 +56,21 @@ const MessageGroup = () => {
           reader.onload = () => resolve(reader.result); // Base64 result
           reader.onerror = (error) => reject(error);
         });
-  
+
       const base64Images = await Promise.all(newImages.map(convertToBase64));
-  
+
       socket.emit("sendMessage", {
         groupId,
         sender: user._id,
         content: newMessage,
         images: base64Images, // Send converted images
       });
-  
+
       setNewMessage("");
       setNewImages([]);
+      setIsSending(false);
     }
   };
-  
 
   return (
     <div className="message-group-container">
@@ -74,6 +78,28 @@ const MessageGroup = () => {
         {messages.map((msg, index) => (
           <>
             <Message index={index} msg={msg} user={user} />
+            {isSending && newImages.length > 0 && (
+              <div className="image-preview-container">
+                {newImages.slice(0, 3).map((image, index) => (
+                  <div key={index} className="image-preview">
+                    <img
+                      src={URL.createObjectURL(image)}
+                      alt={`Selected ${index}`}
+                      className="preview-image"
+                    />
+                    <button onClick={() => removeImage(index)} className="exit">
+                      <i className="fa-solid fa-x exit"></i>
+                    </button>
+                  </div>
+                ))}
+                {newImages.length > 3 && (
+                  <div className="more-images">
+                    +{newImages.length - 3} more
+                  </div>
+                )}
+                <div>sending</div>
+              </div>
+            )}
           </>
         ))}
       </div>
@@ -84,6 +110,7 @@ const MessageGroup = () => {
         sendMessage={sendMessage}
         newImages={newImages}
         setNewImages={setNewImages}
+        isSending={isSending}
       />
     </div>
   );

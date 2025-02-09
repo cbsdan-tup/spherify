@@ -14,7 +14,7 @@ import { loginUser, logoutUser } from "../redux/authSlice";
 // };
 
 export const authenticate = (data, dispatch, next) => {
-  console.log("Data: ", data); 
+  console.log("Data: ", data);
   dispatch(loginUser(data));
   next();
 };
@@ -119,13 +119,19 @@ export const formatDate = (dateStr) => {
   return `${datePart.replace(/\//g, "-")} ${timePart}`;
 };
 
-export const calculateRentalDays = (pickUpDate, returnDate) => {
-  if (!pickUpDate || !returnDate) {
-    return 0;
-  }
-  const pickUp = new Date(pickUpDate);
-  const returnD = new Date(returnDate);
-  const timeDiff = Math.abs(returnD - pickUp);
-  const diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24));
-  return diffDays;
+export const handleAvatarChange = (event) => {
+  return new Promise((resolve, reject) => {
+    const file = event.target.files[0];
+
+    if (!file) {
+      reject("No file selected");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result); // Return the Base64 URL
+    reader.onerror = (err) => reject(err);
+
+    reader.readAsDataURL(file);
+  });
 };

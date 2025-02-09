@@ -10,6 +10,13 @@ const Message = ({ msg, user, index }) => {
       }
     >
       <div className="message-content">
+        {msg.sender._id !== user._id && msg.sender !== user._id ? (
+          <div className="avatar">
+            <img src={msg.sender?.avatar?.url ? msg.sender?.avatar?.url : "/images/account.png"} alt="User" />
+          </div>
+        ) : (
+          <></>
+        )}
         <p key={index}>
           <strong className="sender">
             {msg.sender._id == user._id || msg.sender == user._id

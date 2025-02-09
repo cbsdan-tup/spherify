@@ -6,7 +6,7 @@ const InputMessage = ({ newMessage, setNewMessage, sendMessage, newImages, setNe
   const fileInputRef = useRef(null);
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && newMessage.trim()) {
+    if ((e.key === "Enter" && newMessage.trim()) || newImages?.length > 0) {
       e.preventDefault();
       sendMessage();
     }
