@@ -7,7 +7,7 @@ import { getUser } from "../../../utils/helper";
 import Message from "./Message";
 import InputMessage from "./InputMessage";
 
-const socket = io(`http://localhost:4000`);
+const socket = io(`${import.meta.env.VITE_SOCKET_API}`);
 
 const MessageGroup = () => {
   const [messages, setMessages] = useState([]);
