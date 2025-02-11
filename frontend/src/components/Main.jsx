@@ -7,6 +7,9 @@ import Home from "./main/Home";
 import Settings from "./main/Settings";
 import Team from "./main/Team";
 import MessageGroup from "./main/textchats/MessageGroup";
+import Calendar from "./main/projectmanagement/Calendar";
+import Kanban from "./main/projectmanagement/Kanban";
+import Gantt from "./main/projectmanagement/Gantt";
 
 function Main() {
   const location = useLocation();
@@ -24,10 +27,16 @@ function Main() {
             <Route index element={<Home />} /> 
             <Route path="settings" element={<Settings />} /> 
             <Route path=":teamId/*" element={<Team />} /> 
+            <Route path="projectmanagement">
+              <Route path="calendar" element={<Calendar />} />
+              <Route path="kanban" element={<Kanban />} />
+              <Route path="gantt" element={<Gantt />} />
+            </Route>
+            <Route path=":teamId" element={<Team />} /> 
           </Routes>
         </div>
       </div>
-      {location.pathname == "/main" || location.pathname == "/main/settings" ? (
+      {location.pathname === "/main" || location.pathname === "/main/settings" ? (
         <RightMainPanel />
       ) : (
         <RightToolPanel />
