@@ -7,7 +7,7 @@ import { getUser } from "../../../utils/helper";
 import Message from "./Message";
 import InputMessage from "./InputMessage";
 
-const socket = io(`http://localhost:4000`);
+const socket = io(`${import.meta.env.VITE_SOCKET_API}`);
 
 const MessageGroup = () => {
   const [messages, setMessages] = useState([]);
@@ -68,7 +68,10 @@ const MessageGroup = () => {
 
       setNewMessage("");
       setNewImages([]);
-      setIsSending(false);
+
+      socket.once("messageSentConfirmation", () => {
+        setIsSending(false);
+      });
     }
   };
 
@@ -76,32 +79,31 @@ const MessageGroup = () => {
     <div className="message-group-container">
       <div className="message-group">
         {messages.map((msg, index) => (
-          <>
+          <React.Fragment key={index}>
             <Message index={index} msg={msg} user={user} />
-            {isSending && newImages.length > 0 && (
-              <div className="image-preview-container">
-                {newImages.slice(0, 3).map((image, index) => (
-                  <div key={index} className="image-preview">
-                    <img
-                      src={URL.createObjectURL(image)}
-                      alt={`Selected ${index}`}
-                      className="preview-image"
-                    />
-                    <button onClick={() => removeImage(index)} className="exit">
-                      <i className="fa-solid fa-x exit"></i>
-                    </button>
-                  </div>
-                ))}
-                {newImages.length > 3 && (
-                  <div className="more-images">
-                    +{newImages.length - 3} more
-                  </div>
-                )}
-                <div>sending</div>
-              </div>
-            )}
-          </>
+          </React.Fragment>
         ))}
+        {isSending && newImages.length > 0 && (
+          <div className="image-preview-container">
+            {newImages.slice(0, 3).map((image, index) => (
+              <div key={index} className="image-preview">
+                <img
+                  src={URL.createObjectURL(image)}
+                  alt={`Selected ${index}`}
+                  className="preview-image"
+                />
+                <button onClick={() => removeImage(index)} className="exit">
+                  <i className="fa-solid fa-x exit"></i>
+                </button>
+              </div>
+            ))}
+            {newImages.length > 3 && (
+              <div className="more-images">+{newImages.length - 3} more</div>
+            )}
+            <div className="text-italic">sending</div>
+          </div>
+        )}
+        {isSending && newImages.length === 0 && <div className="text-italic">sending</div>}
       </div>
       <div ref={messagesEndRef} />
       <InputMessage

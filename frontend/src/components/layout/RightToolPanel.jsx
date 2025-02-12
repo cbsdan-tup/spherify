@@ -3,6 +3,9 @@ import TextChatTool from "../main/textchats/TextChatTool";
 import ProjectManagementTool from "../main/projectmanagement/ProjectManagementTool";
 import { useSelector } from "react-redux";
 
+
+import { useSelector } from "react-redux";
+import Conferencing from "../main/conferencing/Conferencing";
 function RightToolPanel() {
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
 
@@ -14,11 +17,7 @@ function RightToolPanel() {
       <h3>Tools</h3>
       <hr className="divider" />
       <TextChatTool />
-      <h5 className="tool-title custom-text-white">
-        {" "}
-        <i className="fa-solid fa-arrow-right arrow"></i>
-        <span className="title">Conferencing</span>
-      </h5>
+      <Conferencing />
       <h5 className="tool-title custom-text-white">
         <i className="fa-solid fa-arrow-right arrow"></i>
 

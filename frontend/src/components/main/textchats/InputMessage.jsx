@@ -1,12 +1,12 @@
 import React, { useState, useRef, useEffect } from "react";
-import EmojiPicker from "emoji-picker-react"; // Import the emoji picker
+import EmojiPicker from "emoji-picker-react"; 
 
 const InputMessage = ({ newMessage, setNewMessage, sendMessage, newImages, setNewImages }) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleKeyDown = (e) => {
-    if ((e.key === "Enter" && newMessage.trim()) || newImages?.length > 0) {
+    if (e.key === "Enter" && (newMessage.trim() || newImages?.length > 0)) {
       e.preventDefault();
       sendMessage();
     }

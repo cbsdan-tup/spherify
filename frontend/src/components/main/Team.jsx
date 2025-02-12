@@ -5,6 +5,8 @@ import Header from "./team/Header";
 import LoadingSpinner from "../layout/LoadingSpinner";
 import Dashboard from "./team/Dashboard";
 import MessageGroup from "./textchats/MessageGroup";
+import { useSelector } from "react-redux";
+import VideoCallPage from "./conferencing/VideoCallPage";
 
 function Team() {
   const { teamId } = useParams();
@@ -25,6 +27,8 @@ function Team() {
     }
   };
 
+  const currentUser = useSelector((state) => state.auth.user);
+
   useEffect(() => {
     fetchTeamInfo();
   }, [teamId]);
@@ -36,10 +40,11 @@ function Team() {
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="/message-group/:groupId" element={<MessageGroup />} />
+            <Route path="/meeting/:meetId" element={<VideoCallPage />} />
           </Routes>
         </div>
       ) : (
-        <LoadingSpinner message={"Loading Team..."} />
+        <LoadingSpinner message={"Loading Team..."} />  
       )}
     </>
   );

@@ -9,5 +9,4 @@ function Gantt() {
     </div>
   );
 }
-
 export default Gantt;

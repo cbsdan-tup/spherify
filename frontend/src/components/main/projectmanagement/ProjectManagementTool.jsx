@@ -1,14 +1,11 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 const ProjectManagementTool = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
-
   const handleToolClick = () => {
     setIsExpanded(!isExpanded);
   };
-
   return (
     <div className="tool-container custom-text-white">
       <div className="header" onClick={handleToolClick}>
@@ -40,5 +37,4 @@ const ProjectManagementTool = () => {
     </div>
   );
 };
-
 export default ProjectManagementTool;

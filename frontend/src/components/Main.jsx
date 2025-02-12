@@ -26,6 +26,11 @@ function Main() {
           <Routes>
             <Route index element={<Home />} /> 
             <Route path="settings" element={<Settings />} /> 
+            <Route path="projectmanagement">
+              <Route path="calendar" element={<Calendar />} />
+              <Route path="kanban" element={<Kanban />} />
+              <Route path="gantt" element={<Gantt />} />
+            </Route>
             <Route path=":teamId/*" element={<Team />} /> 
             <Route path="projectmanagement">
               <Route path="calendar" element={<Calendar />} />

@@ -1,5 +1,6 @@
-const {Team} = require("../models/Team");
+const { Team } = require("../models/Team");
 const cloudinary = require("cloudinary").v2;
+const { ensureBoardConfig } = require("./kanban/boardController");
 
 exports.addTeam = async (req, res) => {
   try {
@@ -77,11 +78,14 @@ exports.addTeam = async (req, res) => {
       createdBy,
     });
 
-    // Save to DB
-    await newTeam.save();
-    res
-      .status(201)
-      .json({ message: "Team created successfully", team: newTeam });
+    // Save team and initialize boards
+    const savedTeam = await newTeam.save();
+    await ensureBoardConfig(savedTeam._id, savedTeam.name);
+    res.status(201).json({
+      message: "Team created successfully",
+      team: savedTeam,
+    });
+
   } catch (error) {
     console.error("Error creating team:", error);
     res
@@ -107,7 +111,10 @@ exports.getTeamMembers = async (req, res) => {
   try {
     const { teamId } = req.params;
 
-    const team = await Team.findById(teamId).populate("members.user", "fname lname email"); 
+    const team = await Team.findById(teamId).populate(
+      "members.user",
+      "fname lname email"
+    );
 
     if (!team) {
       return res.status(404).json({ error: "Team not found" });
