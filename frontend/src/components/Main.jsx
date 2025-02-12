@@ -32,6 +32,12 @@ function Main() {
               <Route path="gantt" element={<Gantt />} />
             </Route>
             <Route path=":teamId/*" element={<Team />} /> 
+            <Route path="projectmanagement">
+              <Route path="calendar" element={<Calendar />} />
+              <Route path="kanban" element={<Kanban />} />
+              <Route path="gantt" element={<Gantt />} />
+            </Route>
+            <Route path=":teamId" element={<Team />} /> 
           </Routes>
         </div>
       </div>
