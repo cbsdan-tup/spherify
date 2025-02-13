@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { errMsg, getToken } from "../../../utils/helper";
+import { errMsg, succesMsg, getToken } from "../../../utils/helper";
 import axios from "axios";
 import { Link } from "react-router-dom";
 import { setCurrentMeetingId } from "../../../redux/teamSlice";
@@ -39,7 +39,7 @@ const Conferencing = () => {
       );
 
       setMeetings([...meetings, res.data]);
-      successMsg("Meeting created successfully");
+      succesMsg("Meeting created successfully");
     } catch (error) {
       console.error("Error creating meeting:", error);
       errMsg("Error creating meeting", error);

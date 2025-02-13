@@ -8,7 +8,7 @@ const JitsiMeeting = ({ roomName, displayName }) => {
     const loadJitsi = () => {
       if (!window.JitsiMeetExternalAPI) {
         const script = document.createElement("script");
-        script.src = "https://meet.jit.si/external_api.js";
+        script.src = "https://spherify-meet.mooo.com/external_api.js";
         script.async = true;
         script.onload = initializeJitsi;
         document.body.appendChild(script);
@@ -22,7 +22,7 @@ const JitsiMeeting = ({ roomName, displayName }) => {
         jitsiApi.current.dispose(); // Remove the previous Jitsi instance before creating a new one
       }
 
-      const domain = "meet.jit.si";
+      const domain = "spherify-meet.mooo.com";
       const options = {
         roomName,
         width: "100%",
