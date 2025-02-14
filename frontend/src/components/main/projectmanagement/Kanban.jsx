@@ -1,13 +1,11 @@
-import React from 'react';
-
+import React from "react";
 
 function Kanban() {
-
   return (
     <div className="kanban-container">
-  
+      <h2>Team Kanban Board</h2>
       <div className="pm-content">
-        Kanban Content
+        Kanban Board Content Here
       </div>
     </div>
   );

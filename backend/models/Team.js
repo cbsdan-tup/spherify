@@ -31,6 +31,10 @@ const TeamSchema = new mongoose.Schema({
     joinedAt: { type: Date, default: Date.now }
   }],
   messageGroups: [{ type: mongoose.Schema.Types.ObjectId, ref: "MessageGroup" }], 
+  events: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Event'
+  }],
   isActive: { type: Boolean, default: true },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   createdAt: { type: Date, default: Date.now }

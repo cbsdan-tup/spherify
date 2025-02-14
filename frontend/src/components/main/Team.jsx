@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Route, Routes, useParams } from "react-router-dom";
+import { Outlet, useParams } from "react-router-dom";
 import axios from "axios";
 import Header from "./team/Header";
 import LoadingSpinner from "../layout/LoadingSpinner";
-import Dashboard from "./team/Dashboard";
-import MessageGroup from "./textchats/MessageGroup";
 import { useSelector } from "react-redux";
-import VideoCallPage from "./conferencing/VideoCallPage";
 
 function Team() {
   const { teamId } = useParams();
@@ -32,16 +29,13 @@ function Team() {
   useEffect(() => {
     fetchTeamInfo();
   }, [teamId]);
+
   return (
     <>
       {teamInfo && teamInfo.name ? (
         <div className="team-container">
           <Header {...teamInfo} />
-          <Routes>
-            <Route index element={<Dashboard />} />
-            <Route path="/message-group/:groupId" element={<MessageGroup />} />
-            <Route path="/meeting/:meetId" element={<VideoCallPage />} />
-          </Routes>
+          <Outlet /> {/* This will render the child routes */}
         </div>
       ) : (
         <LoadingSpinner message={"Loading Team..."} />  

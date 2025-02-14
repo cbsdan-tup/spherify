@@ -6,6 +6,7 @@ import RightToolPanel from "./layout/RightToolPanel";
 import Home from "./main/Home";
 import Settings from "./main/Settings";
 import Team from "./main/Team";
+import Dashboard from "./main/team/Dashboard";
 import MessageGroup from "./main/textchats/MessageGroup";
 import Calendar from "./main/projectmanagement/Calendar";
 import Kanban from "./main/projectmanagement/Kanban";
@@ -14,30 +15,21 @@ import Gantt from "./main/projectmanagement/Gantt";
 function Main() {
   const location = useLocation();
 
-  useEffect(() => {
-    
-  }, [location.pathname]); 
-
   return (
     <>
       <LeftPanel />
       <div className="main-container">
         <div className="content">
           <Routes>
-            <Route index element={<Home />} /> 
-            <Route path="settings" element={<Settings />} /> 
-            <Route path="projectmanagement">
+            <Route index element={<Home />} />
+            <Route path="settings" element={<Settings />} />
+            <Route path=":teamId" element={<Team />}>
+              <Route index element={<Dashboard />} />
               <Route path="calendar" element={<Calendar />} />
               <Route path="kanban" element={<Kanban />} />
               <Route path="gantt" element={<Gantt />} />
+              <Route path="message-group/:groupId" element={<MessageGroup />} />
             </Route>
-            <Route path=":teamId/*" element={<Team />} /> 
-            <Route path="projectmanagement">
-              <Route path="calendar" element={<Calendar />} />
-              <Route path="kanban" element={<Kanban />} />
-              <Route path="gantt" element={<Gantt />} />
-            </Route>
-            <Route path=":teamId" element={<Team />} /> 
           </Routes>
         </div>
       </div>
