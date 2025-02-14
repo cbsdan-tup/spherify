@@ -246,7 +246,6 @@
 }
 
 .main-container .content {
-  padding: 1rem;
   min-height: 100vh;
   position: relative;
 }
@@ -276,6 +275,9 @@
   color: var(--dark-grey);
 }
 
+.main-container .settings {
+  padding: 1rem;
+}
 .main-container .spherify-logo {
   position: absolute;
   top: 50%;
@@ -565,4 +567,35 @@
 .delete {
   color: var(--danger-color);
   cursor: pointer;
+}
+
+.create-modal {
+  z-index: 1000;
+}
+.create-modal .modal-content {
+  max-width: 400px;
+  display: block;
+  margin: 0 auto;
+
+}
+.create-modal .modal-header {
+  background-color: var(--primary-color);
+  color: var(--text-white);
+  border: none;
+}
+
+.create-modal .modal-body label {
+  color: var(--dark-grey)
+} 
+.create-modal .button-container{
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+} 
+
+.create-modal button.save {
+  background-color: var(--primary-color);
+  color: var(--text-white);
+  
 }

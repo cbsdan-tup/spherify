@@ -7,6 +7,7 @@ import Dashboard from "./team/Dashboard";
 import MessageGroup from "./textchats/MessageGroup";
 import { useSelector } from "react-redux";
 import VideoCallPage from "./conferencing/VideoCallPage";
+import TextEditor from "./live-editing/TextEditor";
 
 function Team() {
   const { teamId } = useParams();
@@ -41,6 +42,7 @@ function Team() {
             <Route index element={<Dashboard />} />
             <Route path="/message-group/:groupId" element={<MessageGroup />} />
             <Route path="/meeting/:meetId" element={<VideoCallPage />} />
+            <Route path="/live-editing/:documentId" element={<TextEditor />} />
           </Routes>
         </div>
       ) : (

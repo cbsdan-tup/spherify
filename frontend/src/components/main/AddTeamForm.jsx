@@ -69,7 +69,7 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState }) => {
                   user: currentUser?._id,
                   nickname: `${currentUser?.firstName} ${currentUser?.lastName}`,
                   email: `${currentUser?.email}`,
-                  avatar: currentUser.avatar.url !== currentUser.avatar.url ? currentUser.avatar.url : "/images/account.png",
+                  avatar: currentUser.avatar.url ? currentUser.avatar.url : "/images/account.png",
                 },
               ],
             }}

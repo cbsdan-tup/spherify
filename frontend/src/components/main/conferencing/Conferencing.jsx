@@ -70,7 +70,9 @@ const Conferencing = () => {
   };
 
   useEffect(() => {
-    fetchMeetings();
+    if (currentTeamId !== null) {
+      fetchMeetings();
+    }
   }, [currentTeamId, currentMeetingId, currentMeetingRoomName]);
 
   useEffect(() => {

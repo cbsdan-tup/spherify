@@ -53,7 +53,10 @@ const TextChatTool = () => {
   };
 
   useEffect(() => {
-    fetchGroupChats();
+    if (currentTeamId !== null) {
+      console.log("Crrent team id", currentTeamId);
+      fetchGroupChats();
+    }
   }, [currentTeamId]);
 
   useEffect(() => {

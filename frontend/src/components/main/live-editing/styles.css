@@ -1,0 +1,201 @@
+@import url('https://fonts.googleapis.com/css2?family=Lobster&family=Merriweather:wght@300;700&family=Montserrat:wght@400;700&family=Nunito:wght@300;700&family=Oswald:wght@300;700&family=Pacifico&family=Playfair+Display:wght@400;700&family=Roboto+Mono:wght@400;700&family=Roboto+Serif:wght@400;700&family=Spectral:wght@400;700&display=swap');
+
+
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+    background-color: #f3f3f3;
+    margin: 0;
+}
+
+.container.live-editting {
+  margin-top: 70px;
+
+}
+.container .ql-editor {
+    width: 8.5in;
+    min-height: 11in;
+    padding: 1in;
+    margin: 1rem;
+    box-shadow: 0 0 5px rgba(0, 0, 0, .5);
+    background-color: white;
+}
+
+.container .ql-container.ql-snow {
+    border: none;
+    display: flex;
+    justify-content: center;
+}
+
+
+.container .ql-toolbar.ql-snow {
+    display: flex;
+    justify-content: center;
+    position: sticky;
+    top: 70px;
+    z-index: 1;
+    background-color: #f3f3f3;
+    border: none;
+    box-shadow: 0 0 5px rgba(0, 0, 0, .5);
+}
+
+.tool-content .file {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.5rem;
+  margin: 0.3rem 0;
+  cursor: pointer;
+}
+
+.tool-content .file:hover {
+  color: var(--secondary-color);
+  text-decoration: none;
+}
+
+.tool-content .file .icon {
+  font-size: 0.7rem;
+}
+
+@page {
+    margin: 1in;
+}
+@media print {
+    body {
+        background-color: none;
+    }
+
+    .container .ql-editor {
+        width: 6.5in; 
+        min-height: 9in;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        align-self: flex-start;
+    }
+
+    .container .ql-toolbar.ql-snow {
+        display: none;
+    } 
+}
+
+.ql-picker.ql-font .ql-picker-label::before,
+.ql-picker.ql-font .ql-picker-item::before {
+  content: attr(data-value) !important;
+  font-family: inherit;
+}
+
+.ql-font-arial {
+  font-family: Arial, sans-serif;
+}
+.ql-font-comic-sans {
+  font-family: "Comic Sans MS", cursive, sans-serif;
+}
+.ql-font-courier-new {
+  font-family: "Courier New", Courier, monospace;
+}
+.ql-font-georgia {
+  font-family: Georgia, serif;
+}
+.ql-font-impact {
+  font-family: Impact, sans-serif;
+}
+.ql-font-times-new-roman {
+  font-family: "Times New Roman", Times, serif;
+}
+.ql-font-verdana {
+  font-family: Verdana, Geneva, sans-serif;
+}
+
+/* Google Fonts */
+.ql-font-poppins {
+  font-family: 'Poppins', sans-serif;
+}
+.ql-font-roboto {
+  font-family: 'Roboto', sans-serif;
+}
+.ql-font-lobster {
+  font-family: 'Lobster', cursive;
+}
+.ql-font-merriweather {
+  font-family: 'Merriweather', serif;
+}
+.ql-font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
+.ql-font-nunito {
+  font-family: 'Nunito', sans-serif;
+}
+.ql-font-oswald {
+  font-family: 'Oswald', sans-serif;
+}
+.ql-font-pacifico {
+  font-family: 'Pacifico', cursive;
+}
+.ql-font-playfair-display {
+  font-family: 'Playfair Display', serif;
+}
+.ql-font-roboto-mono {
+  font-family: 'Roboto Mono', monospace;
+}
+.ql-font-roboto-serif {
+  font-family: 'Roboto Serif', serif;
+}
+.ql-font-spectral {
+  font-family: 'Spectral', serif;
+}
+.ql-font-trebuchet-ms {
+  font-family: 'Trebuchet MS', sans-serif;
+}
+.ql-size-8 { font-size: 8px; }
+.ql-size-9 { font-size: 9px; }
+.ql-size-10 { font-size: 10px; }
+.ql-size-11 { font-size: 11px; }
+.ql-size-12 { font-size: 12px; }
+.ql-size-14 { font-size: 14px; }
+.ql-size-18 { font-size: 18px; }
+.ql-size-24 { font-size: 24px; }
+.ql-size-30 { font-size: 30px; }
+.ql-size-36 { font-size: 36px; }
+.ql-size-48 { font-size: 48px; }
+.ql-size-60 { font-size: 60px; }
+.ql-size-72 { font-size: 72px; }
+.ql-size-96 { font-size: 96px; }
+
+.ql-editor p {
+  margin: 0; /* Reset default margin */
+}
+
+.ql-editor .ql-lineHeight-1 {
+  line-height: 1;
+}
+
+.ql-editor .ql-lineHeight-1\.5 {
+  line-height: 1.5;
+}
+
+.ql-editor .ql-lineHeight-2 {
+  line-height: 2;
+}
+
+.ql-editor .ql-lineHeight-2\.5 {
+  line-height: 2.5;
+}
+
+.ql-editor .ql-lineHeight-3 {
+  line-height: 3;
+}
+
+.ql-editor .ql-lineHeight-4 {
+  line-height: 4;
+}
+.ql-undo::before {
+  content: '⮪'; /* Undo Icon */
+}
+
+.ql-redo::before {
+  content: '⮫'; /* Redo Icon */
+}

@@ -14,7 +14,7 @@ const {
 router.post('/addTeam', upload.single('logo'), addTeam);
 router.get('/getTeamByUser/:userId', getTeamByUser);
 router.get('/getTeamById/:teamId', getTeamById);
-router.get('/getTeamMembers/:teamId', getTeamMembers);
+router.get('/getTeamMembers/:teamId', isAuthenticatedUser, getTeamMembers);
 router.delete('/deleteTeam/:teamId', isAuthenticatedUser, deleteTeamById);
 
 module.exports = router

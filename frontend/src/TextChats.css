@@ -53,6 +53,9 @@
   position: relative;
   margin-top: 60px;
 }
+.team-container .message-group-container .message-group {
+  padding: 1rem;
+}
 .team-container .message-group-container .message {
   display: flex;
   gap: 0.5rem;

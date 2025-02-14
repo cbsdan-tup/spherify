@@ -18,6 +18,24 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const messaging = getMessaging(app);
 export const auth = getAuth();
+
+export const refreshFirebaseToken = async () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  if (user) {
+    try {
+      const newToken = await user.getIdToken(true);
+      console.log("New Token:", newToken);
+      return newToken;
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+    }
+  } else {
+    console.log("No user signed in.");
+  }
+};
+
 // export const generateToken = async () => {
 //   const permission = await Notification.requestPermission();
 //   console.log(permission);

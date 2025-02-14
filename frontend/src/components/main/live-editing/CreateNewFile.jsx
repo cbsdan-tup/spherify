@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 
-const CreateNewMeeting = ({ show, onHide, onCreateMeeting }) => {
-  const [roomName, setRoomName] = useState("");
+const CreateNewFile = ({ show, onHide, onCreateFile }) => {
+  const [fileName, setFileName] = useState("");
 
   const user = useSelector((state) => state.auth.user);
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
 
   useEffect(() => {
-    const modalElement = document.getElementById("createMeetingModal");
+    const modalElement = document.getElementById("createFileModal");
     if (modalElement) {
       if (show) {
         modalElement.classList.add("show");
@@ -18,40 +18,40 @@ const CreateNewMeeting = ({ show, onHide, onCreateMeeting }) => {
         modalElement.style.display = "none";
       }
     }
-  }, [show]);
+  }, [show, onCreateFile]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!roomName.trim()) return; 
+    if (!fileName.trim()) return; 
 
-    onCreateMeeting(roomName, user, currentTeamId);
-    setRoomName("");
+    onCreateFile(fileName, user, currentTeamId);
+    setFileName("");
     onHide(); 
   };
 
   return (
     <div
       className="modal fade"
-      id="createMeetingModal"
+      id="createFileModal"
       tabIndex="-1"
       aria-hidden="true"
     >
       <div className="modal-dialog modal-dialog-centered create-modal">
         <div className="modal-content">
           <div className="modal-header">
-            <h5 className="modal-title">Create New Meeting</h5>
+            <h5 className="modal-title">Create New File</h5>
             <button type="button" className="btn-close" onClick={onHide}></button>
           </div>
           <div className="modal-body">
             <form onSubmit={handleSubmit}>
               <div className="mb-3">
-                <label className="form-label">Room Name</label>
+                <label className="form-label">File Name</label>
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Enter room name"
-                  value={roomName}
-                  onChange={(e) => setRoomName(e.target.value)}
+                  placeholder="Enter File name"
+                  value={fileName}
+                  onChange={(e) => setFileName(e.target.value)}
                   required
                 />
               </div>
@@ -60,7 +60,7 @@ const CreateNewMeeting = ({ show, onHide, onCreateMeeting }) => {
                   Cancel
                 </button>
                 <button type="submit" className="btn btn-primary save">
-                  Create Meeting
+                  Create Document
                 </button>
               </div>
             </form>
@@ -71,4 +71,4 @@ const CreateNewMeeting = ({ show, onHide, onCreateMeeting }) => {
   );
 };
 
-export default CreateNewMeeting;
+export default CreateNewFile;

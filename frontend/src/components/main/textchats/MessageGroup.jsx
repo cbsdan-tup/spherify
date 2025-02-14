@@ -22,6 +22,19 @@ const MessageGroup = () => {
 
   const messagesEndRef = useRef(null);
 
+  const PutSkeleton = () => {
+    const skeleton = new Array(6).fill(null);
+    return (
+      <div className="chat-container">
+        <div className="messages-list">
+          {skeleton.map((_, index) => (
+            <div key={index} className="message skeleton" style={{height: "100px"}}/>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -78,6 +91,7 @@ const MessageGroup = () => {
   return (
     <div className="message-group-container">
       <div className="message-group">
+        <PutSkeleton />
         {messages.map((msg, index) => (
           <React.Fragment key={index}>
             <Message index={index} msg={msg} user={user} />

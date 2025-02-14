@@ -6,10 +6,13 @@ import RightToolPanel from "./layout/RightToolPanel";
 import Home from "./main/Home";
 import Settings from "./main/Settings";
 import Team from "./main/Team";
-import MessageGroup from "./main/textchats/MessageGroup";
 import Calendar from "./main/projectmanagement/Calendar";
 import Kanban from "./main/projectmanagement/Kanban";
 import Gantt from "./main/projectmanagement/Gantt";
+import { useSelector, useDispatch } from "react-redux";
+import {refreshFirebaseToken} from "../config/firebase-config";
+import { errMsg } from "../utils/helper";
+import { updateToken } from "../redux/authSlice";
 
 function Main() {
   const location = useLocation();
@@ -18,6 +21,25 @@ function Main() {
     
   }, [location.pathname]); 
 
+  const currentTeamId = useSelector((state) => state.team.currentTeamId);
+  let dispatch = useDispatch();
+  const authState = useSelector((state) => state.auth);
+  useEffect(() => {
+    const refreshToken = async () => {
+      try {
+        console.log("Current token:", authState.token);
+        const token = await refreshFirebaseToken();
+        if (token) {
+          dispatch(updateToken(token)); 
+        }
+      } catch (error) {
+        console.error("Error refreshing token:", error);
+        errMsg("Error refreshing token", error);
+      }
+    };
+
+    refreshToken();
+  }, []); 
   return (
     <>
       <LeftPanel />
@@ -32,11 +54,6 @@ function Main() {
               <Route path="gantt" element={<Gantt />} />
             </Route>
             <Route path=":teamId/*" element={<Team />} /> 
-            <Route path="projectmanagement">
-              <Route path="calendar" element={<Calendar />} />
-              <Route path="kanban" element={<Kanban />} />
-              <Route path="gantt" element={<Gantt />} />
-            </Route>
             <Route path=":teamId" element={<Team />} /> 
           </Routes>
         </div>

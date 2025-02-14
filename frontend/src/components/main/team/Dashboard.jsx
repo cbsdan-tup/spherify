@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Pie, Bar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -10,6 +10,9 @@ import {
   BarElement,
 } from "chart.js";
 import { FaPlus, FaPencilAlt } from "react-icons/fa";
+import axios from "axios";
+import { useSelector } from "react-redux";
+import { errMsg, getToken } from "../../../utils/helper";
 
 // Register chart elements
 ChartJS.register(
@@ -44,6 +47,37 @@ const Dashboard = () => {
       },
     ],
   };
+
+  const currentTeamId = useSelector((state) => state.team.currentTeamId);
+  const authState = useSelector((state) => state.auth);
+
+  const [members, setMembers] = useState([]);
+
+  const fetchTeamMembers = async () => {
+    try {
+      const token = getToken(authState); 
+      // Fetch team members
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      }
+      const {data} = await axios.get(`${import.meta.env.VITE_API}/getTeamMembers/${currentTeamId}`, config);
+  
+      setMembers(data.members);
+
+      console.log("Team members:", data.members);
+    } catch (error) {
+      console.error("Error fetching team members:", error);
+      errMsg("Error fetching team members", error);
+    }
+
+  }
+  useEffect(() => {
+    if (currentTeamId !== null) {
+      fetchTeamMembers();
+    }
+  }, [currentTeamId]);
 
   return (
     <div className="team-content container">
@@ -98,59 +132,30 @@ const Dashboard = () => {
           <div className="card shadow chart-bg">
             <div className="card-header d-flex justify-content-between align-items-center">
               <span className="fw-semibold text-primary">Team Members</span>
-              <span className="badge bg-primary text-white">4</span>
+              <span className="badge bg-primary text-white">{members && members.length}</span>
             </div>
             <div className="card-body">
               {/* Team Member List */}
-              {[
-                {
-                  name: "Daniel (You)",
-                  role: "Team Leader",
-                  status: "Active Now",
-                  img: "/images/cabasa.png",
-                  active: true,
-                },
-                {
-                  name: "Cassley",
-                  role: "Designer",
-                  status: "Active for 00:05:56",
-                  img: "/images/esquivel.png",
-                  active: true,
-                },
-                {
-                  name: "Jury",
-                  role: "Programmer",
-                  status: "Active for 1:05:56",
-                  img: "/images/lebosada.png",
-                  active: true,
-                },
-                {
-                  name: "Romel",
-                  role: "Documentation",
-                  status: "Last Active 2 hours ago",
-                  img: "/images/diaz.png",
-                  active: false,
-                },
-              ].map((member, index) => (
+              {members && members.map((member, index) => (
                 <div
                   key={index}
                   className="d-flex justify-content-between align-items-center bg-light p-2 mb-2 rounded"
                 >
                   <div className="d-flex align-items-center gap-2">
                     <img
-                      src={member.img}
-                      alt={member.name}
+                      src={member.user?.avatar?.url ? member.user.avatar.url : "/images/account.png"}
+                      alt={member?.user?.firstName}
                       className="rounded-circle"
                       width="35"
                     />
                     <div className="px-2">
-                      <p className="mb-0 fw-semibold">{member.name}</p>
+                      <p className="mb-0 fw-semibold">{member.user.firstName} {member.user.lastName}</p>
                       <p
                         className={`mb-0 text-sm ${
                           member.active ? "text-success" : "text-muted"
                         }`}
                       >
-                        {member.status}
+                        {member.status ? member.status : "Active"}
                       </p>
                     </div>
                   </div>

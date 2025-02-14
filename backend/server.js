@@ -6,6 +6,7 @@ const { Server } = require("socket.io");
 
 const { MessageGroup } = require("./models/Team");
 const User = require("./models/User");
+const Document = require("./models/Document");
 
 const app = express();
 const path = require("path");
@@ -25,6 +26,7 @@ const account = require("./routes/account");
 const teamRoutes = require("./routes/teamRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
+const documentRoutes = require("./routes/documentRoutes");
 
 console.log(process.env.NODE_ENV);
 
@@ -35,7 +37,6 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-
 
 //middleware
 app.use(express.json({ limit: "50mb" }));
@@ -53,6 +54,7 @@ app.use("/api/v1", account);
 app.use("/api/v1", teamRoutes);
 app.use("/api/v1", messageRoutes);
 app.use("/api/v1", meetingRoutes);
+app.use("/api/v1", documentRoutes);
 
 //404 not found routes
 app.all("*", (req, res) => {
@@ -76,6 +78,8 @@ const io = new Server(server, {
 // Socket.io for Real-time Messaging
 io.on("connection", (socket) => {
   console.log("User Connected:", socket.id);
+
+  socket.setMaxListeners(20);
 
   socket.on("joinGroup", (groupId) => {
     const validGroupId = mongoose.Types.ObjectId.isValid(groupId)
@@ -136,16 +140,72 @@ io.on("connection", (socket) => {
           avatar: senderDetails.avatar,
         },
       });
-
     } catch (error) {
       console.error("Error sending message:", error);
     }
   });
 
+  socket.on("get-document", async (documentId) => {
+    if (!mongoose.Types.ObjectId.isValid(documentId)) {
+      console.error("❌ Invalid document ID:", documentId);
+      return;
+    }
+  
+    console.log(`✅ User joined document: ${documentId}`);
+  
+    const document = await findOrCreateDocument(documentId);
+    socket.join(documentId);
+  
+    if (!document.data || typeof document.data !== "object" || !document.data.ops) {
+      document.data = { ops: [] };
+    }
+  
+    socket.emit("load-document", document.data);
+  
+    // Ensure no duplicate listeners
+    socket.removeAllListeners("send-changes");
+    socket.on("send-changes", (delta) => {
+      if (!delta || typeof delta !== "object" || !delta.ops) {
+        console.error("⚠️ Invalid delta received:", delta);
+        return;
+      }
+      socket.broadcast.to(documentId).emit("receive-changes", delta);
+    });
+  
+    socket.removeAllListeners("send-format");
+    socket.on("send-format", ({ format, range }) => {
+      if (!format || !range) return;
+      socket.broadcast.to(documentId).emit("receive-format", { format, range });
+    });
+  
+    socket.removeAllListeners("save-document");
+    socket.on("save-document", async (data) => {
+      if (data && typeof data === "object" && data.ops) {
+        await Document.findByIdAndUpdate(documentId, { data });
+      }
+    });
+  
+    socket.on("disconnect", () => {
+      console.log(`❌ User disconnected from document: ${documentId}`);
+    });
+  });
+  
+
   socket.on("disconnect", () => {
     console.log("User Disconnected:", socket.id);
   });
 });
+
+async function findOrCreateDocument(id) {
+  if (!id) return null;
+
+  let document = await Document.findById(id);
+  if (document) {
+    return document 
+  } else {
+    return false;
+  } 
+}
 
 mongoose.connection.once("open", () => {
   console.log("Connected to MongoDB");

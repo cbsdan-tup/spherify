@@ -6,7 +6,7 @@ import NotFound404 from "./components/NotFound404";
 import Header from "./components/layout/Header";
 import FeaturesPage from "./components/FeaturesPage";
 import AboutPage from "./components/AboutPage";
-import { isAuthenticated, getToken, getUser } from "./utils/helper";
+import { isAuthenticated, getToken, getUser, errMsg } from "./utils/helper";
 import Main from "./components/Main";
 import "./Variables.css";
 
@@ -17,15 +17,35 @@ import "./Conferencing.css";
 import { Navigate } from "react-router";
 import { useEffect } from "react";
 
-import { useSelector } from "react-redux";
-import axios from "axios";
+import { useSelector, useDispatch } from "react-redux";
+
+import {refreshFirebaseToken} from "./config/firebase-config";
+import { updateToken } from "./redux/authSlice";
 
 function App() {
   const authState = useSelector((state) => state.auth);
 
+  let dispatch = useDispatch();
   useEffect(() => {
-    console.log("Auth State: ", authState);
-  }, []);
+    const refreshToken = async () => {
+      try {
+        console.log("Current token:", authState.token);
+        const token = await refreshFirebaseToken();
+        if (token) {
+          dispatch(updateToken(token)); 
+        }
+      } catch (error) {
+        console.error("Error refreshing token:", error);
+        errMsg("Error refreshing token", error);
+      }
+    };
+
+    const interval = setInterval(async () => {
+      refreshToken();
+    }, 55 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [dispatch]); 
+
   const LandingRoutes = () => {
     return (
       <>

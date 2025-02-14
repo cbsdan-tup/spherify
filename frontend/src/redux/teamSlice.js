@@ -7,6 +7,7 @@ const teamSlice = createSlice({
     currentMessageGroupId: null,
     currentMeetingId: null,
     currentMeetingRoomName: null,
+    currentFileId: null
   },
   reducers: {
     setTeamId: (state, action) => {
@@ -18,6 +19,7 @@ const teamSlice = createSlice({
     setMsgGroupId: (state, action) => {
       state.currentMessageGroupId = action.payload;
       state.currentMeetingId = null;
+      state.currentFileId = null;
     },
     clearMsgGroupId: (state) => {
       state.currentMessageGroupId = null;
@@ -25,15 +27,26 @@ const teamSlice = createSlice({
     setCurrentMeetingId: (state, action) => {
       state.currentMeetingId = action.payload;
       state.currentMessageGroupId = null;
+      state.currentFileId = null;
     },
     clearCurrentMeetingId: (state) => {
       state.currentMeetingId = null;
     },
     setCurrentMeetingRoomName: (state, action) => {
       state.currentMeetingRoomName = action.payload;
+      state.currentMessageGroupId = null;
+      state.currentFileId = null;
     },
     clearCurrentMeetingRoomName: (state) => {
       state.currentMeetingRoomName = null;
+    },
+    setCurrentFileId: (state, action) => {
+      state.currentFileId = action.payload;
+      state.currentMessageGroupId = null;
+      state.currentMeetingId = null;
+    },
+    clearCurrentFileId: (state) => {
+      state.currentFileId = null;
     },
   },
 });
@@ -47,6 +60,8 @@ export const {
   clearCurrentMeetingId,
   setCurrentMeetingRoomName,
   clearCurrentMeetingRoomName,
+  setCurrentFileId,
+  clearCurrentFileId,
 } = teamSlice.actions;
 
 export default teamSlice.reducer;

@@ -113,7 +113,7 @@ exports.getTeamMembers = async (req, res) => {
 
     const team = await Team.findById(teamId).populate(
       "members.user",
-      "fname lname email"
+      "firstName lastName email avatar"
     );
 
     if (!team) {

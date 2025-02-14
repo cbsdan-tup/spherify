@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
 import TextChatTool from "../main/textchats/TextChatTool";
 import ProjectManagementTool from "../main/projectmanagement/ProjectManagementTool";
-import { useSelector } from "react-redux";
 
 
 import { useSelector } from "react-redux";
 import Conferencing from "../main/conferencing/Conferencing";
+import LiveEditingTool from "../main/live-editing/LiveEditingTool";
 function RightToolPanel() {
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
 
@@ -24,11 +24,7 @@ function RightToolPanel() {
         <span className="title">File Sharing</span>
       </h5>
       <ProjectManagementTool />
-      <h5 className="tool-title custom-text-white">
-        <i className="fa-solid fa-arrow-right arrow"></i>
-
-        <span className="title">Live Editing</span>
-      </h5>
+      <LiveEditingTool />
     </div>
   );
 }
