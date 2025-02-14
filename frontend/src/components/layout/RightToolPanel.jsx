@@ -13,7 +13,7 @@ function RightToolPanel() {
     console.log("Current team ID:", currentTeamId);
   }, [currentTeamId]);
   return (
-    <div className="right-tool-panel d-lg-block d-none">
+    <div className="right-tool-panel">
       <h3>Tools</h3>
       <hr className="divider" />
       <TextChatTool />
