@@ -39,8 +39,10 @@ function Calendar() {
 
   const formatDateForInput = (date) => {
     if (!date) return '';
+    // Ensure we're working with a Date object
     const d = new Date(date);
-    return d.toISOString().slice(0, 16);
+    // Create ISO string and adjust for timezone
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
   };
 
   const handleDateSelect = (selectInfo) => {
@@ -62,7 +64,7 @@ function Calendar() {
       name: clickInfo.event.title,
       description: clickInfo.event.extendedProps.description || "",
       startDate: formatDateForInput(clickInfo.event.start),
-      endDate: formatDateForInput(clickInfo.event.end),
+      endDate: formatDateForInput(clickInfo.event.end || clickInfo.event.start),
       location: clickInfo.event.extendedProps.location || ""
     });
     setShowEventModal(true);
@@ -83,6 +85,24 @@ function Calendar() {
   const handleFormSubmit = async (e) => {
     e.preventDefault();
     
+    const now = new Date();
+    const startDate = new Date(eventForm.startDate);
+    const endDate = new Date(eventForm.endDate);
+
+    // Check if dates are in the past
+    if (startDate < now || endDate < now) {
+      setToastMessage("Cannot create or edit events in the past!");
+      setShowToast(true);
+      return;
+    }
+
+    // Check if end date is before start date
+    if (endDate < startDate) {
+      setToastMessage("End date cannot be before start date!");
+      setShowToast(true);
+      return;
+    }
+
     const eventData = {
       teamId: currentTeamId,
       name: eventForm.name,
@@ -112,6 +132,12 @@ function Calendar() {
     }
   };
 
+  // Add this helper function to get minimum date-time for inputs
+  const getMinDateTime = () => {
+    const now = new Date();
+    return formatDateForInput(now);
+  };
+
   const handleDeleteEvent = () => {
     try {
       dispatch(deleteEvent(selectedEvent.id));
@@ -126,9 +152,9 @@ function Calendar() {
 
   const calendarEvents = Array.isArray(events) ? events.map(event => ({
     id: event._id,
-    title: event.name,
-    start: event.startDate,
-    end: event.endDate,
+    title: event.title || event.name, // Handle both title and name
+    start: new Date(event.start || event.startDate), // Handle both start and startDate
+    end: new Date(event.end || event.endDate), // Handle both end and endDate
     extendedProps: {
       description: event.description,
       location: event.location,
@@ -154,12 +180,29 @@ function Calendar() {
           editable={true}
           selectable={true}
           selectMirror={true}
-          dayMaxEvents={true}
+          dayMaxEvents={false} // Changed to false to allow stacking
           weekends={true}
           select={handleDateSelect}
           eventClick={handleEventClick}
           height="100%"
           events={calendarEvents}
+          eventDisplay="block" // Changed to block display
+          eventOverlap={true} // Allow events to overlap
+          slotEventOverlap={true}
+          eventClassNames="calendar-event" // Add custom class
+          slotMinTime="00:00:00"
+          slotMaxTime="24:00:00"
+          // Add custom styling for events
+          eventContent={(eventInfo) => {
+            return (
+              <div className="event-content">
+                <div className="event-title">{eventInfo.event.title}</div>
+                {eventInfo.event.extendedProps.location && (
+                  <div className="event-location">📍 {eventInfo.event.extendedProps.location}</div>
+                )}
+              </div>
+            );
+          }}
         />
       </div>
 
@@ -217,6 +260,7 @@ function Calendar() {
                 onChange={(e) => setEventForm({...eventForm, startDate: e.target.value})}
                 required
                 step="60"
+                min={getMinDateTime()} // Add minimum date-time
               />
             </Form.Group>
 
@@ -228,6 +272,7 @@ function Calendar() {
                 onChange={(e) => setEventForm({...eventForm, endDate: e.target.value})}
                 required
                 step="60"
+                min={eventForm.startDate || getMinDateTime()} // Add minimum date-time
               />
             </Form.Group>
 

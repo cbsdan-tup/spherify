@@ -5,6 +5,16 @@ const EventSchema = Schema({
     type: String,
     required: [true, "Title is required"],
   },
+  team: {
+    type: Schema.Types.ObjectId,
+    ref: "Team",
+    required: [true, "Team is required"],
+  },
+  createdBy: {
+    type: Schema.Types.ObjectId,
+    ref: "User",
+    required: [true, "User is required"],
+  },
   start: {
     type: Date,
     required: [true, "Start date is required"],
@@ -13,14 +23,12 @@ const EventSchema = Schema({
     type: Date,
     required: [true, "End date is required"],
   },
-  notes: {
+  description: {
     type: String,
   },
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    required: [true, "User is required"],
-  },
+  location: {
+    type: String,
+  }
 });
 
 EventSchema.methods.toJSON = function () {

@@ -1,36 +1,78 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { getToken } from '../utils/helper';
 
-// Async thunks
+// Helper function to get auth header
+const getAuthHeader = (getState) => {
+  const token = getToken(getState().auth);
+  return {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    }
+  };
+};
+
 export const fetchEvents = createAsyncThunk(
   'calendar/fetchEvents',
-  async (teamId) => {
-    const response = await axios.get(`${import.meta.env.VITE_API}/events/team/${teamId}`);
-    return response.data;
+  async (teamId, { getState, rejectWithValue }) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API}/getEventsByTeam/${teamId}`,
+        getAuthHeader(getState)
+      );
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch events');
+    }
   }
 );
 
 export const createEvent = createAsyncThunk(
   'calendar/createEvent',
-  async (eventData) => {
-    const response = await axios.post(`${import.meta.env.VITE_API}/events`, eventData);
-    return response.data.event;
+  async (eventData, { getState, rejectWithValue }) => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_API}/createEvent`,
+        eventData,
+        getAuthHeader(getState)
+      );
+      // The backend returns { event: {...} }
+      return response.data.event;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to create event');
+    }
   }
 );
 
 export const updateEvent = createAsyncThunk(
   'calendar/updateEvent',
-  async ({ eventId, eventData }) => {
-    const response = await axios.put(`${import.meta.env.VITE_API}/events/${eventId}`, eventData);
-    return response.data.event;
+  async ({ eventId, eventData }, { getState, rejectWithValue }) => {
+    try {
+      const response = await axios.put(
+        `${import.meta.env.VITE_API}/updateEvent/${eventId}`,
+        eventData,
+        getAuthHeader(getState)
+      );
+      return response.data.event;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to update event');
+    }
   }
 );
 
 export const deleteEvent = createAsyncThunk(
   'calendar/deleteEvent',
-  async (eventId) => {
-    await axios.delete(`${import.meta.env.VITE_API}/events/${eventId}`);
-    return eventId;
+  async (eventId, { getState, rejectWithValue }) => {
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_API}/deleteEvent/${eventId}`,
+        getAuthHeader(getState)
+      );
+      return eventId;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to delete event');
+    }
   }
 );
 
@@ -50,23 +92,39 @@ const calendarSlice = createSlice({
       })
       .addCase(fetchEvents.fulfilled, (state, action) => {
         state.loading = false;
-        state.events = action.payload;
+        // Ensure dates are properly parsed
+        state.events = action.payload.map(event => ({
+          ...event,
+          start: new Date(event.start || event.startDate).toISOString(),
+          end: new Date(event.end || event.endDate).toISOString()
+        }));
       })
       .addCase(fetchEvents.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload;
       })
       .addCase(createEvent.fulfilled, (state, action) => {
+        // No need to transform, just push the event as-is
         state.events.push(action.payload);
+      })
+      .addCase(createEvent.rejected, (state, action) => {
+        state.error = action.payload;
       })
       .addCase(updateEvent.fulfilled, (state, action) => {
         const index = state.events.findIndex(event => event._id === action.payload._id);
         if (index !== -1) {
+          // Replace the entire event object
           state.events[index] = action.payload;
         }
       })
+      .addCase(updateEvent.rejected, (state, action) => {
+        state.error = action.payload;
+      })
       .addCase(deleteEvent.fulfilled, (state, action) => {
         state.events = state.events.filter(event => event._id !== action.payload);
+      })
+      .addCase(deleteEvent.rejected, (state, action) => {
+        state.error = action.payload;
       });
   }
 });

@@ -852,7 +852,60 @@ body {
   padding: 20px;
 }
 
+/* Calendar Event Styles */
+.calendar-event {
+  margin: 1px 0;
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: none !important;
+  background-color: #3788d8;
+}
 
+.event-content {
+  overflow: hidden;
+  width: 100%;
+}
+
+.event-title {
+  font-size: 0.85em;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-location {
+  font-size: 0.75em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0.9;
+}
+
+/* FullCalendar Overrides */
+.fc-daygrid-event-harness {
+  margin-bottom: 1px !important;
+}
+
+.fc .fc-daygrid-day-events {
+  margin-bottom: 0 !important;
+}
+
+.fc-daygrid-event {
+  white-space: normal !important;
+  align-items: normal !important;
+}
+
+/* Improve the "more" link appearance */
+.fc-daygrid-more-link {
+  font-size: 0.85em;
+  font-weight: bold;
+  color: #666;
+  background: #f8f9fa;
+  padding: 2px 4px;
+  border-radius: 4px;
+  margin-top: 1px;
+}
 
 @media (max-width: 768px) {
   .main-content {
