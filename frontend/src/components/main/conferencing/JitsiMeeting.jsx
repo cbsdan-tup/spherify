@@ -35,7 +35,7 @@ const JitsiMeeting = ({ roomName, displayName }) => {
       const options = {
         roomName,
         width: "100%",
-        height: 650,
+        height: 550,
         parentNode: jitsiContainer.current,
         userInfo: { displayName },
       };

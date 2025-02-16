@@ -12,6 +12,7 @@ const LiveEditingTool = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [files, setFiles] = useState([]);
+  const [isLinkEnabled, setIsLinkEnabled] = useState(false);
 
   const dispatch = useDispatch();
 
@@ -29,6 +30,7 @@ const LiveEditingTool = () => {
   const authState = useSelector((state) => state.auth);
   const token = getToken(authState);
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
+  const currentFileId = useSelector((state) => state.team.currentFileId);
 
   const addNewFile = async (fileName, user, currentTeamId) => {
     try {
@@ -74,13 +76,25 @@ const LiveEditingTool = () => {
     }
   };
   const handleFileClick = (fileId) => {
+    setIsLinkEnabled(false);
     dispatch(setCurrentFileId(fileId));
   };
-  const currentFileId = useSelector((state) => state.team.currentFileId);
 
   useEffect(() => {
-    fetchFiles();
-  }, [isFormVisible, currentTeamId]);
+    setIsLinkEnabled(false); 
+    const timer = setTimeout(() => {
+      setIsLinkEnabled(true);
+    }, 500);
+
+    return () => clearTimeout(timer); 
+  }, [currentFileId]);
+
+  useEffect(() => {
+    if (currentFileId !== null && currentTeamId !== null) {
+      fetchFiles();
+    }
+
+  }, [isFormVisible, currentTeamId, currentFileId]);
   return (
     <div className="tool-container custom-text-white">
       <div className="header" onClick={handleToolClick}>
@@ -111,11 +125,13 @@ const LiveEditingTool = () => {
               <>
                 <Link
                   className={
-                    currentFileId === file._id ? "file btn btn-primary" : "file"
+                    currentFileId === file._id ? "file btn btn-primary p-0" : "file p-0"
                   }
                   key={file._id}
                   to={`/main/${currentTeamId}/live-editing/${file._id}`}
                   onClick={() => handleFileClick(file._id)}
+                  style={{ pointerEvents: isLinkEnabled ? "auto" : "none", opacity: isLinkEnabled ? 1 : 0.5 }}
+
                 >
                   <div key={file._id} className="file">
                     <i className="fa-solid fa-file icon"></i>

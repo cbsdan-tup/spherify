@@ -8,6 +8,7 @@ import MessageGroup from "./textchats/MessageGroup";
 import { useSelector } from "react-redux";
 import VideoCallPage from "./conferencing/VideoCallPage";
 import TextEditor from "./live-editing/TextEditor";
+import Calendar from "./projectmanagement/Calendar";
 
 function Team() {
   const { teamId } = useParams();
@@ -29,10 +30,11 @@ function Team() {
   };
 
   const currentUser = useSelector((state) => state.auth.user);
+  const currentFileId = useSelector((state) => state.team.currentFileId);
 
   useEffect(() => {
     fetchTeamInfo();
-  }, [teamId]);
+  }, [teamId, currentFileId]);
   return (
     <>
       {teamInfo && teamInfo.name ? (
@@ -43,6 +45,7 @@ function Team() {
             <Route path="/message-group/:groupId" element={<MessageGroup />} />
             <Route path="/meeting/:meetId" element={<VideoCallPage />} />
             <Route path="/live-editing/:documentId" element={<TextEditor />} />
+            <Route path="/calendar/" element={<Calendar />} />
           </Routes>
         </div>
       ) : (
