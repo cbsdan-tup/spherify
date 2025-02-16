@@ -4,10 +4,12 @@ import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import authReducer from './authSlice';
 import teamReducer from './teamSlice';
+import calendarReducer from './calendarSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
   team: teamReducer,
+  calendar: calendarReducer,
 });
 
 const persistConfig = {

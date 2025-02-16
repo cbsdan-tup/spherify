@@ -7,7 +7,8 @@ const teamSlice = createSlice({
     currentMessageGroupId: null,
     currentMeetingId: null,
     currentMeetingRoomName: null,
-    currentFileId: null
+    currentFileId: null,
+    currentProjectManagementTool: null,
   },
   reducers: {
     setTeamId: (state, action) => {
@@ -20,6 +21,7 @@ const teamSlice = createSlice({
       state.currentMessageGroupId = action.payload;
       state.currentMeetingId = null;
       state.currentFileId = null;
+      state.currentProjectManagementTool = null;
     },
     clearMsgGroupId: (state) => {
       state.currentMessageGroupId = null;
@@ -28,6 +30,7 @@ const teamSlice = createSlice({
       state.currentMeetingId = action.payload;
       state.currentMessageGroupId = null;
       state.currentFileId = null;
+      state.currentProjectManagementTool = null;
     },
     clearCurrentMeetingId: (state) => {
       state.currentMeetingId = null;
@@ -36,6 +39,7 @@ const teamSlice = createSlice({
       state.currentMeetingRoomName = action.payload;
       state.currentMessageGroupId = null;
       state.currentFileId = null;
+      state.currentProjectManagementTool = null;
     },
     clearCurrentMeetingRoomName: (state) => {
       state.currentMeetingRoomName = null;
@@ -44,9 +48,19 @@ const teamSlice = createSlice({
       state.currentFileId = action.payload;
       state.currentMessageGroupId = null;
       state.currentMeetingId = null;
+      state.currentProjectManagementTool = null;
     },
     clearCurrentFileId: (state) => {
       state.currentFileId = null;
+    },
+    setCurrentProjectManagementTool: (state, action) => {
+      state.currentProjectManagementTool = action.payload;
+      state.currentMessageGroupId = null;
+      state.currentMeetingId = null;
+      state.currentFileId = null;
+    },
+    clearCurrentProjectManagementTool: (state) => {
+      state.currentProjectManagementTool = null;
     },
   },
 });
@@ -62,6 +76,8 @@ export const {
   clearCurrentMeetingRoomName,
   setCurrentFileId,
   clearCurrentFileId,
+  setCurrentProjectManagementTool,
+  clearCurrentProjectManagementTool,
 } = teamSlice.actions;
 
 export default teamSlice.reducer;

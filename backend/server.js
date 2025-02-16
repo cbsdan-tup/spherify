@@ -26,6 +26,7 @@ const account = require("./routes/account");
 const teamRoutes = require("./routes/teamRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
+const eventRoutes = require("./routes/calendar/events");
 const documentRoutes = require("./routes/documentRoutes");
 
 console.log(process.env.NODE_ENV);
@@ -54,6 +55,7 @@ app.use("/api/v1", account);
 app.use("/api/v1", teamRoutes);
 app.use("/api/v1", messageRoutes);
 app.use("/api/v1", meetingRoutes);
+app.use("/api/v1", eventRoutes);
 app.use("/api/v1", documentRoutes);
 
 //404 not found routes

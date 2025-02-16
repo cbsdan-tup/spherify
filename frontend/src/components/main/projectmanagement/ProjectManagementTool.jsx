@@ -1,14 +1,22 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { setCurrentProjectManagementTool } from "../../../redux/teamSlice";
 
 const ProjectManagementTool = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const teamId = useSelector((state) => state.team?.currentTeamId);
+  const currentProjectManagementTool = useSelector((state) => state.team.currentProjectManagementTool);
+  
+  let dispatch = useDispatch();
 
   const handleToolClick = () => {
     setIsExpanded(!isExpanded);
+  };
+
+  const handleCurrentProjectManagementToolClick = (toolName) => {
+    dispatch(setCurrentProjectManagementTool(toolName));
   };
 
   const navigateTo = (path) => {
@@ -27,15 +35,15 @@ const ProjectManagementTool = () => {
       </div>
       {isExpanded && (
         <div className="tool-content">
-          <div className="chat" onClick={() => navigateTo('calendar')}>
+          <div className={`chat ${currentProjectManagementTool === 'calendar' ? "btn btn-primary" : ""}`} onClick={() => {navigateTo('calendar'); handleCurrentProjectManagementToolClick('calendar')}}>
             <i className="fa-solid fa-calendar icon"></i>
             <span className="label">Calendar</span>
           </div>
-          <div className="chat" onClick={() => navigateTo('kanban')}>
+          <div className={`chat ${currentProjectManagementTool === 'kanban' ? "btn btn-primary" : ""}`} onClick={() => {navigateTo('kanban'); handleCurrentProjectManagementToolClick('kanban')}}>
             <i className="fa-solid fa-columns icon"></i>
             <span className="label">Kanban Board</span>
           </div>
-          <div className="chat" onClick={() => navigateTo('gantt')}>
+          <div className={`chat ${currentProjectManagementTool === 'gantt' ? "btn btn-primary" : ""}`} onClick={() => {navigateTo('gantt'); handleCurrentProjectManagementToolClick('gantt')}}>
             <i className="fa-solid fa-chart-gantt icon"></i>
             <span className="label">Gantt Chart</span>
           </div>

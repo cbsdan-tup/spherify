@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Route, Routes, useParams } from "react-router-dom";
+import { Outlet, Routes, Route, useParams } from "react-router-dom";
 import axios from "axios";
 import Header from "./team/Header";
 import LoadingSpinner from "../layout/LoadingSpinner";
-import Dashboard from "./team/Dashboard";
-import MessageGroup from "./textchats/MessageGroup";
 import { useSelector } from "react-redux";
 import VideoCallPage from "./conferencing/VideoCallPage";
 import TextEditor from "./live-editing/TextEditor";
 import Calendar from "./projectmanagement/Calendar";
+import Dashboard from "./team/Dashboard";
+import MessageGroup from "./textchats/MessageGroup";
 
 function Team() {
   const { teamId } = useParams();
@@ -40,16 +40,16 @@ function Team() {
       {teamInfo && teamInfo.name ? (
         <div className="team-container">
           <Header {...teamInfo} />
+          <Outlet />
           <Routes>
             <Route index element={<Dashboard />} />
             <Route path="/message-group/:groupId" element={<MessageGroup />} />
             <Route path="/meeting/:meetId" element={<VideoCallPage />} />
             <Route path="/live-editing/:documentId" element={<TextEditor />} />
-            <Route path="/calendar/" element={<Calendar />} />
           </Routes>
         </div>
       ) : (
-        <LoadingSpinner message={"Loading Team..."} />  
+        <LoadingSpinner message={"Loading Team..."} />
       )}
     </>
   );

@@ -1,11 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import LoadingSpinner from "../../layout/LoadingSpinner";
+import Draggable from "react-draggable";
 
 const JitsiMeeting = ({ roomName, displayName }) => {
   const jitsiContainer = useRef(null);
   const jitsiApi = useRef(null);
   const [loading, setLoading] = useState(true);
+  const [isScale, setIsScale] = useState(false);
 
+  const handleScaleClick = () => {
+    setIsScale(!isScale);
+  };
   useEffect(() => {
     const loadJitsi = () => {
       if (!window.JitsiMeetExternalAPI) {
@@ -34,11 +39,13 @@ const JitsiMeeting = ({ roomName, displayName }) => {
       const domain = "spherify-meet.mooo.com";
       const options = {
         roomName,
-        width: "100%",
-        height: 550,
         parentNode: jitsiContainer.current,
         userInfo: { displayName },
       };
+
+      if (!isScale) {
+        options.height = 570;
+      }
 
       jitsiApi.current = new window.JitsiMeetExternalAPI(domain, options);
 
@@ -62,7 +69,17 @@ const JitsiMeeting = ({ roomName, displayName }) => {
 
   return (
     <>
-      <div ref={jitsiContainer} style={{ width: "100%", height: "650px" }} />
+      <div
+        onClick={handleScaleClick}
+        className={`scale-button-container ${isScale ? "scale" : ""}`}
+      >
+        <i className="fa-solid fa-expand scale-button"></i>
+      </div>
+      <div
+        ref={jitsiContainer}
+        style={{ border: "1px solid white" }}
+        className={!isScale ? "jitsi-container" : "jitsi-container scale"}
+      />
     </>
   );
 };

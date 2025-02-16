@@ -302,7 +302,7 @@
   margin-bottom: 1rem;
   background-color: var(--secondary-color);
   height: 60px;
-  z-index: 10;
+  z-index: 1040;
 }
 
 .main-container .header .logo-name {
