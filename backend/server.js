@@ -28,6 +28,9 @@ const messageRoutes = require("./routes/messageRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
 const eventRoutes = require("./routes/calendar/events");
 const documentRoutes = require("./routes/documentRoutes");
+const boardRoutes = require("./routes/kanban/boardRoutes");
+const listRoutes = require("./routes/kanban/listRoutes");
+const cardRoutes = require("./routes/kanban/cardRoutes");
 
 console.log(process.env.NODE_ENV);
 
@@ -50,13 +53,15 @@ app.use("/", express.static(path.join(__dirname, "public")));
 app.use(errorHandler);
 
 // Routes
-app.use("/", require("./routes/root"));
 app.use("/api/v1", account);
 app.use("/api/v1", teamRoutes);
 app.use("/api/v1", messageRoutes);
 app.use("/api/v1", meetingRoutes);
 app.use("/api/v1", eventRoutes);
 app.use("/api/v1", documentRoutes);
+app.use("/api/v1", boardRoutes);    // Update this line
+app.use("/api/v1", listRoutes);      // Update this line
+app.use("/api/v1", cardRoutes);      // Update this line
 
 //404 not found routes
 app.all("*", (req, res) => {

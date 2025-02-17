@@ -1,23 +1,21 @@
 const mongoose = require('mongoose');
-const boardSchema = new mongoose.Schema({
-    type: {
-        type: String,
-        required: true
-    },
-    team: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Team',
-        required: true
-    },
-    order: {
-        type: Number,
-        required: true
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now
+const Schema = mongoose.Schema;
+
+const BoardSchema = new Schema(
+  {
+    teamId: { type: Schema.Types.ObjectId, ref: 'Team', required: true },
+    boardTitle: { type: String, required: true },
+    description: { type: String },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    isArchived: { type: Boolean, default: false },
+    background: {
+      type: { type: String, enum: ['color', 'image'], default: 'color' },
+      value: { type: String, default: '#FFFFFF' }
     }
-});
-boardSchema.index({ type: 1, team: 1 }, { unique: true });
-const Board = mongoose.model('Board', boardSchema);
-module.exports = { Board };
+  },
+  {
+    timestamps: true
+  }
+);
+
+module.exports = mongoose.model('Board', BoardSchema);
