@@ -14,6 +14,7 @@ import {refreshFirebaseToken} from "../config/firebase-config";
 import { errMsg } from "../utils/helper";
 import { updateToken } from "../redux/authSlice";
 import Dashboard from "./main/team/Dashboard";
+import Header from "./Header";
 function Main() {
   const location = useLocation();
 
@@ -42,14 +43,14 @@ function Main() {
   }, []); 
   return (
     <>
+      {/* <Header /> */}
       <LeftPanel />
       <div className="main-container">
-        <div className="content">
+        <div className="">
           <Routes>
             <Route index element={<Home />} />
             <Route path="settings" element={<Settings />} />
             <Route path=":teamId" element={<Team />}>
-              <Route index element={<Dashboard />} />
               <Route path="calendar" element={<Calendar />} />
               <Route path="kanban" element={<Kanban />} />
               <Route path="gantt" element={<Gantt />} />

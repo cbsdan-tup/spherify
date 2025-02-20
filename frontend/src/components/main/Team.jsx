@@ -9,6 +9,7 @@ import TextEditor from "./live-editing/TextEditor";
 import Calendar from "./projectmanagement/Calendar";
 import Dashboard from "./team/Dashboard";
 import MessageGroup from "./textchats/MessageGroup";
+import FileSharingPage from "./file-sharing/FileSharingPage";
 
 function Team() {
   const { teamId } = useParams();
@@ -46,6 +47,7 @@ function Team() {
             <Route path="/message-group/:groupId" element={<MessageGroup />} />
             <Route path="/meeting/:meetId" element={<VideoCallPage />} />
             <Route path="/live-editing/:documentId" element={<TextEditor />} />
+            <Route path="/file-sharing/:folderId" element={<FileSharingPage />} />
           </Routes>
         </div>
       ) : (

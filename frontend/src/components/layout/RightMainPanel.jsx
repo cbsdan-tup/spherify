@@ -2,7 +2,7 @@ import React from 'react';
 
 const RightMainPanel = () => {
     return (
-        <div className='right-main-panel'>
+        <div className='right-main-panel' >
             <h3>Colleagues</h3>
             <hr className='divider'/>
             <input
