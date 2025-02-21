@@ -276,14 +276,7 @@ function Calendar() {
               />
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Location</Form.Label>
-              <Form.Control
-                type="text"
-                value={eventForm.location}
-                onChange={(e) => setEventForm({...eventForm, location: e.target.value})}
-              />
-            </Form.Group>
+            {/* Location Form.Group removed but state and functionality preserved */}
 
             <div className="d-flex justify-content-end gap-2">
               {eventAction === "edit" && (

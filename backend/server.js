@@ -156,7 +156,7 @@ io.on("connection", (socket) => {
     if (!mongoose.Types.ObjectId.isValid(documentId)) {
       console.error("❌ Invalid document ID:", documentId);
       return;
-    }
+      }
   
     console.log(`✅ User joined document: ${documentId}`);
   
