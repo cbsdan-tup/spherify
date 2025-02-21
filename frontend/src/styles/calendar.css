@@ -1,0 +1,34 @@
+// ...existing styles...
+
+.member-list {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  margin-top: 5px;
+}
+
+.member-list .form-check {
+  margin-bottom: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.member-list .form-check:hover {
+  background-color: #f8f9fa;
+}
+
+.member-list .form-check-input {
+  margin-top: 8px;
+}
+
+.member-list .form-check-label {
+  width: 100%;
+  cursor: pointer;
+}
+
+.member-list .form-check:last-child {
+  margin-bottom: 0;
+}
