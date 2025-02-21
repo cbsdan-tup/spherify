@@ -7,10 +7,12 @@ const JitsiMeeting = ({ roomName, displayName }) => {
   const jitsiApi = useRef(null);
   const [loading, setLoading] = useState(true);
   const [isScale, setIsScale] = useState(false);
+  const [redirected, setRedirected] = useState(false); // Track if redirected
 
   const handleScaleClick = () => {
     setIsScale(!isScale);
   };
+
   useEffect(() => {
     const loadJitsi = () => {
       if (!window.JitsiMeetExternalAPI) {
@@ -37,10 +39,12 @@ const JitsiMeeting = ({ roomName, displayName }) => {
       }
 
       const domain = "spherify-meet.mooo.com";
+
       const options = {
         roomName,
         parentNode: jitsiContainer.current,
         userInfo: { displayName },
+        interfaceConfigOverwrite: {},
       };
 
       if (!isScale) {
@@ -55,7 +59,9 @@ const JitsiMeeting = ({ roomName, displayName }) => {
 
       jitsiApi.current.addEventListener("videoConferenceLeft", () => {
         setLoading(true);
+        setRedirected(true);
       });
+
     };
 
     loadJitsi();
@@ -65,10 +71,20 @@ const JitsiMeeting = ({ roomName, displayName }) => {
         jitsiApi.current.dispose();
       }
     };
-  }, [roomName, displayName]);
+  }, [roomName, displayName, isScale]);
+
+  if (redirected) {
+    return (
+      <div className="p-3">
+        <h2>Meeting was terminated</h2>
+        <p>The meeting was redirected or terminated. Please check the link.</p>
+      </div>
+    );
+  }
 
   return (
     <>
+      {loading && <LoadingSpinner />} {/* Display spinner while loading */}
       <div
         onClick={handleScaleClick}
         className={`scale-button-container ${isScale ? "scale" : ""}`}

@@ -13,74 +13,74 @@ const FeaturesPage = () => {
         <hr className="section-divider" />
         <div className="features-grid">
           <div className="feature-item">
-            <video
-              src="/images/chats.mp4"
+            <img
+              src="/images/chats.png"
               alt="Chats"
               className="feature-video"
               autoPlay
               loop
               muted
-            ></video>
+            />
             <p>Chats</p>
           </div>
 
           <div className="feature-item">
-            <video
-              src="/images/video call.mp4"
+            <img
+              src="/images/video call.png"
               alt="Video Calls"
               className="feature-video"
               autoPlay
               loop
               muted
-            ></video>
+            />
             <p>Video Calls</p>
           </div>
 
           <div className="feature-item">
-            <video
-              src="/images/file transfer.mp4"
+            <img
+              src="/images/file sharing.png"
               alt="File Sharing"
               className="feature-video"
               autoPlay
               loop
               muted
-            ></video>
+            />
             <p>File Sharing</p>
           </div>
 
           <div className="feature-item">
-            <video
-              src="/images/management tools.mp4"
+            <img
+              src="/images/management tools.png"
               alt="Management Tools"
               className="feature-video"
               autoPlay
               loop
               muted
-            ></video>
+            />
             <p>Management Tools</p>
           </div>
 
           <div className="feature-item">
-            <video
-              src="/images/data analytics.mp4"
+            <img
+              src="/images/data analytics.png"
               alt="Data Analytics"
               className="feature-video"
               autoPlay
               loop
               muted
-            ></video>
+            />
             <p>Data Analytics</p>
           </div>
 
           <div className="feature-item">
-            <video
-              src="/images/role management.mp4"
+            <img
+              src="/images/role managemnet.png"
               alt="Role Assignment"
               className="feature-video"
               autoPlay
               loop
               muted
-            ></video>
+            />
             <p>Role Assignment</p>
           </div>
         </div>

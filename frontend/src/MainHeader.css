@@ -1,0 +1,91 @@
+.header-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+}
+
+.header-container .header {
+    padding: 0.7rem 1.5rem;
+    background-color: var(--primary-color);
+    color: var(--text-white);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 4.8rem;
+}
+
+.header-container .header .content {
+    flex: 1;
+}
+.header .brand {
+    font-size: 1.2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center ;
+    gap: 0.5rem;
+}
+.header .brand img {
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 50%;
+}
+.header .go-to-main {
+    cursor: pointer;
+}
+.go-to-main .button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    color: var(--text-white);
+    cursor: pointer;
+    background-color: var(--secondary-color-opacity);
+    padding: 0.5rem 1.3rem;
+    border-radius: 0.5rem;
+}
+.go-to-main .button .icon {
+    font-size: 1.3rem;
+}
+.go-to-main .button .label {
+    font-size: 1rem;
+}
+.go-to-main .button:hover {
+    outline: none;
+    text-decoration: none;
+}
+
+.header .right-navigation {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-size: 1.2rem;
+    justify-content: flex-end;
+}
+.header .right-navigation .profile {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem
+}
+.right-navigation .profile img {
+    width: 3rem;
+    height: 3rem;
+    border: 3px solid var( --active-color);
+    border-radius: 50%;
+}
+
+.header .right-navigation .button {
+    cursor: pointer;
+    color: var(--text-white);
+    padding: 0.5rem 0.7rem;
+    border-radius: 0.5rem;
+    font-size: 1.5rem; 
+}
+
+.header .right-navigation .button.settings {
+    color: var(--secondary-color)
+}
+
+.header .right-navigation .button.logout {
+    color: var(--danger-color)
+}

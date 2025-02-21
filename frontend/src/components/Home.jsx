@@ -27,7 +27,7 @@ const Home = () => {
         <div className="illustration-section">
           <div className="video-container">
             <video
-              src="/images/homepage.mp4" 
+              src="/images/logo-animation.mp4" 
               className="illustration-video"
               autoPlay
               loop

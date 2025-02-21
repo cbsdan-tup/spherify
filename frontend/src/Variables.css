@@ -1,6 +1,7 @@
 :root {
     --primary-color: #001f3f;
     --secondary-color: #7ab2d3;
+    --secondary-color-opacity: #7ab2d366;
     --tertiary-color: #cbdceb;
   
     --header-text-color: #1d559e;
