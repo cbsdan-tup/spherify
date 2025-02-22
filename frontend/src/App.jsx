@@ -12,6 +12,7 @@ import "./Variables.css";
 // import "./MainHeader.css";
 import "./App.css";
 import "./Main.css";
+import "./FileSharing.css";
 import "./TextChats.css";
 import "./Conferencing.css";
 import { Navigate } from "react-router";

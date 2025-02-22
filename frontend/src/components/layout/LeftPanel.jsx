@@ -5,7 +5,7 @@ import { errMsg, getUser, logout, succesMsg } from "../../utils/helper";
 import AddTeamForm from "../main/AddTeamForm";
 import { getToken } from "../../utils/helper";
 import axios from "axios";
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector } from "react-redux";
 import { setTeamId, clearTeamId, clearMsgGroupId } from "../../redux/teamSlice";
 
 const LeftPanel = () => {
@@ -42,7 +42,6 @@ const LeftPanel = () => {
     console.log("Form Data:", data);
 
     try {
-
       const token = getToken(authState);
       const userId = getUser(authState)?._id;
 
@@ -60,7 +59,8 @@ const LeftPanel = () => {
         formData.append("members", JSON.stringify(data.membersEmail));
       }
 
-      const response = await axios.post(`${import.meta.env.VITE_API}/addTeam`, 
+      const response = await axios.post(
+        `${import.meta.env.VITE_API}/addTeam`,
         formData,
         {
           headers: {
@@ -69,9 +69,25 @@ const LeftPanel = () => {
           },
         }
       );
-      
+
       console.log("Team created successfully:", response);
-      succesMsg("Team created successfully!");  
+      const newTeamId = response.data.team?._id;
+      const createTeamFolder = await axios.post(
+        `${import.meta.env.VITE_API}/createTeamFolder/${newTeamId}`,
+        {
+          createdBy: userId,
+          owner: userId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      console.log("Team folder created successfully:", createTeamFolder);
+
+      succesMsg("Team created successfully!");
       fetchTeams();
 
       handleClose();
@@ -97,13 +113,19 @@ const LeftPanel = () => {
     }
   };
   useEffect(() => {
-
     fetchTeams();
   }, []);
 
   return (
     <div className="left-panel-container">
-      <Link className="spherify-logo-container" to="/main" onClick={() => {dispatch(clearTeamId()); dispatch(clearMsgGroupId())}}>
+      <Link
+        className="spherify-logo-container"
+        to="/main"
+        onClick={() => {
+          dispatch(clearTeamId());
+          dispatch(clearMsgGroupId());
+        }}
+      >
         <img
           src="/images/white-logo.png"
           alt="Spherify"
@@ -123,7 +145,9 @@ const LeftPanel = () => {
             teams.map((team) => (
               <Link
                 to={`/main/${team._id}`}
-                className={`team-link ${team._id === currentTeamId ? "active" : ""}`}
+                className={`team-link ${
+                  team._id === currentTeamId ? "active" : ""
+                }`}
                 key={team._id}
                 onClick={() => dispatch(setTeamId(team._id))}
               >
@@ -144,11 +168,25 @@ const LeftPanel = () => {
       </div>
       <hr className="divider" />
       <div className="bottom-section">
-        <Link className="button settings-button mb-0" to="/main/settings" onClick={() => {dispatch(clearTeamId()); dispatch(clearMsgGroupId())}}>
+        <Link
+          className="button settings-button mb-0"
+          to="/main/settings"
+          onClick={() => {
+            dispatch(clearTeamId());
+            dispatch(clearMsgGroupId());
+          }}
+        >
           <img className="icon" src="/images/settings-icon.png" />
           Settings
         </Link>
-        <button className="button logout-button mb-0" onClick={()=>{logoutHandler(); dispatch(clearTeamId()); dispatch(clearMsgGroupId())}}>
+        <button
+          className="button logout-button mb-0"
+          onClick={() => {
+            logoutHandler();
+            dispatch(clearTeamId());
+            dispatch(clearMsgGroupId());
+          }}
+        >
           <img className="icon" src="/images/logout-icon.png" />
           Logout
         </button>

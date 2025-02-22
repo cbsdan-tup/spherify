@@ -16,12 +16,12 @@ const getUserFromToken = async (req) => {
     }
 
     try {
-        console.log('Verifying token:', token);  
+        // console.log('Verifying token:', token);  
 
         const decodedToken = await admin.auth().verifyIdToken(token); 
         const uid = decodedToken.uid; 
 
-        console.log('Decoded token:', decodedToken); 
+        // console.log('Decoded token:', decodedToken); 
 
         const user = await User.findOne({ uid });
 

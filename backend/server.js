@@ -28,6 +28,8 @@ const messageRoutes = require("./routes/messageRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
 const eventRoutes = require("./routes/calendar/events");
 const documentRoutes = require("./routes/documentRoutes");
+const nextCloudRoutes = require("./routes/nextCloudUpload");
+const fileSharingRoutes = require("./routes/fileSharingRoutes");
 
 console.log(process.env.NODE_ENV);
 
@@ -57,6 +59,8 @@ app.use("/api/v1", messageRoutes);
 app.use("/api/v1", meetingRoutes);
 app.use("/api/v1", eventRoutes);
 app.use("/api/v1", documentRoutes);
+app.use("/api/v1", nextCloudRoutes);
+app.use("/api/v1", fileSharingRoutes);
 
 //404 not found routes
 app.all("*", (req, res) => {

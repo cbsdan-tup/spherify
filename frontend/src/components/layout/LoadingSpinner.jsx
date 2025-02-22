@@ -1,7 +1,7 @@
 import React from 'react';
 import ClipLoader from 'react-spinners/ClipLoader';
 
-const LoadingSpinner = ({ message }) => {
+const LoadingSpinner = ({ message , height}) => {
   return (
     <div
       style={{
@@ -11,7 +11,7 @@ const LoadingSpinner = ({ message }) => {
         flexDirection: 'column',
         fontSize: "20px",
         fontWeight: "600",
-        height: 'calc(100vh - 70px)',
+        height: height ? height : 'calc(100vh - 70px)',
       }}
     >
       <ClipLoader color="#00BFFF" size={80} />

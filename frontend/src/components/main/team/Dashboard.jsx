@@ -13,6 +13,7 @@ import { FaPlus, FaPencilAlt } from "react-icons/fa";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { errMsg, getToken } from "../../../utils/helper";
+import FileShare from "../file-sharing/FileShare";
 
 // Register chart elements
 ChartJS.register(
@@ -81,6 +82,7 @@ const Dashboard = () => {
 
   return (
     <div className="team-content container">
+      <FileShare />
       <h1 className="fw-bold text-primary">Data Analytics & Dashboard</h1>
       <hr />
       {/* Main Grid Layout */}

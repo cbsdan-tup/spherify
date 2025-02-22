@@ -1,0 +1,188 @@
+.fs-container {
+  width: 100%;
+  color: var(--header-text-color);
+}
+
+.fs-header {
+  display: flex;
+  align-self: center;
+  justify-content: space-between;
+  background-color: #f3f3e0;
+  font-weight: 600;
+  padding: 1rem;
+  border-top-left-radius: 0.8rem;
+  border-top-right-radius: 0.8rem;
+}
+.fs-header .header-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 1.2rem;
+  flex: 1;
+}
+.fs-header .header-title .path {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.fs-header .header-title .path .back {
+  cursor: pointer;
+  margin-left: 0.6rem;
+  color: var(--danger-color);
+}
+.fs-header .header-title .right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  position: relative;
+}
+.fs-header .header-title .right .main-button {
+  background-color: var(--header-text-color);
+  color: var(--text-white);
+  padding: 0.3rem 0.8rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  border: none;
+}
+.fs-header .header-title .right .main-button i {
+  font-size: 1rem;
+}
+.fs-header .header-title .right .main-button span {
+  margin-left: 0.5rem;
+}
+.fs-header .header-title .right .main-button:focus {
+  border: none;
+  outline: none;
+}
+.fs-header .header-title .right .hidden-buttons {
+  position: absolute;
+  top: 3rem;
+  right: 0;
+  background-color: #f3f3e0;
+  border-radius: 0.5rem;
+  box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.1);
+  padding: 0.5rem 1rem;
+  z-index: 1;
+  width: 15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background-color: var(--header-text-color);
+  color: var(--text-white);
+}
+
+.fs-header .header-title .right .hidden-buttons button {
+  background-color: transparent;
+  border: none;
+  color: var(--header-text-color);
+  cursor: pointer;
+  padding: 0.5rem;
+  width: 100%;
+  text-align: start;
+}
+
+.fs-header .header-title .right .hidden-buttons button:focus {
+  border: none;
+  outline: none;
+}
+.fs-header .header-title .right .hidden-buttons button:hover * {
+  color: var(--secondary-color);
+}
+.fs-header .header-title .right .hidden-buttons > button:last-of-type {
+  border-bottom: none;
+}
+.fs-header .header-title .right .hidden-buttons button i {
+  width: 2rem;
+  color: var(--text-white);
+  text-align: center;
+}
+.fs-header .header-title .right .hidden-buttons button span {
+  color: var(--text-white);
+  font-size: 1rem;
+}
+
+.fs-header .header-title .right .hidden-buttons * {
+  flex: 1;
+}
+.fs-header .header-title .right .hidden-buttons button {
+  border-bottom: 1px solid var(--text-white);
+}
+.fs-header .header-title .refresh {
+  cursor: pointer;
+  width: 1.5rem;
+}
+.fs-content {
+  background-color: var(--tertiary-color);
+  padding: 0.7rem;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+.fs-header .header-title .right .button-container {
+  display: flex;
+  gap: 0.5rem;
+}
+.fs-content .folder,
+.fs-content .file {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--secondary-color-opacity);
+}
+
+.fs-content .folder .name:hover ,
+.fs-content .file .name:hover {
+  text-decoration: underline;
+}
+
+.fs-content > div:last-child {
+  border-bottom: none;
+}
+.fs-content .modification {
+  font-style: italic;
+  color: #4d97c2;
+  font-size: 1rem;
+}
+
+.fs-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  justify-content: space-between;
+}
+
+.fs-footer .progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+} 
+
+.fs-footer .progress span {
+  font-size: 1rem;
+}
+.fs-footer progress {
+  width: 30vw;
+}
+.fs-footer .status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.loader {
+  width: 24px;
+  height: 24px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
