@@ -48,7 +48,7 @@ const JitsiMeeting = ({ roomName, displayName }) => {
       };
 
       if (!isScale) {
-        options.height = 570;
+        options.height = 700;
       }
 
       jitsiApi.current = new window.JitsiMeetExternalAPI(domain, options);

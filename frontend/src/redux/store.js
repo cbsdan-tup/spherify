@@ -5,11 +5,17 @@ import storage from 'redux-persist/lib/storage';
 import authReducer from './authSlice';
 import teamReducer from './teamSlice';
 import calendarReducer from './calendarSlice';
+import boardReducer from './boardSlice';
+import listReducer from './listSlice';
+import cardReducer from './cardSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
   team: teamReducer,
   calendar: calendarReducer,
+  boards: boardReducer,
+  lists: listReducer,
+  cards: cardReducer,
 });
 
 const persistConfig = {

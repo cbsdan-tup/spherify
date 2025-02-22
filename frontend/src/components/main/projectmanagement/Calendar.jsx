@@ -11,12 +11,14 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import { fetchTeamMembers } from "../../../functions/TeamFunctions";
 
 function Calendar() {
   const dispatch = useDispatch();
   const { currentTeamId } = useSelector((state) => state.team);
   const { events, error } = useSelector((state) => state.calendar);
   const { user } = useSelector((state) => state.auth);
+  const authState = useSelector((state) => state.auth);
   
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventAction, setEventAction] = useState("create");
@@ -26,16 +28,28 @@ function Calendar() {
     description: "",
     startDate: "",
     endDate: "",
-    location: ""
+    location: "",
+    assignedMembers: []
   });
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [teamMembers, setTeamMembers] = useState([]);
 
   useEffect(() => {
     if (currentTeamId) {
       dispatch(fetchEvents(currentTeamId));
     }
   }, [currentTeamId, dispatch]);
+
+  useEffect(() => {
+    const loadMembers = async () => {
+      if (currentTeamId) {
+        const members = await fetchTeamMembers(currentTeamId, authState);
+        setTeamMembers(members || []);
+      }
+    };
+    loadMembers();
+  }, [currentTeamId, authState]);
 
   const formatDateForInput = (date) => {
     if (!date) return '';
@@ -52,7 +66,8 @@ function Calendar() {
       description: "",
       startDate: formatDateForInput(selectInfo.start),
       endDate: formatDateForInput(selectInfo.end),
-      location: ""
+      location: "",
+      assignedMembers: []
     });
     setShowEventModal(true);
   };
@@ -60,12 +75,15 @@ function Calendar() {
   const handleEventClick = (clickInfo) => {
     setEventAction("edit");
     setSelectedEvent(clickInfo.event);
+    const eventDetails = clickInfo.event;
+    
     setEventForm({
-      name: clickInfo.event.title,
-      description: clickInfo.event.extendedProps.description || "",
-      startDate: formatDateForInput(clickInfo.event.start),
-      endDate: formatDateForInput(clickInfo.event.end || clickInfo.event.start),
-      location: clickInfo.event.extendedProps.location || ""
+      name: eventDetails.title,
+      description: eventDetails.extendedProps.description || "",
+      startDate: formatDateForInput(eventDetails.start),
+      endDate: formatDateForInput(eventDetails.end || eventDetails.start),
+      location: eventDetails.extendedProps.location || "",
+      assignedMembers: eventDetails.extendedProps.assignedMembers || []
     });
     setShowEventModal(true);
   };
@@ -78,13 +96,45 @@ function Calendar() {
       description: "",
       startDate: "",
       endDate: "",
-      location: ""
+      location: "",
+      assignedMembers: []
     });
   };
 
+  // Add this helper function after the existing helper functions
+  const checkForOverlappingEvents = (newStart, newEnd, assignedMembers, currentEventId = null) => {
+    const newStartDate = new Date(newStart);
+    const newEndDate = new Date(newEnd);
+
+    return events.some(event => {
+      // Skip checking against the current event when editing
+      if (currentEventId && event._id === currentEventId) {
+        return false;
+      }
+
+      const eventStart = new Date(event.start || event.startDate);
+      const eventEnd = new Date(event.end || event.endDate);
+      
+      // Check if dates overlap
+      const datesOverlap = (
+        (newStartDate >= eventStart && newStartDate < eventEnd) ||
+        (newEndDate > eventStart && newEndDate <= eventEnd) ||
+        (newStartDate <= eventStart && newEndDate >= eventEnd)
+      );
+
+      // Check if any assigned members overlap
+      const membersOverlap = assignedMembers.some(memberId => 
+        event.assignedMembers?.includes(memberId)
+      );
+
+      return datesOverlap && membersOverlap;
+    });
+  };
+
+  // Replace the existing handleFormSubmit with this updated version
   const handleFormSubmit = async (e) => {
     e.preventDefault();
-    
+      
     const now = new Date();
     const startDate = new Date(eventForm.startDate);
     const endDate = new Date(eventForm.endDate);
@@ -103,6 +153,20 @@ function Calendar() {
       return;
     }
 
+    // Check for overlapping events
+    const hasOverlap = checkForOverlappingEvents(
+      startDate,
+      endDate,
+      eventForm.assignedMembers,
+      selectedEvent?.id
+    );
+
+    if (hasOverlap) {
+      setToastMessage("One or more assigned members already have an event during this time slot!");
+      setShowToast(true);
+      return;
+    }
+
     const eventData = {
       teamId: currentTeamId,
       name: eventForm.name,
@@ -110,24 +174,30 @@ function Calendar() {
       startDate: eventForm.startDate,
       endDate: eventForm.endDate,
       location: eventForm.location,
-      createdBy: user._id
+      assignedMembers: eventForm.assignedMembers
     };
 
     try {
       if (eventAction === "create") {
-        dispatch(createEvent(eventData));
+        await dispatch(createEvent(eventData)).unwrap();
         setToastMessage("Event created successfully!");
       } else {
-        dispatch(updateEvent({
+        await dispatch(updateEvent({
           eventId: selectedEvent.id,
-          eventData
-        }));
+          eventData: {
+            ...eventData,
+            title: eventForm.name,
+            start: eventForm.startDate,
+            end: eventForm.endDate
+          }
+        })).unwrap();
         setToastMessage("Event updated successfully!");
       }
+      dispatch(fetchEvents(currentTeamId));
       setShowToast(true);
       handleModalClose();
     } catch (err) {
-      setToastMessage("An error occurred");
+      setToastMessage(err.message || "An error occurred");
       setShowToast(true);
     }
   };
@@ -138,9 +208,11 @@ function Calendar() {
     return formatDateForInput(now);
   };
 
-  const handleDeleteEvent = () => {
+  const handleDeleteEvent = async () => {
     try {
-      dispatch(deleteEvent(selectedEvent.id));
+      await dispatch(deleteEvent(selectedEvent.id)).unwrap();
+      // Add this line to refresh events after delete
+      dispatch(fetchEvents(currentTeamId));
       setToastMessage("Event deleted successfully!");
       setShowToast(true);
       handleModalClose();
@@ -158,9 +230,45 @@ function Calendar() {
     extendedProps: {
       description: event.description,
       location: event.location,
-      createdBy: event.createdBy
+      createdBy: event.createdBy,
+      assignedMembers: event.assignedMembers || []
     }
   })) : [];
+
+  const renderMemberSelection = () => (
+    <Form.Group className="mb-3">
+      <Form.Label>Assign Members</Form.Label>
+      <div className="member-list">
+        {teamMembers && teamMembers.map((member) => (
+          <Form.Check
+            key={member.user._id}
+            type="checkbox"
+            id={`member-${member.user._id}`}
+            label={
+              <div className="d-flex align-items-center gap-2">
+                <img 
+                  src={member.user.avatar?.url || "/images/account.png"} 
+                  alt={member.user.firstName}
+                  style={{ width: '24px', height: '24px', borderRadius: '50%' }}
+                />
+                <span>{member.user.firstName} {member.user.lastName}</span>
+              </div>
+            }
+            checked={eventForm.assignedMembers.includes(member.user._id)}
+            onChange={(e) => {
+              const memberId = member.user._id;
+              setEventForm(prev => ({
+                ...prev,
+                assignedMembers: e.target.checked
+                  ? [...prev.assignedMembers, memberId]
+                  : prev.assignedMembers.filter(id => id !== memberId)
+              }));
+            }}
+          />
+        ))}
+      </div>
+    </Form.Group>
+  );
 
   return (
     <div className="calendar-container" style={{padding: '1rem', paddingTop: '80px',  }}>
@@ -276,14 +384,7 @@ function Calendar() {
               />
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label>Location</Form.Label>
-              <Form.Control
-                type="text"
-                value={eventForm.location}
-                onChange={(e) => setEventForm({...eventForm, location: e.target.value})}
-              />
-            </Form.Group>
+            {renderMemberSelection()}
 
             <div className="d-flex justify-content-end gap-2">
               {eventAction === "edit" && (

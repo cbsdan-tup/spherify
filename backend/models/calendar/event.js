@@ -1,39 +1,46 @@
-const { Schema, model } = require("mongoose");
+const mongoose = require('mongoose');
 
-const EventSchema = Schema({
+const EventSchema = new mongoose.Schema({
+  team: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Team',
+    required: true
+  },
   title: {
     type: String,
-    required: [true, "Title is required"],
-  },
-  team: {
-    type: Schema.Types.ObjectId,
-    ref: "Team",
-    required: [true, "Team is required"],
-  },
-  createdBy: {
-    type: Schema.Types.ObjectId,
-    ref: "User",
-    required: [true, "User is required"],
-  },
-  start: {
-    type: Date,
-    required: [true, "Start date is required"],
-  },
-  end: {
-    type: Date,
-    required: [true, "End date is required"],
+    required: true,
+    trim: true,
+    maxLength: 50
   },
   description: {
     type: String,
+    trim: true,
+    maxLength: 500
+  },
+  start: {
+    type: Date,
+    required: true
+  },
+  end: {
+    type: Date,
+    required: true
   },
   location: {
     type: String,
-  }
+    trim: true,
+    maxLength: 100
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  assignedMembers: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }]
+}, {
+  timestamps: true
 });
 
-EventSchema.methods.toJSON = function () {
-  const { __v, ...event } = this.toObject();
-  return event;
-};
-
-module.exports = model("Event", EventSchema);
+module.exports = mongoose.model('Event', EventSchema);

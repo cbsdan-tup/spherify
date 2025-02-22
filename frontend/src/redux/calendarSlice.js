@@ -104,8 +104,13 @@ const calendarSlice = createSlice({
         state.error = action.payload;
       })
       .addCase(createEvent.fulfilled, (state, action) => {
-        // No need to transform, just push the event as-is
-        state.events.push(action.payload);
+        const newEvent = {
+          ...action.payload,
+          start: new Date(action.payload.start || action.payload.startDate).toISOString(),
+          end: new Date(action.payload.end || action.payload.endDate).toISOString()
+        };
+        state.events.push(newEvent);
+        state.error = null;
       })
       .addCase(createEvent.rejected, (state, action) => {
         state.error = action.payload;
@@ -113,15 +118,21 @@ const calendarSlice = createSlice({
       .addCase(updateEvent.fulfilled, (state, action) => {
         const index = state.events.findIndex(event => event._id === action.payload._id);
         if (index !== -1) {
-          // Replace the entire event object
-          state.events[index] = action.payload;
+          state.events[index] = {
+            ...action.payload,
+            start: new Date(action.payload.start || action.payload.startDate).toISOString(),
+            end: new Date(action.payload.end || action.payload.endDate).toISOString(),
+            title: action.payload.title || action.payload.name // Handle both title and name
+          };
         }
+        state.error = null;
       })
       .addCase(updateEvent.rejected, (state, action) => {
         state.error = action.payload;
       })
       .addCase(deleteEvent.fulfilled, (state, action) => {
         state.events = state.events.filter(event => event._id !== action.payload);
+        state.error = null;
       })
       .addCase(deleteEvent.rejected, (state, action) => {
         state.error = action.payload;

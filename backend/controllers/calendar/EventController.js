@@ -39,7 +39,7 @@ exports.getEventsByTeam = async (req, res) => {
 
 exports.createEvent = async (req, res) => {
   try {
-    const { teamId, name, description, startDate, endDate, location, createdBy } = req.body;
+    const { teamId, name, description, startDate, endDate, location, assignedMembers } = req.body;
 
     // Verify team membership
     const team = await Team.findOne({
@@ -58,10 +58,15 @@ exports.createEvent = async (req, res) => {
       end: new Date(endDate),
       description,
       location,
-      createdBy: req.user._id
+      createdBy: req.user._id,
+      assignedMembers: assignedMembers || [] // Add this line
     });
 
     await event.save();
+    
+    // Populate the createdBy and assignedMembers fields before sending response
+    await event.populate('createdBy assignedMembers', 'firstName lastName email avatar');
+    
     return res.status(201).json({ event });
   } catch (error) {
     console.log(error);
@@ -74,7 +79,7 @@ exports.createEvent = async (req, res) => {
 
 exports.updateEvent = async (req, res) => {
   const { eventId } = req.params;
-  const { name, description, startDate, endDate, location, teamId } = req.body;
+  const { name, description, startDate, endDate, location, teamId, assignedMembers } = req.body;
 
   try {
     // Verify team membership
@@ -90,14 +95,15 @@ exports.updateEvent = async (req, res) => {
     const event = await Event.findByIdAndUpdate(
       eventId,
       {
-        title: name, // Convert frontend 'name' to backend 'title'
+        title: name,
         start: new Date(startDate),
         end: new Date(endDate),
         description,
-        location
+        location,
+        assignedMembers: assignedMembers || [] // Add this line
       },
       { new: true }
-    ).populate('createdBy', 'firstName lastName email');
+    ).populate('createdBy assignedMembers', 'firstName lastName email avatar');
 
     if (!event) {
       return res.status(404).json({ message: "Event not found" });

@@ -28,8 +28,11 @@ const messageRoutes = require("./routes/messageRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
 const eventRoutes = require("./routes/calendar/events");
 const documentRoutes = require("./routes/documentRoutes");
+const boardRoutes = require("./routes/kanban/boardRoutes");
+const listRoutes = require("./routes/kanban/listRoutes")
 const nextCloudRoutes = require("./routes/nextCloudUpload");
-const fileSharingRoutes = require("./routes/fileSharingRoutes");
+const fileSharingRoutes = require("./routes/fileSharingRoutes");;
+const cardRoutes = require("./routes/kanban/cardRoutes");
 
 console.log(process.env.NODE_ENV);
 
@@ -52,13 +55,15 @@ app.use("/", express.static(path.join(__dirname, "public")));
 app.use(errorHandler);
 
 // Routes
-app.use("/", require("./routes/root"));
 app.use("/api/v1", account);
 app.use("/api/v1", teamRoutes);
 app.use("/api/v1", messageRoutes);
 app.use("/api/v1", meetingRoutes);
 app.use("/api/v1", eventRoutes);
 app.use("/api/v1", documentRoutes);
+app.use("/api/v1", boardRoutes);    // Update this line
+app.use("/api/v1", listRoutes);      // Update this line
+app.use("/api/v1", cardRoutes);      // Update this line
 app.use("/api/v1", nextCloudRoutes);
 app.use("/api/v1", fileSharingRoutes);
 
@@ -155,7 +160,7 @@ io.on("connection", (socket) => {
     if (!mongoose.Types.ObjectId.isValid(documentId)) {
       console.error("❌ Invalid document ID:", documentId);
       return;
-    }
+      }
   
     console.log(`✅ User joined document: ${documentId}`);
   

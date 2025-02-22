@@ -1,6 +1,5 @@
 const { Team } = require("../models/Team");
 const cloudinary = require("cloudinary").v2;
-const { ensureBoardConfig } = require("./kanban/boardController");
 
 exports.addTeam = async (req, res) => {
   try {
@@ -78,9 +77,8 @@ exports.addTeam = async (req, res) => {
       createdBy,
     });
 
-    // Save team and initialize boards
+    // Save team (removed board initialization)
     const savedTeam = await newTeam.save();
-    await ensureBoardConfig(savedTeam._id, savedTeam.name);
     res.status(201).json({
       message: "Team created successfully",
       team: savedTeam,
