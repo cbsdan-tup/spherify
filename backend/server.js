@@ -61,9 +61,9 @@ app.use("/api/v1", messageRoutes);
 app.use("/api/v1", meetingRoutes);
 app.use("/api/v1", eventRoutes);
 app.use("/api/v1", documentRoutes);
-app.use("/api/v1", boardRoutes);    // Update this line
-app.use("/api/v1", listRoutes);      // Update this line
-app.use("/api/v1", cardRoutes);      // Update this line
+app.use("/api/v1", boardRoutes);    
+app.use("/api/v1", listRoutes);      
+app.use("/api/v1", cardRoutes);      
 app.use("/api/v1", nextCloudRoutes);
 app.use("/api/v1", fileSharingRoutes);
 
