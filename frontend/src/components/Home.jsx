@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import "../index.css";
 import { Link } from 'react-router-dom';
 import { createInfiniteScroll } from '../functions/Homefunctions';
+// import { Canvas } from '@react-three/fiber';
+// import { OrbitControls, useGLTF } from '@react-three/drei';
 
 
 const Home = () => {
@@ -12,9 +14,19 @@ const Home = () => {
     }
   }, []);
 
+  // const Model = () => {
+  //   // Load the GLTF model
+  //   const { scene } = useGLTF('/3d-assets/model.glb');  // Path to your GLB model
+  
+  //   return (
+  //     <primitive object={scene} scale={0.5} position={[0, -1, 0]} />
+  //   );
+  // };
+
   return (
     <div className="landing-page">
-      <main className="main-content">
+
+    <main className="main-content">
         {/* Main text section */}
         <div className="text-section">
           <h1>
@@ -31,31 +43,33 @@ const Home = () => {
         </div>
 
         {/* Illustration Section */}
-        <div className="illustration-section">
-          <div className="video-container">
-            <video
-              
-              className="illustration-video"
-              autoPlay
-              loop
-              muted
-            />
-          </div>
-        </div>
+        {/* <div className="illustration-section">
+      <div className="canvas-container">
+        <Canvas style={{ height: '100vh', width: '100%' }}>
+          <ambientLight intensity={0.5} />
+          <spotLight position={[10, 10, 10]} angle={0.15} intensity={1} />
+          
+          <Model />
+          
+          <OrbitControls />
+        </Canvas>
+      </div>
+    </div> */}
 
-        {/* Decorative Circles */}
-        <div className="decorative-elements">
+
+    {/* Decorative Circles */}
+    <div className="decorative-elements">
           <div className="green-circle"></div>
           <div className="green-circle small"></div>
           <div className="green-circle top-left"></div>
           <div className="green-circle top-center"></div>
           <div className="green-circle bottom-right"></div>
           <div className="green-circle center"></div>
-        </div>
-      </main>
+    </div>
+    </main>
 
-       {/* Features Section */}
-       <section className="features-section">
+    {/* Features Section */}
+    <section className="features-section">
         <h2 className="features-heading">
           <span className="highlight">Features</span></h2>
           <div class="features-carousel">
@@ -115,135 +129,163 @@ const Home = () => {
           </div>
         </div>
       </div>  
-      </section>
+    </section>
 
-
-      {/* About Us Section */}
-      <section className="about-section">
-        <div className="about-content">
-          <div className="about-image">
-            <img
-              src="/images/about us.png"
-              alt="About Us"
-              className="about-img"
-            />
-          </div>
-
-          <div className="about-text">
-            <h2>About Us</h2>
-            <h3>
-              Spherify is a dynamic team planning and collaboration platform
-              designed for software developers.
-            </h3>
-            <p>
-              Streamlines communication, task management, and workflow tracking
-              in one centralized platform. With real-time collaboration, task
-              coordination, and integrated tools for scheduling and productivity,
-              it empowers development teams to boost efficiency, reduce delays,
-              and enhance accountability.
-            </p>
-          </div>
-        </div>
-      </section>
-
-    
-
-    {/* How to Use Section */}
-<section className="how-to-use-section">
-  <h2 className="how-to-use-heading">
-    How to Use <span className="highlight">Spherify</span>
-  </h2>
-  <div className="how-to-use-content">
-    <div className="step">
-      <div className="face face1">
-        <div className="content">
-          <h3>Step 1: Sign Up</h3>
-        </div>
-      </div>
-      <div className="face face2">
-        <p>Start by creating an account on our platform. It only takes a few moments to get started!</p>
-      </div>
+    {/* About Section */}
+    <section className="about" id="about">
+  <div className="box-container">
+  <h2 className="deco-title">Our Story</h2>
+    <div className="image">
+      <img src="/images/about us.png" alt="About Us" />
     </div>
-
-    <div className="step">
-      <div className="face face1">
-        <div className="content">
-          <h3>Step 2: Set Up Your Team</h3>
+    <div className="content">
+      <h3 className="title">Spherify: Empowering Teams to Collaborate Better</h3>
+      <p>
+        At Spherify, we believe that effective collaboration is the key to success.
+        Our platform was designed with one goal in mind: to simplify the way teams work together,
+        no matter where they are. With powerful tools for task management, real-time communication,
+        and seamless file sharing, Spherify ensures that your team stays on track and productive from start to finish.
+      </p>
+      <div className="icons-container">
+        <div className="icons">
+          <img src="/images/icon-connect.png" alt="We Connect" />
+          <h3>We Connect</h3>
         </div>
-      </div>
-      <div className="face face2">
-        <p>Invite your team members and set up your team workspace. Organize tasks, assign roles, and start collaborating.</p>
-      </div>
-    </div>
-
-    <div className="step">
-      <div className="face face1">
-        <div className="content">
-          <h3>Step 3: Start Collaborating</h3>
+        <div className="icons">
+          <img src="/images/icon-organize.png" alt="We Organize" />
+          <h3>We Organize</h3>
         </div>
-      </div>
-      <div className="face face2">
-        <p>Use our chat, video calls, and file-sharing tools to collaborate in real-time. Stay connected and keep track of your team's progress.</p>
-      </div>
-    </div>
-
-    <div className="step">
-      <div className="face face1">
-        <div className="content">
-          <h3>Step 4: Analyze Data</h3>
+        <div className="icons">
+          <img src="/images/icon-analyze.png" alt="We Analyze" />
+          <h3>We Analyze</h3>
         </div>
-      </div>
-      <div className="face face2">
-        <p>Utilize our built-in data analytics tools to track performance and improve team efficiency. Make informed decisions for your projects.</p>
       </div>
     </div>
   </div>
-</section>
+    </section>
 
-
-
-
-
-      {/* Developers Section */}
-      <section className="developers-section">
-        <h2>Developers</h2>
-        <div className="developers-grid">
-          <div className="developer-card">
-            <img
-              src="/images/cabasa.png"
-              alt="Daniel Cabasa"
-              className="developer-img"
-            />
-            <p>Cabasa, Daniel</p>
+    {/* How to Use Section */}
+    <section className="how-to-use-section">
+      <h2 className="how-to-use-heading">
+        How to Use <span className="highlight">Spherify</span>
+      </h2>
+      <div className="how-to-use-content">
+        <div className="step">
+          <div className="face face1">
+            <div className="content">
+              <h3>Step 1: Sign Up</h3>
+            </div>
           </div>
-          <div className="developer-card">
-            <img
-              src="/images/diaz.png"
-              alt="Romel Diaz"
-              className="developer-img"
-            />
-            <p>Diaz, Romel</p>
-          </div>
-          <div className="developer-card">
-            <img
-              src="/images/lebosada.png"
-              alt="Jury Lebosada"
-              className="developer-img"
-            />
-            <p>Lebosada, Jury</p>
-          </div>
-          <div className="developer-card">
-            <img
-              src="/images/esquivel.png"
-              alt="Cassley Esquivel"
-              className="developer-img"
-            />
-            <p>Esquivel, Cassley</p>
+          <div className="face face2">
+            <p>Start by creating an account on our platform. It only takes a few moments to get started!</p>
           </div>
         </div>
-      </section>
 
-    
+        <div className="step">
+          <div className="face face1">
+            <div className="content">
+              <h3>Step 2: Set Up Your Team</h3>
+            </div>
+          </div>
+          <div className="face face2">
+            <p>Invite your team members and set up your team workspace. Organize tasks, assign roles, and start collaborating.</p>
+          </div>
+        </div>
+
+        <div className="step">
+          <div className="face face1">
+            <div className="content">
+              <h3>Step 3: Start Collaborating</h3>
+            </div>
+          </div>
+          <div className="face face2">
+            <p>Use our chat, video calls, and file-sharing tools to collaborate in real-time. Stay connected and keep track of your team's progress.</p>
+          </div>
+        </div>
+
+        <div className="step">
+          <div className="face face1">
+            <div className="content">
+              <h3>Step 4: Analyze Data</h3>
+            </div>
+          </div>
+          <div className="face face2">
+            <p>Utilize our built-in data analytics tools to track performance and improve team efficiency. Make informed decisions for your projects.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    {/* Mission & Vision Section */}
+    {/* <section className="mission-vision" id="mission-vision">
+  <h2 className="heading">Mission & Vision</h2>
+  <div className="box-container">
+  
+    <div className="box">
+      <img src="images/mission.png" alt="Mission" />
+      <h3>Our Mission and V</h3>
+      <h4 className="price">Empower Teams</h4>
+      <p>
+        Our mission is to empower teams worldwide by providing a seamless
+        platform that enhances collaboration, productivity, and communication.
+      </p>
+    </div>
+
+    <div className="box">
+      <img src="images/vision.png" alt="Vision" />
+      <h3>Our Vision</h3>
+      <h4 className="price">Create Connections</h4>
+      <p>
+        Our vision is to become the leading platform for team collaboration,
+        helping businesses and individuals thrive by creating meaningful connections.
+      </p>
+    </div>
+  </div>
+</section> */}
+
+    {/* Developers Section */}
+    <section className="developers-section">
+        <h2>Developers</h2>
+        <div className="developers-grid">
+            <div className="developer-card">
+                <img
+                    src="/images/cabasa.png"
+                    alt="Daniel Cabasa"
+                    className="developer-img"
+                />
+                <p>Cabasa, Daniel</p>
+                <p className="developer-description">Full Stack Developer</p> {/* Added description */}
+            </div>
+            <div className="developer-card">
+                <img
+                    src="/images/diaz.png"
+                    alt="Romel Diaz"
+                    className="developer-img"
+                />
+                <p>Diaz, Romel</p>
+                <p className="developer-description">Front-End Specialist</p> {/* Added description */}
+            </div>
+            <div className="developer-card">
+                <img
+                    src="/images/lebosada.png"
+                    alt="Jury Lebosada"
+                    className="developer-img"
+                />
+                <p>Lebosada, Jury</p>
+                <p className="developer-description">Back-End Developer</p> {/* Added description */}
+            </div>
+            <div className="developer-card">
+                <img
+                    src="/images/esquivel.png"
+                    alt="Cassley Esquivel"
+                    className="developer-img"
+                />
+                <p>Esquivel, Cassley</p>
+                <p className="developer-description">UI/UX Designer</p> {/* Added description */}
+            </div>
+        </div>
+    </section>
+
     </div>
   );
 };

@@ -36,6 +36,7 @@ export default function TextEditor() {
   const [editingUsers, setEditingUsers] = useState([]); // State for users editing the document
   const currentUserRef = useRef(currentUser); // Use a ref to store the currentUser value
 
+
   // Update the ref whenever currentUser changes
   useEffect(() => {
     currentUserRef.current = currentUser;
@@ -188,6 +189,7 @@ if (redoButton) {
   // Access the user from the Redux store
 const user = useSelector((state) => state.auth.user);
 console.log("User from Redux:", user); // Log user data to ensure it's being set correctly
+
 
 // Fetch user from Redux and set currentUser
 useEffect(() => {

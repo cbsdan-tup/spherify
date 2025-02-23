@@ -229,65 +229,136 @@ body {
 .developers-section {
   text-align: center;
   padding: 50px 20px;
-  background-color: #f9f9f9;
+  background-color: #fff;
 }
 
 .developers-section h2 {
-  font-size: 2rem; /* Make the section heading engaging */
-  margin-bottom: 30px; /* Add spacing below the heading */
+  font-size: 2rem;
+  margin-bottom: 30px;
   color: #001f3f;
-  text-transform: uppercase; /* Optional: Add emphasis to heading */
-  letter-spacing: 1px; /* Add letter spacing for style */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: bold;
 }
 
 .developers-grid {
-  display: flex; /* Change to flex layout for horizontal alignment */
-  justify-content: center; /* Center the items horizontally */
-  gap: 40px; /* Add space between developer cards */
-  flex-wrap: nowrap; /* Prevent wrapping to a new line */
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
 }
 
 .developer-card {
   text-align: center;
-  padding: 20px; /* Add padding for better spacing inside the card */
-  background-color: #fff; /* Add a card background */
-  border-radius: 10px; /* Add rounded corners to the card */
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Add a shadow for depth */
-  max-width: 250px; /* Optional: Limit the width of each card */
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 250px;
   width: 100%;
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth hover effect */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .developer-card:hover {
-  transform: scale(1.05); /* Slightly enlarge the card */
-  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2); /* Increase shadow on hover */
+  transform: scale(1.05);
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 .developer-card img {
-  width: 150px; /* Adjust image size */
-  height: 150px; /* Ensure the image remains square */
-  border-radius: 50%; /* Make the image circular */
-  border: 3px solid #001f3f; /* Add a border to the image */
-  object-fit: cover; /* Ensure the image fits properly inside the circle */
-  margin-bottom: 15px; /* Add spacing below the image */
-  transition: transform 0.3s ease, border-color 0.3s ease; /* Smooth hover effect */
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 3px solid #001f3f;
+  object-fit: cover;
+  margin-bottom: 15px;
+  transition: transform 0.3s ease, border-color 0.3s ease;
 }
 
 .developer-card:hover img {
-  transform: scale(1.1); /* Enlarge the image on hover */
-  border-color: #EAD8B1; /* Change the border color */
+  transform: scale(1.1);
+  border-color: #EAD8B1;
 }
 
 .developer-card p {
-  font-size: 1.1rem; /* Increase font size for better readability */
+  font-size: 1.1rem;
   color: #133E87;
-  font-weight: bold; /* Add emphasis to the name */
-  transition: color 0.3s ease; /* Smooth text color transition */
+  font-weight: bold;
+  transition: color 0.3s ease;
 }
 
 .developer-card:hover p {
-  color: #EAD8B1; /* Change the text color on hover */
+  color: #EAD8B1;
 }
+
+/* New description style for developer role */
+.developer-description {
+  font-size: 1rem; /* Adjust size for description */
+  color: #777; /* Lighter color for description */
+  font-weight: normal;
+  margin-top: 10px;
+  transition: color 0.3s ease; /* Smooth transition for hover effect */
+}
+
+.developer-card:hover .developer-description {
+  color: #EAD8B1; /* Change description text color on hover */
+}
+
+/* Mission and Vision Section */
+/* .mission-vision .box-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  background-image: url('/images/mi-vi.png');
+  background-size: contain; 
+  background-position: center; 
+  background-repeat: no-repeat;
+}
+
+
+.mission-vision .box {
+  background: var(--bg);
+  padding: 3rem;
+  text-align: center;
+  border-radius: 79% 51% 81% 19% / 58% 93% 7% 42%; 
+}
+
+.mission-vision .box:hover {
+  border-radius: .5rem; 
+}
+
+.mission-vision .box img {
+  height: 15.5rem;
+  width: 15.5rem;
+  margin-bottom: .5rem;
+}
+
+.mission-vision .box h3 {
+  font-size: 2.6rem;
+  color: var(--black);
+  padding: 1rem 0;
+}
+
+.mission-vision .box .price {
+  font-size: 2.2rem;
+  color: var(--main);
+  padding: .5rem 0;
+}
+
+.mission-vision .box p {
+  font-size: 1.5rem;
+  color: var(--black);
+  padding: .5rem 0;
+}
+
+.mission-vision .box-container .left-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: center; 
+}
+
+.mission-vision .box-container .right-side {
+  background-image: none; 
+} */
 
 /* Features Page */
 .features-section {
@@ -382,75 +453,99 @@ body {
 }
 
 /* About Page */
-/* About Section Styling */
-.about-section {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 50px 20px;
-  background-color: #fff; /* Light background to match the style */
-}
 
-/* About Content Wrapper */
-.about-content {
-  display: flex;
-  flex-direction: row;
-  gap: 40px;
-  max-width: 1200px;
-  width: 100%;
-  align-items: center;
-}
-
-/* Image Styling */
-.about-image {
-  flex: 1; /* Allow the image to take up equal space with the text */
-  display: flex;
-  justify-content: center;
-}
-
-.about-img {
-  max-width: 90%; /* Ensure the image doesn't take up the full width */
-  height: auto;
-  border-radius: 10px; /* Rounded corners for the image */
-}
-
-/* Text Styling */
-.about-text {
-  flex: 1; /* Equal space as the image */
-  text-align: left;
-}
-
-.about-text h2 {
-  font-size: 1.8rem;
-  font-weight: bold;
-  color: #001f3f;
-  margin-bottom: 20px;
+.about {
+  padding: 30px 0; /* Adjust as needed */
+  overflow: hidden; /* Hide any overflowed content */
   position: relative;
 }
 
-.about-text h2::before {
-  content: "";
+.about .box-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 2rem;
+  position: relative; /* Allows absolute positioning for the deco-title */
+  padding-bottom: 30px; /* Add space below the container */
+  
+  background-image: url('/images/wave.png'); /* Path to your wave.png image */
+  background-size: cover; /* Ensure the image covers the whole container */
+  background-position: center; /* Center the background image */
+  background-repeat: no-repeat; /* Prevent repeating the background */
+}
+
+.about .box-container .deco-title {
+  font-size: 10rem;
+  font-weight: 700;
+  white-space: nowrap;
+  line-height: 0.5;
+  color: #333; /* Change to a visible color */
+  -webkit-text-fill-color: #333; /* Fill the text with the same color */
+  -webkit-text-stroke: 1px rgb(204, 204, 204); /* Optional: Change stroke to make it more visible */
+  transform-origin: top left;
+  transform: rotate(0.25turn);
+  z-index: -1;
   position: absolute;
-  width: 50px;
-  height: 4px;
-  background-color: #caa472; /* Match the color from the design */
-  top: 0;
-  left: 0;
-  transform: translateY(-150%);
+  top: 20%;
+  left: 50%;
+  width: 100%;
+  height: auto;
+  pointer-events: none;
 }
 
-.about-text h3 {
-  font-size: 1.4rem;
-  font-weight: bold;
-  color: #001f3f;
-  margin-bottom: 15px;
-  line-height: 1.4;
+.about .box-container .image{
+  flex: 1 1 31rem;
 }
 
-.about-text p {
-  font-size: 1.1rem;
-  color: #555;
-  line-height: 1.8;
+.about .box-container .image img{
+  width: 100%;
+}
+.about .content{
+  flex: 1 1 41rem;
+}
+
+.about .content .title {
+  font-size: 3rem;
+  color: var(--black);
+  font-weight: bold; /* Add this line to make the text bold */
+}
+
+.about .content p{
+  font-size: 1.2rem;
+  color: #444;
+  padding: 1rem 0;
+  line-height: 2;
+}
+
+.about .content .icons-container {
+  display: flex;
+  justify-content: space-evenly; /* Distribute items evenly across the container */
+  flex-wrap: nowrap; /* Prevent wrapping of items */
+  gap: 2rem;
+  margin-top: 1rem;
+  margin-right: 2rem;
+}
+
+.about .content .icons-container .icons {
+  flex: 1 1 16rem;
+  text-align: center;
+  background: #FFDC7F; /* Lighter background color similar to the image */
+  border-radius: 4px; /* Rounded corners */
+  padding: 2rem 2rem; /* Adjust padding */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Light shadow for depth */
+}
+
+.about .content .icons-container .icons img {
+  width: 60px; /* Icon size, tweak if needed */
+  height: 60px;
+  margin-bottom: 1rem; /* Space between the icon and text */
+}
+
+.about .content .icons-container .icons h3 {
+  font-size: 1.6rem;
+  color: #16325B; /* Orange color for text */
+  font-weight: bold; /* Bold text */
 }
 
 /* How to Use Section */
@@ -465,6 +560,7 @@ body {
   color: #333;
   margin-bottom: 20px;
   font-weight: bold;
+  text-transform: uppercase;
 }
 
 .how-to-use-content {
@@ -530,6 +626,7 @@ body {
   font-size: 1.5rem;
   margin-bottom: 10px;
   color: #fff;
+  
 }
 
 .step p {
@@ -559,6 +656,8 @@ body {
     margin-bottom: 20px;
   }
 }
+
+
 
 /* Login Page Container */
 .login-page {
