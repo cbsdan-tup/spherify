@@ -14,7 +14,6 @@ import { loginUser, logoutUser } from "../redux/authSlice";
 // };
 
 export const authenticate = (data, dispatch, next) => {
-  console.log("Data: ", data);
   dispatch(loginUser(data));
   next();
 };
@@ -24,7 +23,6 @@ export const isAuthenticated = (state) => {
 };
 
 export const getToken = (state) => {
-  console.log(state);
   return state?.token;
 };
 // export const isAuthenticated = () => {

@@ -1,17 +1,19 @@
 import React, { useEffect, useRef, useState } from "react";
 import LoadingSpinner from "../../layout/LoadingSpinner";
-import Draggable from "react-draggable";
+import { Rnd } from "react-rnd";
+import { useDispatch } from "react-redux";
+import { clearCurrentMeetingRoomName } from "../../../redux/teamSlice";
 
-const JitsiMeeting = ({ roomName, displayName }) => {
+const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
   const jitsiContainer = useRef(null);
   const jitsiApi = useRef(null);
   const [loading, setLoading] = useState(true);
-  const [isScale, setIsScale] = useState(false);
-  const [redirected, setRedirected] = useState(false); // Track if redirected
+  const [redirected, setRedirected] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [windowSize, setWindowSize] = useState({ width: 400, height: 400 });
+  const [position, setPosition] = useState({ x: 10, y: 100 });
 
-  const handleScaleClick = () => {
-    setIsScale(!isScale);
-  };
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const loadJitsi = () => {
@@ -44,12 +46,18 @@ const JitsiMeeting = ({ roomName, displayName }) => {
         roomName,
         parentNode: jitsiContainer.current,
         userInfo: { displayName },
-        interfaceConfigOverwrite: {},
+        interfaceConfigOverwrite: {
+          SHOW_CHROME_EXTENSION_BANNER: false,
+          SHOW_JITSI_WATERMARK: false,
+          SHOW_WATERMARK_FOR_GUESTS: false,
+          SHOW_BRAND_WATERMARK: false,
+          SHOW_POWERED_BY: false,
+          SHOW_ROOM_NAME: false,
+          HIDE_INVITE_MORE_HEADER: true,
+        },
+        width: "100%",
+        height: "100%",
       };
-
-      if (!isScale) {
-        options.height = 700;
-      }
 
       jitsiApi.current = new window.JitsiMeetExternalAPI(domain, options);
 
@@ -61,7 +69,6 @@ const JitsiMeeting = ({ roomName, displayName }) => {
         setLoading(true);
         setRedirected(true);
       });
-
     };
 
     loadJitsi();
@@ -71,31 +78,88 @@ const JitsiMeeting = ({ roomName, displayName }) => {
         jitsiApi.current.dispose();
       }
     };
-  }, [roomName, displayName, isScale]);
+  }, [roomName, displayName]);
+
+  // 🔥 Toggle full-screen mode
+  const toggleFullScreen = () => {
+    if (!isFullScreen) {
+      // Save previous position & size before going full-screen
+      setWindowSize({ width: 400, height: 400 });
+      setPosition({ x: 0, y: 0 });
+    } else {
+      // Restore previous size and position
+      setWindowSize({ width: 400, height: 400 });
+      setPosition({ x: 10, y: 10 });
+    }
+    setIsFullScreen(!isFullScreen);
+  };
+
+  const handleCloseConference = () => {
+    dispatch(clearCurrentMeetingRoomName());
+  };
 
   if (redirected) {
-    return (
-      <div className="p-3">
-        <h2>Meeting was terminated</h2>
-        <p>The meeting was redirected or terminated. Please check the link.</p>
-      </div>
-    );
+    handleCloseConference();
+    return null;
   }
-
   return (
     <>
-      {loading && <LoadingSpinner />} {/* Display spinner while loading */}
-      <div
-        onClick={handleScaleClick}
-        className={`scale-button-container ${isScale ? "scale" : ""}`}
+      {loading && <LoadingSpinner />}
+      <Rnd
+        size={
+          isFullScreen
+            ? { width: window.innerWidth, height: window.innerHeight }
+            : undefined
+        } // Apply size only in full screen
+        position={isFullScreen ? { x: 0, y: 0 } : position}
+        default={{ x: 10, y: 10, width: 400, height: 400 }}
+        minWidth={350}
+        minHeight={270}
+        bounds="window"
+        dragHandleClassName="drag-handle"
+        onResizeStop={(e, direction, ref, delta, position) => {
+          setWindowSize({ width: ref.offsetWidth, height: ref.offsetHeight });
+          setPosition(position);
+        }}
+        onDragStop={(e, d) => setPosition({ x: d.x, y: d.y })}
+        className={`jitsi-wrapper ${isFullScreen ? "fullscreen" : ""}`}
       >
-        <i className="fa-solid fa-expand scale-button"></i>
-      </div>
-      <div
-        ref={jitsiContainer}
-        style={{ border: "1px solid white" }}
-        className={!isScale ? "jitsi-container" : "jitsi-container scale"}
-      />
+        <div className={`drag-handle ${isFullScreen && "opacity-1"}`}>
+          <div className="left">
+            <i class="fa-solid fa-video"></i> {chatName}
+          </div>
+          {!isFullScreen && (
+            <div className="center">
+              {" "}
+              <i className="fa-solid fa-arrows-alt"></i>
+            </div>
+          )}
+
+          <div className="right">
+            <i
+              className={`fa-solid ${
+                isFullScreen ? "fa-compress" : "fa-expand"
+              }`}
+              onClick={toggleFullScreen}
+            ></i>
+            <i
+              className="fa-solid fa-circle-xmark exit"
+              onClick={handleCloseConference}
+            ></i>
+          </div>
+        </div>
+
+        {/* Jitsi Container */}
+        <div
+          ref={jitsiContainer}
+          className="jitsi-container"
+          style={{
+            width: "100%",
+            height: "calc(100% - 50px)",
+            border: "1px solid white",
+          }}
+        />
+      </Rnd>
     </>
   );
 };

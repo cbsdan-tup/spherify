@@ -1,10 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap'); /* Import Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&display=swap');
 
 body {
   font-family: 'Inter', sans-serif; /* Use Inter font */
   margin: 0;
   padding: 0;
-  background-color: #f9f9f9;
+  background-color: #fff;
 }
 
 /* Navbar */
@@ -67,7 +69,7 @@ body {
 /* Landing Page Styling */
 .landing-page {
   padding-top: 60px; /* Space for fixed navbar */
-  background-color: #f9f9f9; /* Light background */
+  background-color: #fff; /* Light background */
   font-family: "Inter", sans-serif; /* Modern font */
   position: relative; /* For decorative elements */
  
@@ -92,14 +94,16 @@ body {
 }
 
 .text-section h1 {
-  font-size: 3rem;
-  color: #FADA7A;
+  font-family: 'Libre Baskerville', serif;
+  font-size: 6rem;
+  color: #001F3F;
   font-weight: bold;
-  line-height: 1.2; /* Improve readability */
+  line-height: 1; /* Improve readability */
 }
 
 .text-section span {
   color: #001F3F; /* Bright green highlight color */
+  font-size: 3rem;
 }
 
 .text-section p {
@@ -115,6 +119,7 @@ body {
   display: flex;
   gap: 10px; /* Add spacing between buttons */
 }
+
 
 .cta-buttons button {
   font-size: 1rem;
@@ -220,6 +225,162 @@ body {
   opacity: 0.5;
 }
 
+/* Developers Section */
+.developers-section {
+  text-align: center;
+  padding: 50px 20px;
+  background-color: #f9f9f9;
+}
+
+.developers-section h2 {
+  font-size: 2rem; /* Make the section heading engaging */
+  margin-bottom: 30px; /* Add spacing below the heading */
+  color: #001f3f;
+  text-transform: uppercase; /* Optional: Add emphasis to heading */
+  letter-spacing: 1px; /* Add letter spacing for style */
+}
+
+.developers-grid {
+  display: flex; /* Change to flex layout for horizontal alignment */
+  justify-content: center; /* Center the items horizontally */
+  gap: 40px; /* Add space between developer cards */
+  flex-wrap: nowrap; /* Prevent wrapping to a new line */
+}
+
+.developer-card {
+  text-align: center;
+  padding: 20px; /* Add padding for better spacing inside the card */
+  background-color: #fff; /* Add a card background */
+  border-radius: 10px; /* Add rounded corners to the card */
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Add a shadow for depth */
+  max-width: 250px; /* Optional: Limit the width of each card */
+  width: 100%;
+  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth hover effect */
+}
+
+.developer-card:hover {
+  transform: scale(1.05); /* Slightly enlarge the card */
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2); /* Increase shadow on hover */
+}
+
+.developer-card img {
+  width: 150px; /* Adjust image size */
+  height: 150px; /* Ensure the image remains square */
+  border-radius: 50%; /* Make the image circular */
+  border: 3px solid #001f3f; /* Add a border to the image */
+  object-fit: cover; /* Ensure the image fits properly inside the circle */
+  margin-bottom: 15px; /* Add spacing below the image */
+  transition: transform 0.3s ease, border-color 0.3s ease; /* Smooth hover effect */
+}
+
+.developer-card:hover img {
+  transform: scale(1.1); /* Enlarge the image on hover */
+  border-color: #EAD8B1; /* Change the border color */
+}
+
+.developer-card p {
+  font-size: 1.1rem; /* Increase font size for better readability */
+  color: #133E87;
+  font-weight: bold; /* Add emphasis to the name */
+  transition: color 0.3s ease; /* Smooth text color transition */
+}
+
+.developer-card:hover p {
+  color: #EAD8B1; /* Change the text color on hover */
+}
+
+/* Features Page */
+.features-section {
+  padding: 40px 20px;
+  text-align: center;
+  background-color: #fff;
+}
+
+.features-heading {
+  font-size: 2.5rem; /* Increase font size */
+  color: #f1c463; /* Dark blue for primary text */
+  margin-bottom: 20px; /* Add spacing below the heading */
+  font-weight: 700; /* Make the text bold */
+  position: relative; /* Enable positioning for pseudo-elements */
+  text-transform: uppercase; /* Optional: Transform text to uppercase */
+}
+.features-carousel {
+  width: 100%; /* Full width of the container */
+  overflow: hidden; /* Hide content that overflows the container */
+  position: relative; /* Required for proper scrolling */
+}
+
+.features-grid {
+  display: flex;
+  gap: 30px; /* Add space between grid items */
+  animation: scroll-carousel 20s linear infinite; /* Apply animation for continuous scrolling */
+}
+
+.features-grid .feature-item {
+  text-align: center;
+  flex: 0 0 auto; /* Prevent flex-grow, so items keep their size */
+  max-width: 150px; /* Limit maximum width of items */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative; /* So the child elements can be adjusted relative to it */
+}
+
+.feature-video {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  border: 0px solid #133E87;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: move-left 20s linear infinite; /* Apply left-moving animation for the video */
+}
+
+.features-grid p {
+  margin-top: 10px; /* Add spacing between video and text */
+  font-size: 1rem;
+  color: #001f3f; /* Dark blue for consistency */
+  font-weight: bold;
+  text-transform: capitalize; /* Optional: Capitalize text */
+  transition: color 0.3s ease, transform 0.3s ease; /* Smooth text color transition */
+  animation: move-right 20s linear infinite; /* Apply right-moving animation for the text */
+}
+@keyframes scroll-carousel {
+  0% {
+    transform: translateX(0); /* Start position */
+  }
+  100% {
+    transform: translateX(-100%); /* Scroll the grid to the left by 100% of its width */
+  }
+}
+
+@keyframes move-left {
+  0% {
+    transform: translateX(100%); /* Video starts from the right side */
+  }
+  100% {
+    transform: translateX(-100%); /* Video moves left across the screen */
+  }
+}
+
+@keyframes move-right {
+  0% {
+    transform: translateX(100%); /* Text starts from the right side */
+  }
+  100% {
+    transform: translateX(-100%); /* Text moves left across the screen */
+  }
+}
+
+.features-grid.clone {
+  display: flex;
+  gap: 30px;
+  animation: scroll-carousel 20s linear infinite;
+}
+
+.features-grid.clone .feature-item {
+  flex: 0 0 auto;
+}
+
 /* About Page */
 /* About Section Styling */
 .about-section {
@@ -227,7 +388,7 @@ body {
   justify-content: center;
   align-items: center;
   padding: 50px 20px;
-  background-color: #f9f9f9; /* Light background to match the style */
+  background-color: #fff; /* Light background to match the style */
 }
 
 /* About Content Wrapper */
@@ -292,154 +453,112 @@ body {
   line-height: 1.8;
 }
 
-
-.developers-section {
+/* How to Use Section */
+.how-to-use-section {
+  background-color: #fff;
+  padding: 20px 20px;
   text-align: center;
-  padding: 50px 20px;
-  background-color: #f9f9f9;
 }
 
-.developers-section h2 {
-  font-size: 2rem; /* Make the section heading engaging */
-  margin-bottom: 30px; /* Add spacing below the heading */
-  color: #001f3f;
-  text-transform: uppercase; /* Optional: Add emphasis to heading */
-  letter-spacing: 1px; /* Add letter spacing for style */
+.how-to-use-heading {
+  font-size: 2rem;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: bold;
 }
 
-.developers-grid {
-  display: flex; /* Change to flex layout for horizontal alignment */
-  justify-content: center; /* Center the items horizontally */
-  gap: 40px; /* Add space between developer cards */
-  flex-wrap: nowrap; /* Prevent wrapping to a new line */
+.how-to-use-content {
+  display: flex;
+  justify-content: space-evenly;
+  gap: 10px;
+  flex-wrap: wrap;
+
 }
 
-.developer-card {
-  text-align: center;
-  padding: 20px; /* Add padding for better spacing inside the card */
-  background-color: #fff; /* Add a card background */
-  border-radius: 10px; /* Add rounded corners to the card */
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); /* Add a shadow for depth */
-  max-width: 250px; /* Optional: Limit the width of each card */
+.step {
+  position: relative;
+  width: 250px;
+  height: 250px;
+  perspective: 1000px; /* For the 3D effect */
+  border-radius: 15px; /* Rounded corners */
+  box-shadow: #007bff 0px 4px 8px; /* Add shadow for depth */
+  
+}
+
+.face {
+  position: absolute;
   width: 100%;
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth hover effect */
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.5s, height 0.5s; /* For smooth transition */
 }
 
-.developer-card:hover {
-  transform: scale(1.05); /* Slightly enlarge the card */
-  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2); /* Increase shadow on hover */
+.face1 {
+  background-color: #003366;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
 }
 
-.developer-card img {
-  width: 150px; /* Adjust image size */
-  height: 150px; /* Ensure the image remains square */
-  border-radius: 50%; /* Make the image circular */
-  border: 3px solid #001f3f; /* Add a border to the image */
-  object-fit: cover; /* Ensure the image fits properly inside the circle */
-  margin-bottom: 15px; /* Add spacing below the image */
-  transition: transform 0.3s ease, border-color 0.3s ease; /* Smooth hover effect */
+.face2 {
+  background-color: #CBDCEB;
+  color: #333;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  border-radius: 15px;
+  opacity: 0;
+  transform: scale(0.9);
 }
 
-.developer-card:hover img {
-  transform: scale(1.1); /* Enlarge the image on hover */
-  border-color: #EAD8B1; /* Change the border color */
+.step:hover .face1 {
+  transform: scale(0.7); /* Shrinks the top face on hover */
 }
 
-.developer-card p {
-  font-size: 1.1rem; /* Increase font size for better readability */
-  color: #001f3f;
-  font-weight: bold; /* Add emphasis to the name */
-  transition: color 0.3s ease; /* Smooth text color transition */
+.step:hover .face2 {
+  opacity: 1;
+  transform: scale(1); /* Reveal and expand the back face */
 }
 
-.developer-card:hover p {
-  color: #EAD8B1; /* Change the text color on hover */
+.step h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+  color: #fff;
 }
 
-
-/* Features Page */
-.features-section {
-  padding: 80px 20px;
-  text-align: center;
-  background-color: #f9f9f9;
-}
-
-.features-heading {
-  font-size: 2rem; /* Increase font size */
-  color: #001f3f; /* Dark blue for primary text */
-  margin-bottom: 20px; /* Add spacing below the heading */
-  font-weight: 700; /* Make the text bold */
-  position: relative; /* Enable positioning for pseudo-elements */
-  text-transform: uppercase; /* Optional: Transform text to uppercase */
-}
-
-.features-heading .highlight {
-  color: #EAD8B1; /* Highlight color */
-  background-color: #133E87; /* Background behind the highlighted text */
-  padding: 0 8px; /* Add padding to the highlighted text */
-  border-radius: 5px; /* Rounded corners for the background */
-}
-
-.features-heading::after {
-  content: "";
-  display: block;
-  width: 50px; /* Set the width of the decorative line */
-  height: 4px; /* Set the thickness of the decorative line */
-  background-color: #001f3f; /* Dark blue line color */
-  margin: 10px auto 0; /* Center the line */
-  border-radius: 2px; /* Round the edges of the line */
+.step p {
+  font-size: 1rem;
+  color: #333;
+  text-align: justify; /* Add this line to justify text */
 }
 
 .section-divider {
-  width: 80%; /* Adjust the width of the line */
-  margin: 20px auto; /* Center the line and add spacing */
-  border: none; /* Remove the default border style */
-  height: 2px; /* Set the thickness of the line */
-  background-color: #001f3f; /* Set the color of the line */
+  width: 50%;
+  margin: 20px auto;
+  border: none;
+  height: 2px;
+  background-color: #001f3f;
 }
 
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3 columns */
-  grid-template-rows: repeat(2, auto); /* 2 rows */
-  gap: 20px; /* Space between grid items */
-  justify-items: center; /* Center items horizontally */
-  align-items: center; /* Center items vertically */
-}
+/* Media Query for smaller screens */
+@media (max-width: 768px) {
+  .how-to-use-content {
+    flex-direction: column;
+    align-items: center;
+  }
 
-.features-grid .feature-item {
-  text-align: center;
+  .step {
+    width: 80%;
+    max-width: 90%;
+    margin-bottom: 20px;
+  }
 }
-
-.feature-video {
-  width: 250px; /* Match the width for a circular appearance */
-  height: 250px; /* Match the height for a square */
-  border-radius: 50%; /* Make the video circular */
-  border: 10px solid #133E87; /* Add a border around the video */
-  object-fit: cover; /* Ensure the video fits properly inside the circle */
-  display: block; /* Remove inline spacing */
-  transition: transform 0.3s ease, box-shadow 0.3s ease; /* Smooth transition for hover effect */
-}
-
-.features-grid .feature-item:hover .feature-video {
-  transform: scale(1.1); /* Slightly enlarge the video */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Add a shadow effect */
-  border-color: #EAD8B1; /* Change the border color on hover */
-}
-
-.features-grid p {
-  margin-top: 10px; /* Add spacing between video and text */
-  font-size: 1rem;
-  color: #001f3f; /* Dark blue for consistency */
-  font-weight: bold;
-  text-transform: capitalize; /* Optional: Capitalize text */
-  transition: color 0.3s ease; /* Smooth text color transition */
-}
-
-.features-grid .feature-item:hover p {
-  color: #EAD8B1; /* Change the text color on hover */
-}
-
 
 /* Login Page Container */
 .login-page {
@@ -763,11 +882,9 @@ body {
   font-size: 1rem;
 }
 
-
 .input-icon input::placeholder {
   color: #7c7c7c;
 }
-
 
 .register-forgot-password {
   text-align: right;
@@ -931,43 +1048,6 @@ body {
     display: none; /* Hide decorative elements on small screens */
   }
 
-  /* Features Page */
-  .features-grid {
-    grid-template-columns: repeat(1, 1fr); /* Single column layout */
-    gap: 30px; /* Add space between items */
-  }
-
-  .features-heading {
-    font-size: 1.8rem; /* Adjust heading size */
-  }
-
-  /* About Us Page */
-  .about-content {
-    flex-direction: column; /* Stack image and text vertically */
-    text-align: center; /* Center-align text */
-  }
-
-  .about-image {
-    width: 100%; /* Ensure the image takes full width */
-  }
-
-  .about-img {
-    max-width: 100%; /* Scale the image properly */
-    margin-bottom: 20px; /* Add spacing below the image */
-  }
-
-  .about-text {
-    text-align: center; /* Center-align the text */
-  }
-
-  .about-text h2 {
-    font-size: 1.6rem; /* Adjust heading size */
-  }
-
-  .about-text p {
-    font-size: 1rem; /* Adjust paragraph font size */
-  }
-
   /* Developers Section */
   .developers-grid {
     flex-direction: column; /* Stack developer cards */
@@ -1008,3 +1088,42 @@ body {
   }
 }
 
+/* Styling the container of editing users */
+.editing-users {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Heading style */
+.editing-users h4 {
+  font-size: 1.2em;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+/* Styling the list of users */
+.editing-users ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.editing-users li {
+  font-size: 1em;
+  padding: 5px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.editing-users li:last-child {
+  border-bottom: none; /* Remove bottom border on last item */
+}
+
+/* Style for when no users are editing */
+.editing-users .no-users {
+  font-style: italic;
+  color: #888;
+  text-align: center;
+}

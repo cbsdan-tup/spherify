@@ -7,7 +7,7 @@
   display: flex;
   align-self: center;
   justify-content: space-between;
-  background-color: #f3f3e0;
+  background-color: #e7e7c3;
   font-weight: 600;
   padding: 1rem;
   border-top-left-radius: 0.8rem;
@@ -115,8 +115,13 @@
 .fs-content {
   background-color: var(--tertiary-color);
   padding: 0.7rem;
-  max-height: 70vh;
+  max-height: 60vh;
   overflow-y: auto;
+}
+.fs-content .empty {
+  text-align: center;
+  font-size: 1.2rem;
+  font-style: italic;
 }
 .fs-header .header-title .right .button-container {
   display: flex;
@@ -140,6 +145,11 @@
 
 .fs-content > div:last-child {
   border-bottom: none;
+}
+.fs-content .modification-delete {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 .fs-content .modification {
   font-style: italic;

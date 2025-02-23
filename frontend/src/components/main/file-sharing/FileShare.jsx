@@ -24,11 +24,16 @@ const FileUpload = () => {
 
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const user = useSelector((state) => state.auth.user);
+  const token = useSelector((state) => state.auth.token);
 
   useEffect(() => {
     // Reset path when team changes
     setCurrentPath("");
   }, [currentTeamId]);
+
+  useEffect(() => {
+    setRefresh((prev) => !prev);
+  }, [currentPath]);
 
   useEffect(() => {
     setProgress(0);
@@ -135,8 +140,14 @@ const FileUpload = () => {
 
   const handleFileClick = async (url) => {
     try {
+      console.log("Passed Url: ", url);
       const response = await axios.get(
-        `${import.meta.env.VITE_API}/getPublicLink?filePath=${url}`
+        `${import.meta.env.VITE_API}/getPublicLink?filePath=${url}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
       console.log("Public link:", response.data.publicUrl);
       const fileUrl = response.data.publicUrl;
@@ -167,7 +178,9 @@ const FileUpload = () => {
       if (result.isConfirmed) {
         try {
           await axios.delete(`${import.meta.env.VITE_API}/delete/${fileId}`);
-          succesMsg(`${type === "folder" ? "Folder" : "File"} deleted successfully!`);
+          succesMsg(
+            `${type === "folder" ? "Folder" : "File"} deleted successfully!`
+          );
           setRefresh((prev) => !prev);
         } catch (error) {
           console.error("Delete error:", error);
@@ -184,7 +197,7 @@ const FileUpload = () => {
           {currentPath === currentTeamId ? (
             <div className="header-title">
               <div className="left">
-                <div>File Sharing</div>{" "}
+                <div>Shared Files</div>{" "}
               </div>
               <div className="right">
                 <div className="refresh" onClick={() => setRefresh(!refresh)}>
@@ -276,15 +289,22 @@ const FileUpload = () => {
               >
                 📁 {folder.name}
               </div>
-              <div className="modification">
-                {getTimeFeedback(folder.createdAt)} by {folder.owner?.firstName}{" "}
-                {folder.owner?.lastName}{" "}
+              <div className="modification-delete">
+                <div className="modification">
+                  {getTimeFeedback(folder.createdAt)} by{" "}
+                  {folder.owner?.firstName} {folder.owner?.lastName}{" "}
+                </div>
+                {folder.name !== currentTeamId && (
+                  <div
+                    className="delete"
+                    onClick={() =>
+                      handleDelete(folder._id, folder.name, "folder")
+                    }
+                  >
+                    <i className="fa-solid fa-trash"></i>
+                  </div>
+                )}
               </div>
-              {
-                folder.name !== currentTeamId && (
-                  <div className="delete" onClick={() => handleDelete(folder._id, folder.name, "folder")}><i className="fa-solid fa-trash"></i></div>
-                )
-              }
             </div>
           ))}
           {files.map((file) => (
@@ -292,12 +312,18 @@ const FileUpload = () => {
               <div onClick={() => handleFileClick(file.url)} className="name">
                 📄 {file.name}
               </div>
-              <div className="modification">
-                {getTimeFeedback(file.createdAt)} by {file.owner?.firstName}{" "}
-                {file.owner?.lastName}{" "}
+              <div className="modification-delete">
+                <div className="modification">
+                  {getTimeFeedback(file.createdAt)} by {file.owner?.firstName}{" "}
+                  {file.owner?.lastName}{" "}
+                </div>
+                <div
+                  className="delete"
+                  onClick={() => handleDelete(file._id, file.name, "file")}
+                >
+                  <i className="fa-solid fa-trash"></i>
+                </div>
               </div>
-              <div className="delete" onClick={() => handleDelete(file._id, file.name, "file")}><i className="fa-solid fa-trash"></i></div>
-
             </div>
           ))}
           {files.length === 0 && folders.length === 0 && (

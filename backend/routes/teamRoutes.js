@@ -10,12 +10,14 @@ const {
     getTeamMembers,
     deleteTeamById,
     leaveTeam,
-    inviteMembers
+    inviteMembers,
+    getMessageGroupInfo
 } = require('../controllers/TeamController');
 
 router.post('/addTeam', upload.single('logo'), addTeam);
 router.get('/getTeamByUser/:userId', getTeamByUser);
 router.get('/getTeamById/:teamId', getTeamById);
+router.get('/getMessageGroupInfo/:messageGroupId', isAuthenticatedUser, getMessageGroupInfo);
 router.get('/getTeamMembers/:teamId', isAuthenticatedUser, getTeamMembers);
 router.delete('/deleteTeam/:teamId', isAuthenticatedUser, deleteTeamById);
 router.post('/leaveTeam/:teamId/:userId', isAuthenticatedUser, leaveTeam);

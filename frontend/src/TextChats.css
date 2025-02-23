@@ -48,20 +48,31 @@
 .tool-content .chat .icon {
   font-size: 0.7rem;
 }
+.right-tool-panel * {
+  color: var(--text-white)
+}
+.right-tool-panel .message-group-container {
+  position: absolute;
+  top: 60px;
+  bottom: 58px;
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+}
+.right-tool-panel .message-group-container .createdAt {
+  font-style: italic;
+  font-size: 0.8rem;
+  text-align: center;
+  margin: 0.5rem 0;
+  color: var(--chart-bg-color)
+}
 
-.team-container .message-group-container {
-  position: relative;
-  margin-top: 60px;
-}
-.team-container .message-group-container .message-group {
-  padding: 1rem;
-}
-.team-container .message-group-container .message {
+.right-tool-panel .message-group-container .message {
   display: flex;
   gap: 0.5rem;
   margin: 0.3rem 0;
 }
-.team-container .message-group-container .message .message-content {
+.right-tool-panel .message-group-container .message .message-content {
   border-radius: 0.5rem;
   color: var(--dark-grey);
   font-size: 0.8rem;
@@ -70,38 +81,41 @@
   align-items: end;
   gap: 0.4rem;
 }
-.team-container .message-group-container .message .message-content .avatar {
+.right-tool-panel .message-group-container .message .message-content .msg-text {
+  color: var(--header-text-color);
+}
+.right-tool-panel .message-group-container .message .message-content .avatar {
   height: 40px;
   width: 40px;
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 0.9rem;
 }
-.team-container .message-group-container .message .message-content .avatar img {
+.right-tool-panel .message-group-container .message .message-content .avatar img {
   height: 100%;
   width: 100%;
   border-radius: 50%;
   object-fit: cover;
   border: 1px solid var(--white-grey);
 }
-.team-container .message-group-container .message .message-content p {
+.right-tool-panel .message-group-container .message .message-content p {
   max-width: 80%;
   margin-bottom: 0;
 }
-.team-container .message-group-container .message.other p {
+.right-tool-panel .message-group-container .message.other p {
   margin-right: auto;
 }
-.team-container .message-group-container .message.you p {
+.right-tool-panel .message-group-container .message.you p {
   margin-left: auto;
 }
-.team-container .message-group-container .message.you .message-content .sender {
+.right-tool-panel .message-group-container .message.you .message-content .sender {
   display: flex;
   flex: 1;
   justify-content: flex-end;
   user-select: none;
   margin-bottom: 3px;
 }
-.team-container
+.right-tool-panel
   .message-group-container
   .message.other
   .message-content
@@ -112,27 +126,27 @@
   user-select: none;
   margin-bottom: 3px;
 }
-.team-container .message-group-container .message.you p .chat-content {
+.right-tool-panel .message-group-container .message.you p .chat-content {
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
   border-bottom-left-radius: 10px;
 }
-.team-container .message-group-container .message.other p .chat-content {
+.right-tool-panel .message-group-container .message.other p .chat-content {
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
 }
 
-.team-container .message-group-container .message.you p .chat-time {
+.right-tool-panel .message-group-container .message.you p .chat-time {
   text-align: right;
 }
-.team-container .message-group-container .message .chat-content {
+.right-tool-panel .message-group-container .message .chat-content {
   padding: 0.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
-.team-container
+.right-tool-panel
   .message-group-container
   .message
   .chat-content
@@ -143,28 +157,59 @@
   object-fit: contain;
   padding: 0.3rem;
 }
-.team-container .message-group-container .message .chat-time {
+.right-tool-panel .message-group-container .message .chat-time {
   font-size: 0.6rem;
   color: var(--white-grey);
   user-select: none;
   margin-top: 3px;
 }
-.team-container .message-group-container .input-message-container {
+.right-tool-panel .message-group-container .input-message-container {
   position: fixed;
-  left: 100px;
-  right: 320px;
+  right: 0;
+  width: 350px;
   bottom: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem;
-  background-color: var(--secondary-color);
+  background-color: transparent;
   border-top: 1px solid var(--border-color);
+  z-index: 1000;
+  gap: 0.3rem;
 }
 
-.team-container .message-group-container .message-group {
-  margin-bottom: 50px;
-  min-height: 70vh;
+.right-tool-panel .message-group-container .message-group {
+  /* margin-bottom: 50px; */
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0 0.5rem;
+  top: 0;
+  overflow-y: auto;
+}
+/* Hide the scrollbar track (background) */
+.right-tool-panel .message-group-container .message-group::-webkit-scrollbar-track {
+  background: transparent; /* Make the track invisible */
+}
+
+/* Style the scrollbar thumb (the draggable part) */
+.right-tool-panel .message-group-container .message-group::-webkit-scrollbar {
+  width: 5px;
+}
+
+.right-tool-panel .message-group-container .message-group::-webkit-scrollbar-thumb {
+  background: #888; /* Color of the scroll thumb */
+  border-radius: 10px;
+}
+
+.right-tool-panel .message-group-container .message-group::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Darken on hover */
+}
+
+.right-tool-panel .message-group-container .message-group .chat-container {
+  /* overflow: auto; */
+  margin-bottom: 58px;
 }
 .chat-content.other {
   background-color: var(--other-message-bg);
@@ -172,30 +217,34 @@
 .chat-content.you {
   background-color: var(--your-message-bg);
 }
-.team-container .message-group-container .input-message-container input {
+.right-tool-panel .message-group-container .input-message-container input {
   padding: 0.5rem;
   border: 1px solid var(--primary-color);
   border-radius: 0.5rem;
   outline: none;
-  flex: 11;
+  flex: 7;
+  font-size: 0.9rem;
+  color: var(--header-text-color)
 }
-.team-container
+.right-tool-panel
   .message-group-container
   .input-message-container
   .emoji-picker {
   flex: 1;
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   max-width: 80px;
   padding-left: 15px;
+  position: absolute;
+  right: 52px;
 }
-.team-container .message-group-container .emoji-picker-container {
+.right-tool-panel .message-group-container .emoji-picker-container {
   position: absolute;
   bottom: 60px;
   right: 5px;
   z-index: 1000;
 }
 
-.team-container .message-group-container .input-message-container button {
+.right-tool-panel .message-group-container .input-message-container button {
   background-color: transparent;
   outline: none;
   border: none;
@@ -206,7 +255,7 @@
   color: var(--primary-color);
 }
 
-.team-container
+.right-tool-panel
   .message-group-container
   .input-message-container
   .image-preview-container {
@@ -219,14 +268,14 @@
   gap: 0.5rem;
   z-index: 100;
 }
-.team-container
+.right-tool-panel
   .message-group-container
   .input-message-container
   .image-preview-container
   .image-preview {
   position: relative;
 }
-.team-container
+.right-tool-panel
   .message-group-container
   .input-message-container
   .image-preview-container
@@ -236,7 +285,7 @@
   object-fit: cover;
   padding: 0.3rem;
 }
-.team-container
+.right-tool-panel
   .message-group-container
   .input-message-container
   .image-preview-container

@@ -17,20 +17,23 @@ import Dashboard from "./main/team/Dashboard";
 import Header from "./Header";
 
 import "../styles/MainHeader.css";
+import JitsiMeeting from "./main/conferencing/JitsiMeeting";
 function Main() {
   const [refresh, setRefresh] = useState(false);
   const location = useLocation();
   const [showRightPanel, setShowRightPanel] = useState(true);
+  const [showChats, setShowChats] = useState(true);
 
   useEffect(() => {}, [location.pathname]);
 
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   let dispatch = useDispatch();
   const authState = useSelector((state) => state.auth);
+  const user = useSelector((state) => state.auth.user);
   useEffect(() => {
     const refreshToken = async () => {
       try {
-        console.log("Current token:", authState.token);
+        // console.log("Current token:", authState.token);
         const token = await refreshFirebaseToken();
         if (token) {
           dispatch(updateToken(token));
@@ -49,18 +52,38 @@ function Main() {
     setShowRightPanel(!showRightPanel);
   };
 
+  const handleToggleChats = () => {
+    setShowChats(!showChats);
+    console.log("clicked")
+  };
+
+  const currentMeetingRoomName = useSelector((state)=>state.team.currentMeetingRoomName);
+
+
   return (
     <>
       <Header />
       <div className="main-container">
-        <div className={`pages-container container ${!showRightPanel && "full"}`}>
+        <div
+          className={`pages-container container ${!showRightPanel && "full"}`}
+        >
           <Routes>
             <Route
               index
               element={<Home refresh={refresh} setRefresh={setRefresh} />}
             />
             <Route path="settings" element={<Settings />} />
-            <Route path=":teamId" element={<Team showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel}/>}>
+            <Route
+              path=":teamId"
+              element={
+                <Team
+                  showRightPanel={showRightPanel}
+                  setShowRightPanel={setShowRightPanel}
+                  showChats={showChats}
+                  handleToggleChats={handleToggleChats}
+                />
+              }
+            >
               <Route path="calendar" element={<Calendar />} />
               <Route path="kanban" element={<Kanban />} />
               <Route path="gantt" element={<Gantt />} />
@@ -70,14 +93,15 @@ function Main() {
           </Routes>
         </div>
       </div>
-      <div className={`toggle-show ${showRightPanel && "leftmargin"}`} onClick={handleToggleShow}>
-        {
-          showRightPanel ? (
-            <i className="fa-solid fa-eye-slash"></i>
-          ) : (
-            <i className="fa-solid fa-eye"></i>
-          )
-        }
+      <div
+        className={`toggle-show ${showRightPanel && "leftmargin"}`}
+        onClick={handleToggleShow}
+      >
+        {showRightPanel ? (
+          <i className="fa-solid fa-arrow-right"></i>
+        ) : (
+          <i className="fa-solid fa-arrow-left"></i>
+        )}
       </div>
 
       {showRightPanel &&
@@ -89,8 +113,12 @@ function Main() {
             show={showRightPanel}
           />
         ) : (
-          <RightToolPanel />
+          <RightToolPanel showChats={showChats} />
         ))}
+
+        {
+          currentMeetingRoomName && <JitsiMeeting roomName={currentMeetingRoomName} displayName={user.firstName + " " + user.lastName} />
+        }
     </>
   );
 }

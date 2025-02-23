@@ -47,7 +47,7 @@ const LiveEditingTool = () => {
         config
       );
 
-      setFiles([...files, res.data]);
+      setFiles((prevFiles) => [...prevFiles, res.data]);
       succesMsg("File created successfully");
     } catch (error) {
       console.error("Error creating file:", error);
@@ -81,20 +81,26 @@ const LiveEditingTool = () => {
   };
 
   useEffect(() => {
-    setIsLinkEnabled(false); 
+    setIsLinkEnabled(false);
     const timer = setTimeout(() => {
       setIsLinkEnabled(true);
     }, 500);
 
-    return () => clearTimeout(timer); 
+    return () => clearTimeout(timer);
   }, [currentFileId]);
 
   useEffect(() => {
-    if (currentFileId !== null && currentTeamId !== null) {
+    if (currentTeamId) {
       fetchFiles();
     }
+  }, [currentTeamId]); // Run once when `currentTeamId` is set
 
-  }, [isFormVisible, currentTeamId, currentFileId]);
+  useEffect(() => {
+    if (currentTeamId) {
+      fetchFiles();
+    }
+  }, [isFormVisible, currentTeamId]);
+
   return (
     <div className="tool-container custom-text-white">
       <div className="header" onClick={handleToolClick}>
@@ -120,26 +126,27 @@ const LiveEditingTool = () => {
               onCreateFile={addNewFile}
             />
           )}
-          {files &&
-            files.map((file) => (
-              <>
-                <Link
-                  className={
-                    currentFileId === file._id ? "file btn btn-primary p-0" : "file p-0"
-                  }
-                  key={file._id}
-                  to={`/main/${currentTeamId}/live-editing/${file._id}`}
-                  onClick={() => handleFileClick(file._id)}
-                  style={{ pointerEvents: isLinkEnabled ? "auto" : "none", opacity: isLinkEnabled ? 1 : 0.5 }}
-
-                >
-                  <div key={file._id} className="file">
-                    <i className="fa-solid fa-file icon"></i>
-                    <span className="label">{file.fileName}</span>
-                  </div>
-                </Link>
-              </>
-            ))}
+          {files.map((file) => (
+            <Link
+              key={file._id} // ✅ Move key here
+              className={
+                currentFileId === file._id
+                  ? "file btn btn-primary p-0"
+                  : "file p-0"
+              }
+              to={`/main/${currentTeamId}/live-editing/${file._id}`}
+              onClick={() => handleFileClick(file._id)}
+              style={{
+                pointerEvents: isLinkEnabled ? "auto" : "none",
+                opacity: isLinkEnabled ? 1 : 0.5,
+              }}
+            >
+              <div className="file">
+                <i className="fa-solid fa-file icon"></i>
+                <span className="label">{file.fileName}</span>
+              </div>
+            </Link>
+          ))}
         </div>
       )}
     </div>

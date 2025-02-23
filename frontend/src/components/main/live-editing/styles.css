@@ -12,7 +12,7 @@ body {
 }
 
 .container.live-editing {
-  margin-top: 70px;
+  margin-top: calc(70px + 77px);
 
 }
 .container .ql-editor {
@@ -35,7 +35,7 @@ body {
     display: flex;
     justify-content: center;
     position: sticky;
-    top: 70px;
+    top: 140px;
     z-index: 1;
     background-color: #f3f3f3;
     border: none;
@@ -47,7 +47,7 @@ body {
   align-items: center;
   gap: 0.5rem;
   padding: 0 0.5rem;
-  margin: 0.3rem 0;
+  margin: 0.3rem;
   cursor: pointer;
 }
 
@@ -81,6 +81,141 @@ body {
         display: none;
     } 
 }
+
+.editor-header {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  border-bottom: 2px solid #ccc;
+  margin-top: 140px;
+}
+
+.header-title {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.header-menu {
+  margin-top: 10px;
+}
+
+.header-menu button {
+  margin-right: 15px;
+  padding: 8px 12px;
+  background-color: #f3f3f3;
+  border: none;  /* Remove the border */
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+}
+
+.header-menu button:hover {
+  background-color: #7ab2d3;
+}
+
+.file-menu {
+  z-index: 9999; /* Ensure it's on top */
+  display: block;
+  position: absolute;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  top: 100px; /* Adjust based on the header size */
+  left: 0;
+  width: 200px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.file-menu ul {
+  list-style: none;
+  padding: 10px;
+  margin: 0;
+}
+
+.file-menu ul li {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.file-menu ul li:hover {
+  background-color: #f0f0f0;
+}
+
+.file-menu ul li.separator {
+  border-bottom: 1px solid #ccc; /* Add a light gray line */
+  padding-bottom: 8px; /* Add space for the line */
+}
+
+.insert-menu {
+  z-index: 9999;
+  display: block;
+  position: absolute;
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  top: 100px; /* Adjust based on header size */
+  left: 0;
+  width: 200px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.insert-menu ul {
+  list-style: none;
+  padding: 10px;
+  margin: 0;
+}
+
+.insert-menu ul li {
+  padding: 8px;
+  cursor: pointer;
+}
+
+.insert-menu ul li:hover {
+  background-color: #f0f0f0;
+}
+
+.insert-menu ul li i {
+  margin-right: 10px;
+}
+
+.insert-menu ul li i.fa {
+  font-size: 18px; /* Adjust icon size */
+}
+
+.insert-btn {
+  display: flex;
+  align-items: center;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 5px 10px;
+  width: 100%;
+}
+
+.insert-btn i {
+  margin-right: 8px; /* Add spacing between icon and text */
+}
+
+.insert-btn:hover {
+  background-color: #f1f1f1; /* Add a hover effect */
+}
+
+.ql-editor table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ql-editor table td {
+  padding: 5px;
+  text-align: center;
+  border: 1px solid #ccc;
+}
+  
+
+
+.wrapper {
+  margin-top: 20px;
+}
+
 
 .ql-picker.ql-font .ql-picker-label::before,
 .ql-picker.ql-font .ql-picker-item::before {

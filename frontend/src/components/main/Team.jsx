@@ -12,7 +12,7 @@ import MessageGroup from "./textchats/MessageGroup";
 import FileSharingPage from "./file-sharing/FileSharingPage";
 import Kanban from './projectmanagement/Kanban';
 
-function Team({showRightPanel, setShowRightPanel}) {
+function Team({showRightPanel, setShowRightPanel, handleToggleChats, showChats}) {
   const { teamId } = useParams();
   const [teamInfo, setTeamInfo] = useState({});
   const [loading, setLoading] = useState(true);
@@ -41,7 +41,7 @@ function Team({showRightPanel, setShowRightPanel}) {
     <>
       {teamInfo && teamInfo.name ? (
         <div className="team-container">
-          <Header {...teamInfo} showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} />
+          <Header {...teamInfo} showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} handleToggleChats={handleToggleChats} showChats={showChats} />
           <Outlet />
           <Routes>
             <Route index element={<Dashboard />} />

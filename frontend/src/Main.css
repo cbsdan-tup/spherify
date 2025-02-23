@@ -14,10 +14,10 @@
   color: var(--header-text-color);
 }
 .custom-text-primary {
-  color: var(--primary-color)
+  color: var(--primary-color);
 }
 .custom-text-secondary {
-  color: var(--secondary-color)
+  color: var(--secondary-color);
 }
 .custom-text-dark-grey {
   color: var(--dark-grey);
@@ -77,8 +77,8 @@
   height: 90%;
   background-color: var(--text-white);
   z-index: -1;
-  border-top-right-radius: 8px ;
-  border-bottom-right-radius: 8px ;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
 .left-panel-container .teams-container .team-link:hover {
   text-decoration: none;
@@ -150,7 +150,7 @@
   object-fit: cover;
   border-radius: 50%;
 }
-.settings .profile-image .edit{
+.settings .profile-image .edit {
   height: 30px;
   width: 30px;
   padding: 0.2rem;
@@ -164,7 +164,7 @@
   padding: 0.2rem;
   cursor: pointer;
 }
-.settings .profile-image .save{
+.settings .profile-image .save {
   width: 80px;
   padding: 0.3rem 0.7rem;
   border: none;
@@ -176,8 +176,9 @@
   padding: 0.2rem;
   cursor: pointer;
 }
-.settings .profile-image .edit:focus, .settings .profile-image .save:focus {
-  outline: none
+.settings .profile-image .edit:focus,
+.settings .profile-image .save:focus {
+  outline: none;
 }
 .settings-button:focus {
   outline: none;
@@ -209,13 +210,13 @@
   border-radius: 50%;
 }
 
-
 .main-container {
   display: block;
   width: 100%;
 }
 .main-container .pages-container {
-  margin-right: 320px;
+  margin-left: 10px;
+  margin-right: 350px;
   flex: 1;
 }
 .main-container .pages-container.full {
@@ -230,7 +231,7 @@
   width: 40px;
   padding: 0.3rem;
   color: var(--text-white);
-  border-radius: 0.5rem;
+  border-radius: 0.3rem;
   background-color: var(--header-text-color);
   text-align: center;
   cursor: pointer;
@@ -241,7 +242,7 @@
   opacity: 1;
 }
 .toggle-show.leftmargin {
-  right: 325px;
+  right: 345px;
 }
 .main-container .content {
   min-height: 100vh;
@@ -253,13 +254,12 @@
   padding: 1rem;
 }
 
-
 .main-container .header {
   display: flex;
   position: fixed;
   top: 77px;
   left: 0;
-  right: 320px;
+  right: 350px;
   padding: 1rem;
   justify-content: space-between;
   align-items: center;
@@ -268,10 +268,23 @@
   height: 60px;
   z-index: 1040;
 }
+.main-container .header .nav-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--header-text-color);
+  font-size: 1.2rem;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  background-color: var(--tertiary-color);
+  user-select: none;
+}
 
 .main-container .header.full {
   right: 0;
-} 
+}
 .main-container .header .logo-name {
   display: flex;
   align-items: center;
@@ -308,11 +321,11 @@
 
 .main-container .team-container .team-content {
   margin-top: calc(60px + 77px);
-  padding: 1rem; 
+  padding: 1rem;
 }
 
 .right-tool-panel {
-  max-width: 320px;
+  max-width: 350px;
   width: 100%;
   position: fixed;
   right: 0;
@@ -321,7 +334,41 @@
   padding: 1rem;
   background-color: var(--header-text-color);
   color: var(--text-white);
-  overflow-y: auto;
+  max-height: calc(100vh - 77px);
+  z-index: 1040;
+  /* overflow-y: auto; */
+}
+.right-tool-panel .header.chat {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  border-left: 1px solid var(--text-white);
+  background-color: var(--secondary-color);
+}
+.right-tool-panel .header {
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem;
+}
+.right-tool-panel .header .conferencing {
+  cursor: pointer;
+}
+.right-tool-panel .header .conferencing i {
+  font-size: 1.2rem;
+  color: var(--active-color);
+}
+.right-tool-panel .header .chat-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+}
+.right-tool-panel .header .chat-info * {
+  color: var(--header-text-color);
 }
 .right-tool-panel .divider {
   background-color: var(--secondary-color);
@@ -444,7 +491,6 @@
   padding: 1rem;
   border-radius: 10px;
   height: 200px;
-
 }
 .settings .profile {
   display: flex;
@@ -462,7 +508,6 @@
   padding: 0.5rem;
   background-color: var(--secondary-color);
   border-radius: 50%;
-
 }
 .settings .profile img {
   width: 100%;
@@ -471,7 +516,7 @@
   border-radius: 50%;
 }
 .settings .settings-form {
-  position: relative
+  position: relative;
 }
 .settings .settings-form .edit {
   position: absolute;
@@ -509,10 +554,14 @@
   padding: 0.5rem;
   background-color: var(--secondary-color);
 
-  border-radius: 50%;;
+  border-radius: 50%;
 }
 .modal-dialog {
-  max-width: 1000px !important;
+  /* max-width: 1000px !important; */
+  max-width: 900px;
+}
+.maxWidth500px {
+  max-width: 500px !important;
 }
 .modal-body {
   max-height: 80vh; /* Adjust the height to fit the modal */
@@ -527,7 +576,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.3rem;
-  border: none
+  border: none;
 }
 .member-info .member-avatar {
   width: 40px;
@@ -545,7 +594,6 @@
   max-width: 400px;
   display: block;
   margin: 0 auto;
-
 }
 .create-modal .modal-header {
   background-color: var(--primary-color);
@@ -554,14 +602,14 @@
 }
 
 .create-modal .modal-body label {
-  color: var(--dark-grey)
-} 
-.create-modal .button-container{
+  color: var(--dark-grey);
+}
+.create-modal .button-container {
   display: flex;
   justify-content: center;
   gap: 1rem;
   margin-top: 1rem;
-} 
+}
 
 .create-modal button.save {
   background-color: var(--primary-color);
@@ -569,10 +617,16 @@
   
 }
 
+.main-container .team-container .calendar-container {
+  margin-top: 70px;
+}
 .gantt-container {
-  background-color: white;
+  background-color: var(--tertiary-color);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 1rem;
+  margin-top: 180px; 
+
 }
 
 .task-bar:hover .task-info {
@@ -592,3 +646,70 @@
 .task-bar:hover {
   background-color: #0056b3;
 }
+
+.jitsi-wrapper {
+  position: fixed !important;
+  z-index: 1200;
+}
+.jitsi-wrapper .jitsi-container {
+  background-color: var(--secondary-color);
+}
+
+.jitsi-wrapper .drag-handle {
+  height: 50px;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--light-yellow-bg);
+  color: var(--header-text-color);
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  cursor: pointer;
+  border: 1px solid var(--light-yellow-bg);
+  user-select: none;
+  opacity: 0;
+}
+.jitsi-wrapper:hover .drag-handle {
+  opacity: 1;
+}
+.jitsi-wrapper .drag-handle.opacity-1 {
+  opacity: 1 !important;
+}
+.jitsi-wrapper .drag-handle div {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+}
+.jitsi-wrapper .drag-handle div.left {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+.jitsi-wrapper .drag-handle div.left i {
+  font-size: 0.9rem;
+  color: var(--active-color);
+}
+.jitsi-wrapper .drag-handle div.center {
+  text-align: center;
+  display: flex;
+  justify-content: center;
+}
+.jitsi-wrapper .drag-handle div.center i {
+  font-size: 1.2rem !important  ;
+}
+.jitsi-wrapper .drag-handle div.right {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+}
+.jitsi-wrapper .drag-handle div.right .exit {
+  color: var(--inactive-color);
+  font-size: 1.7rem;
+  margin-right: 0.1rem;
+}
+.jitsi-wrapper .drag-handle i {
+  font-size: 1.5rem;
+}
+

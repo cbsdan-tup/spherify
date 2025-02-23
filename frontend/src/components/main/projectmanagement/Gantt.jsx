@@ -278,10 +278,10 @@ function Gantt() {
   };
 
   return (
-    <div className="gantt-container" style={{ padding: '1rem', paddingTop: '180px' }}>
+    <div className="gantt-container">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2>Team Gantt Chart</h2>
-        <div>
+        <div className="d-flex align-items-center " style={{gap: "10px"}}>
           <Button variant="primary" onClick={() => setShowTaskModal(true)} className="me-2">
             Add Task
           </Button>
@@ -431,7 +431,7 @@ function Gantt() {
                 className="py-0 px-2"
                 onClick={() => handleEditTask(task)}
               >
-                Edit
+                <i className="fa-solid fa-pen"></i>
               </Button>
               <Button
                 variant="outline-danger"
@@ -439,7 +439,7 @@ function Gantt() {
                 className="py-0 px-2"
                 onClick={() => handleDeleteTask(task._id)}
               >
-                Delete
+                <i className="fa-solid fa-trash"></i>
               </Button>
             </div>
           ))}

@@ -5,7 +5,8 @@ import axios from "axios";
 import AddMessageGroupForm from "./AddMessageGroupForm";
 import { addMessageGroup } from "../../../functions/TeamFunctions";
 import { Link } from "react-router-dom";
-import {setMsgGroupId} from "../../../redux/teamSlice"
+import {setMsgGroupId} from "../../../redux/teamSlice";
+
 const TextChatTool = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isFormVisible, setIsFormVisible] = useState(false);

@@ -4,7 +4,7 @@ import * as Yup from "yup";
 import axios from "axios";
 import { getUser } from "../../utils/helper";
 
-const PopupForm = ({ show, handleClose, handleSubmit, authState }) => {
+const PopupForm = ({ show, handleClose, handleSubmit, authState, isLoading }) => {
   const [isEmailValid, setIsEmailValid] = React.useState(false);
   const [isSearching, setIsSearching] = React.useState(false);
   const [isTyping, setIsTyping] = React.useState(false);
@@ -242,7 +242,7 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState }) => {
                             </>
                           )}
                         </ul>
-                        <label className="form-label custom-text-header">Invited Members</label>
+                        <label className="form-label custom-text-header">Members to be Invited</label>
                         <ul className="list-group">
                           {values.membersEmail.slice(1).map((member, index) => (
                             <li
@@ -294,8 +294,11 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState }) => {
                     <button
                       type="submit"
                       className="btn btn-primary custom-secondary-bg "
+                      disabled={isLoading}
                     >
-                      Create Team
+                      {
+                        isLoading ? (<><div className="loader"></div></>) : "Create Team"
+                      }
                     </button>
                   </div>
                 </Form>

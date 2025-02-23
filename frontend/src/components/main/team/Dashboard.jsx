@@ -14,6 +14,7 @@ import axios from "axios";
 import { useSelector } from "react-redux";
 import { errMsg, getToken } from "../../../utils/helper";
 import FileShare from "../file-sharing/FileShare";
+import InviteMemberPopUp from "../InviteMemberPopUp";
 
 // Register chart elements
 ChartJS.register(
@@ -54,6 +55,14 @@ const Dashboard = () => {
 
   const [members, setMembers] = useState([]);
 
+  const [showInvitePopup, setShowInvitePopup] = useState(false);
+
+  const handleOpenInvitePopUp = () => {
+    setShowInvitePopup(true);
+  };
+  const handleCloseInvitePopUp = () => {
+    setShowInvitePopup(false);
+  };
   const fetchTeamMembers = async () => {
     try {
       const token = getToken(authState); 
@@ -82,9 +91,9 @@ const Dashboard = () => {
 
   return (
     <div className="team-content container">
-      <FileShare />
       <h1 className="fw-bold text-primary">Data Analytics & Dashboard</h1>
       <hr />
+      <FileShare />
       {/* Main Grid Layout */}
       <div className="row g-4 mt-4">
         {/* Kanban Board */}
@@ -166,7 +175,7 @@ const Dashboard = () => {
               ))}
             </div>
             <div className="card-footer text-center">
-              <button className="btn btn-primary rounded-circle p-2">
+              <button className="btn btn-primary rounded-circle p-2" onClick={handleOpenInvitePopUp}>
                 <FaPlus size={16} />
               </button>
             </div>
@@ -193,6 +202,12 @@ const Dashboard = () => {
           ))}
         </div>
       </div>
+      <InviteMemberPopUp
+        show={showInvitePopup}
+        handleClose={handleCloseInvitePopUp}
+        authState={authState}
+        currentTeamId={currentTeamId}
+      />
     </div>
   );
 };

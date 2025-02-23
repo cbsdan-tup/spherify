@@ -173,11 +173,11 @@
 }
 
 .right-main-panel {
-  max-width: 320px;
+  max-width: 350px;
   width: 100%;
   position: fixed;
   right: 0;
-  top: 70px;
+  top: 77px;
   bottom: 0;
   padding: 1rem;
   background-color: var(--header-text-color);
