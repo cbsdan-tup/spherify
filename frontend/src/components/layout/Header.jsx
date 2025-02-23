@@ -49,9 +49,6 @@ const Header = () => {
           ) : (
             <></>
           )}
-          <Link to="/">Home</Link>
-          <Link to="/features">Features</Link>
-          <Link to="/about">About</Link>
           {user ? (
             <>
               <Link
@@ -67,9 +64,7 @@ const Header = () => {
                 Logout
               </Link>
             </>
-          ) : (
-            <Link to="/login">Login</Link>
-          )}
+          ) : null}
         </nav>
       </header>
     </>

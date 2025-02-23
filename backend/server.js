@@ -38,6 +38,8 @@ const ganttRoutes = require("./routes/gantt/ganttRoutes");  // Add this line
 
 console.log(process.env.NODE_ENV);
 
+let usersEditing = {}; // Initialize the object to track users editing documents
+
 connectDatabase();
 
 cloudinary.config({
@@ -105,6 +107,26 @@ io.on("connection", (socket) => {
     socket.join(groupId);
     console.log(`User joined group: ${groupId}`);
   });
+
+// Handle user editing updates (add this part for update-user-status and user-editing)
+  socket.on("update-user-status", (data) => {
+  const { documentId, user } = data;
+
+  // Track users editing the document
+  usersEditing[documentId] = usersEditing[documentId] || [];
+  if (!usersEditing[documentId].includes(user)) {
+    usersEditing[documentId].push(user);
+  }
+
+  // Emit the updated list of users editing the document to all clients in the room
+  io.to(documentId).emit("user-editing", {
+    documentId,
+    users: usersEditing[documentId],
+  });
+
+  console.log(`User ${user} is editing document: ${documentId}`);
+});
+
   socket.on("sendMessage", async ({ groupId, sender, content, images }) => {
     try {
       const messageGroup = await MessageGroup.findById(groupId);
@@ -200,10 +222,18 @@ io.on("connection", (socket) => {
       }
     });
   
-    socket.on("disconnect", () => {
+     socket.on("disconnect", () => {
       console.log(`❌ User disconnected from document: ${documentId}`);
+      // Remove the user from the editing list when they disconnect
+      for (let docId in usersEditing) {
+        usersEditing[docId] = usersEditing[docId].filter(
+          (user) => user !== socket.id
+        );
+        io.to(docId).emit("user-editing", { documentId: docId, users: usersEditing[docId] });
+      }
     });
   });
+
   
 
   socket.on("disconnect", () => {
