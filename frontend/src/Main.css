@@ -614,6 +614,31 @@
 .create-modal button.save {
   background-color: var(--primary-color);
   color: var(--text-white);
+  
+}
+
+.gantt-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.task-bar:hover .task-info {
+  display: block;
+  z-index: 1000;
+}
+
+.gantt-row:hover {
+  background-color: rgba(0,0,0,0.05);
+}
+
+.task-bar {
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.task-bar:hover {
+  background-color: #0056b3;
 }
 
 .jitsi-wrapper {

@@ -8,6 +8,7 @@ import calendarReducer from './calendarSlice';
 import boardReducer from './boardSlice';
 import listReducer from './listSlice';
 import cardReducer from './cardSlice';
+import ganttReducer from './ganttSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -16,6 +17,7 @@ const rootReducer = combineReducers({
   boards: boardReducer,
   lists: listReducer,
   cards: cardReducer,
+  gantt: ganttReducer,
 });
 
 const persistConfig = {
