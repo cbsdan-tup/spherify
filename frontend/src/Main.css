@@ -617,10 +617,16 @@
   
 }
 
+.main-container .team-container .calendar-container {
+  margin-top: 70px;
+}
 .gantt-container {
-  background-color: white;
+  background-color: var(--tertiary-color);
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 1rem;
+  margin-top: 180px; 
+
 }
 
 .task-bar:hover .task-info {
@@ -706,3 +712,4 @@
 .jitsi-wrapper .drag-handle i {
   font-size: 1.5rem;
 }
+
