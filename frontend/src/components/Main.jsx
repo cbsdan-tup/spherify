@@ -1,5 +1,5 @@
-import React, {useEffect} from "react";
-import { Routes, Route, useLocation  } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
 import LeftPanel from "./layout/LeftPanel";
 import RightMainPanel from "./layout/RightMainPanel";
 import RightToolPanel from "./layout/RightToolPanel";
@@ -10,17 +10,19 @@ import Calendar from "./main/projectmanagement/Calendar";
 import Kanban from "./main/projectmanagement/Kanban";
 import Gantt from "./main/projectmanagement/Gantt";
 import { useSelector, useDispatch } from "react-redux";
-import {refreshFirebaseToken} from "../config/firebase-config";
+import { refreshFirebaseToken } from "../config/firebase-config";
 import { errMsg } from "../utils/helper";
 import { updateToken } from "../redux/authSlice";
 import Dashboard from "./main/team/Dashboard";
 import Header from "./Header";
-function Main() {
-  const location = useLocation();
 
-  useEffect(() => {
-    
-  }, [location.pathname]); 
+import "../styles/MainHeader.css";
+function Main() {
+  const [refresh, setRefresh] = useState(false);
+  const location = useLocation();
+  const [showRightPanel, setShowRightPanel] = useState(true);
+
+  useEffect(() => {}, [location.pathname]);
 
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   let dispatch = useDispatch();
@@ -31,7 +33,7 @@ function Main() {
         console.log("Current token:", authState.token);
         const token = await refreshFirebaseToken();
         if (token) {
-          dispatch(updateToken(token)); 
+          dispatch(updateToken(token));
         }
       } catch (error) {
         console.error("Error refreshing token:", error);
@@ -40,31 +42,55 @@ function Main() {
     };
 
     refreshToken();
-  }, []); 
+  }, []);
+
+  const handleToggleShow = () => {
+    console.log("Show right panel");
+    setShowRightPanel(!showRightPanel);
+  };
+
   return (
     <>
-      {/* <Header /> */}
-      <LeftPanel />
+      <Header />
       <div className="main-container">
-        <div className="">
+        <div className={`pages-container container ${!showRightPanel && "full"}`}>
           <Routes>
-            <Route index element={<Home />} />
+            <Route
+              index
+              element={<Home refresh={refresh} setRefresh={setRefresh} />}
+            />
             <Route path="settings" element={<Settings />} />
-            <Route path=":teamId" element={<Team />}>
+            <Route path=":teamId" element={<Team showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel}/>}>
               <Route path="calendar" element={<Calendar />} />
               <Route path="kanban" element={<Kanban />} />
               <Route path="gantt" element={<Gantt />} />
             </Route>
-            <Route path=":teamId/*" element={<Team />} /> 
-            <Route path=":teamId" element={<Team />} /> 
+            <Route path=":teamId/*" element={<Team />} />
+            <Route path=":teamId" element={<Team />} />
           </Routes>
         </div>
       </div>
-      {location.pathname === "/main" || location.pathname === "/main/settings" ? (
-        <RightMainPanel />
-      ) : (
-        <RightToolPanel />
-      )}
+      <div className={`toggle-show ${showRightPanel && "leftmargin"}`} onClick={handleToggleShow}>
+        {
+          showRightPanel ? (
+            <i className="fa-solid fa-eye-slash"></i>
+          ) : (
+            <i className="fa-solid fa-eye"></i>
+          )
+        }
+      </div>
+
+      {showRightPanel &&
+        (location.pathname === "/main" ||
+        location.pathname === "/main/settings" ? (
+          <RightMainPanel
+            refresh={refresh}
+            setRefresh={setRefresh}
+            show={showRightPanel}
+          />
+        ) : (
+          <RightToolPanel />
+        ))}
     </>
   );
 }

@@ -6,6 +6,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { getUser, logout } from "../../utils/helper";
 import "../../index.css";
 import { useDispatch, useSelector } from "react-redux";
+import { clearTeamId, clearMsgGroupId } from "../../redux/teamSlice";
 
 const Header = () => {
   const authState = useSelector((state) => state.auth);
@@ -57,7 +58,11 @@ const Header = () => {
                 className="text-danger"
                 style={{ textDecoration: "none" }}
                 to="/"
-                onClick={logoutHandler}
+                onClick={() => {
+                  logoutHandler();
+                  dispatch(clearTeamId());
+                  dispatch(clearMsgGroupId());
+                }}
               >
                 Logout
               </Link>

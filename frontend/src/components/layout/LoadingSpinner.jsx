@@ -15,7 +15,7 @@ const LoadingSpinner = ({ message , height}) => {
       }}
     >
       <ClipLoader color="#00BFFF" size={80} />
-      <span className="mt-3 text-warning fs-1">{message}</span>
+      <span className="mt-3 fs-1" style={{color: "#7ab2d3"}}>{message}</span>
     </div>
   );
 };

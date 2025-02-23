@@ -28,7 +28,8 @@ const TeamSchema = new mongoose.Schema({
     nickname: { type: String, default: "" },
     role: { type: String, default: "member" },
     isAdmin: { type: Boolean, default: false },
-    joinedAt: { type: Date, default: Date.now }
+    joinedAt: { type: Date, default: Date.now },
+    leaveAt: { type: Date, default: null }
   }],
   messageGroups: [{ type: mongoose.Schema.Types.ObjectId, ref: "MessageGroup" }], 
   isActive: { type: Boolean, default: true },

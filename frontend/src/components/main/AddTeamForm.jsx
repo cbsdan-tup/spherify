@@ -14,7 +14,7 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState }) => {
 
   const validationSchema = Yup.object({
     name: Yup.string().required("Team name is required"),
-    description: Yup.string(),
+    // description: Yup.string(),
     logo: Yup.mixed().nullable(),
     membersEmail: Yup.array().of(
       Yup.object().shape({
@@ -40,7 +40,7 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState }) => {
     }
   };
 
-  const currentUser = getUser(authState)
+  const currentUser = getUser(authState);
 
   return (
     <div
@@ -61,7 +61,7 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState }) => {
           <Formik
             initialValues={{
               name: "",
-              description: "",
+              // description: "",
               logo: null,
               emailInput: "",
               membersEmail: [
@@ -69,7 +69,9 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState }) => {
                   user: currentUser?._id,
                   nickname: `${currentUser?.firstName} ${currentUser?.lastName}`,
                   email: `${currentUser?.email}`,
-                  avatar: currentUser.avatar.url ? currentUser.avatar.url : "/images/account.png",
+                  avatar: currentUser.avatar.url
+                    ? currentUser.avatar.url
+                    : "/images/account.png",
                 },
               ],
             }}
@@ -121,7 +123,7 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState }) => {
                       </div>
 
                       {/* Description */}
-                      <div className="mb-3">
+                      {/* <div className="mb-3">
                         <label
                           htmlFor="description"
                           className="form-label custom-text-header"
@@ -135,7 +137,7 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState }) => {
                           className="form-control"
                           placeholder="Enter team description"
                         />
-                      </div>
+                      </div> */}
 
                       {/* Logo */}
                       <div className="mb-3">
@@ -162,7 +164,7 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState }) => {
                           htmlFor="emailInput"
                           className="form-label custom-text-header"
                         >
-                          Add Member (Email)
+                          Invite Member (Email)
                         </label>
                         <div className="d-flex">
                           <Field
@@ -213,17 +215,46 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState }) => {
                           Members
                         </label>
                         <ul className="list-group">
-                          {values.membersEmail.map((member, index) => (
-                            
+                          {values.membersEmail.length > 0 && (
+                            <>
+                              {/* Owner (First Member) */}
+                              <li className="list-group-item member-info">
+                                <span>
+                                  <img
+                                    src={
+                                      values.membersEmail[0].avatar
+                                        ? values.membersEmail[0].avatar
+                                        : "/images/account.png"
+                                    }
+                                    className="member-avatar"
+                                  />
+                                </span>
+                                <span className="member-nickname">
+                                  {values.membersEmail[0].nickname}
+                                </span>{" "}
+                                <span className="member-email custom-text-secondary ">
+                                  ({values.membersEmail[0].email})
+                                </span>
+                                <span className="custom-text-secondary">
+                                  (You)
+                                </span>
+                              </li>
+                            </>
+                          )}
+                        </ul>
+                        <label className="form-label custom-text-header">Invited Members</label>
+                        <ul className="list-group">
+                          {values.membersEmail.slice(1).map((member, index) => (
                             <li
-                              key={index}
+                              key={index + 1}
                               className="list-group-item member-info"
                             >
                               <span>
                                 <img
                                   src={
-                                    member.avatar ? member.avatar :
-                                    "/images/account.png"
+                                    member.avatar
+                                      ? member.avatar
+                                      : "/images/account.png"
                                   }
                                   className="member-avatar"
                                 />
@@ -234,27 +265,18 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState }) => {
                               <span className="member-email custom-text-secondary ">
                                 ({member.email})
                               </span>
-                              {index !== 0 ? (
-                                <span
-                                  className="delete"
-                                  onClick={() => {
-                                    const updatedMembers =
-                                      values.membersEmail.filter(
-                                        (_, i) => i !== index
-                                      );
-                                    setFieldValue(
-                                      "membersEmail",
-                                      updatedMembers
+                              <span
+                                className="delete"
+                                onClick={() => {
+                                  const updatedMembers =
+                                    values.membersEmail.filter(
+                                      (_, i) => i !== index + 1
                                     );
-                                  }}
-                                >
-                                  <i className="fa-solid fa-delete-left"></i>
-                                </span>
-                              ) : (
-                                <span className="custom-text-secondary ">
-                                  (You)
-                                </span>
-                              )}
+                                  setFieldValue("membersEmail", updatedMembers);
+                                }}
+                              >
+                                <i className="fa-solid fa-delete-left"></i>
+                              </span>
                             </li>
                           ))}
                         </ul>

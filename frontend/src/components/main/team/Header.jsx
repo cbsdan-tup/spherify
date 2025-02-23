@@ -2,10 +2,10 @@ import React from "react";
 import ActiveStatus from "./ActiveStatus";
 import { Link } from "react-router-dom";
 
-function Header(teamInfo) {
+function Header({ showRightPanel, setShowRightPanel, ...teamInfo }) {
   const currentTeamId = teamInfo._id;
   return (
-    <div className="header">
+    <div className={`header ${!showRightPanel ? "full" : ""}`}>
       <div className="logo-name">
         <div key={teamInfo._id} className="team">
           {teamInfo.logo.url !== "" ? (
@@ -20,7 +20,6 @@ function Header(teamInfo) {
         </div>
         <div className="team-name">{teamInfo.name}</div>
       </div>
-      <ActiveStatus />
       <Link className="dashboard active" to={`/main/${currentTeamId}`}>
           Dashboard
       </Link>
