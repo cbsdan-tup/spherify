@@ -1,207 +1,385 @@
-  import React, { useEffect, useState, useCallback } from 'react';
-  import Quill from 'quill';
-  import 'quill/dist/quill.snow.css';
-  import { io } from 'socket.io-client';
-  import { useParams } from 'react-router-dom';
-  import { FONT_OPTIONS } from './Live-Editing Functionalities/quillFonts';
-  import './styles.css';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import Quill from 'quill';
+import 'quill/dist/quill.snow.css';
+import { jsPDF } from 'jspdf'; // Import jsPDF
+import html2pdf from 'html2pdf.js'; // Import html2pdf.js
+import axios from 'axios';
+import { useParams } from 'react-router-dom';
+import { FONT_OPTIONS } from './Live-Editing Functionalities/quillFonts';
+import './styles.css';
+import { io } from 'socket.io-client';  // <-- Add this line
+import { useSelector } from 'react-redux';
 
+
+const TOOLBAR_OPTIONS = [
+  [{ undo: 'undo' }, { redo: 'redo' }], // ✅ Undo & Redo
+  [{ header: [1, 2, 3, 4, 5, 6, false] }], // Headers
+  [{ font: FONT_OPTIONS }], // Font options
+  ['bold', 'italic', 'underline'], // Text formatting
+  [{ color: [] }, { background: [] }], // Text color & background
+  [{ align: [] }, { list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }], // Alignment & lists
+  [{ script: 'sub' }, { script: 'super' }], // Subscript & superscript
+  // [{ lineHeight: ['1', '1.5', '2', '2.5', '3', '4'] }], // ✅ Line Spacing
+  [{ list: 'check' }], // ✅ Checklist
+  ['image', 'link'], // Media & links
+  ['clean'], // Remove formatting
+];
+
+const SAVE_INTERVAL_MS = 2000;
+
+export default function TextEditor() {
+  const { documentId } = useParams();
+  const [socket, setSocket] = useState(null);
+  const [quill, setQuill] = useState(null);
+  const [lastFormat, setLastFormat] = useState({}); // Store last format used
+  const [currentUser, setCurrentUser] = useState(null); // State to store current user
+  const [editingUsers, setEditingUsers] = useState([]); // State for users editing the document
+  const currentUserRef = useRef(currentUser); // Use a ref to store the currentUser value
+
+  // Update the ref whenever currentUser changes
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
+  console.log(documentId);
+  // 🔹 Connect to Socket.io
+  useEffect(() => {
+    const s = io(`${import.meta.env.VITE_SOCKET_API}`); 
+
+    s.removeAllListeners(); 
+    setSocket(s);
+
+    return () => {
+      s.disconnect();
+    };
+  }, []);
   
-  const TOOLBAR_OPTIONS = [
-    [{ undo: 'undo' }, { redo: 'redo' }], // ✅ Undo & Redo
-    [{ header: [1, 2, 3, 4, 5, 6, false] }], // Headers
-    [{ font: FONT_OPTIONS }], // Font options
-    ['bold', 'italic', 'underline'], // Text formatting
-    [{ color: [] }, { background: [] }], // Text color & background
-    [{ align: [] }, { list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }], // Alignment & lists
-    [{ script: 'sub' }, { script: 'super' }], // Subscript & superscript
-    // [{ lineHeight: ['1', '1.5', '2', '2.5', '3', '4'] }], // ✅ Line Spacing
-    [{ list: 'check' }], // ✅ Checklist
-    ['image', 'link'], // Media & links
-    ['clean'], // Remove formatting
-  ];
-
+  // 🔹 Receive text changes
+  useEffect(() => {
+    if (socket == null || quill == null) return;
   
+    const textHandler = (delta) => {
+      if (!quill || !delta || typeof delta !== "object" || !delta.ops) return;
+      quill.updateContents(delta, "silent");
+    };
+  
+    socket.off("receive-changes", textHandler); // Remove previous listener
+    socket.on("receive-changes", textHandler);
+  
+    return () => {
+      socket.off("receive-changes", textHandler); // Cleanup on unmount
+    };
+  }, [socket, quill]);
 
-  const SAVE_INTERVAL_MS = 2000;
-
-  export default function TextEditor() {
-    const { documentId } = useParams();
-    const [socket, setSocket] = useState(null);
-    const [quill, setQuill] = useState(null);
-    const [lastFormat, setLastFormat] = useState({}); // Store last format used
-
-    console.log(documentId);
-    // 🔹 Connect to Socket.io
-    useEffect(() => {
-      const s = io(`${import.meta.env.VITE_SOCKET_API}`); 
-
-      s.removeAllListeners(); 
-      setSocket(s);
-
-      return () => {
-        s.disconnect();
-      };
-    }, []);
-
-    // 🔹 Receive text changes
-    useEffect(() => {
-      if (socket == null || quill == null) return;
-    
-      const textHandler = (delta) => {
-        if (!quill || !delta || typeof delta !== "object" || !delta.ops) return;
-        quill.updateContents(delta, "silent");
-      };
-    
-      socket.off("receive-changes", textHandler); // Remove previous listener
-      socket.on("receive-changes", textHandler);
-    
-      return () => {
-        socket.off("receive-changes", textHandler); // Cleanup on unmount
-      };
-    }, [socket, quill]);
-
-    // 🔹 Receive format changes
-    useEffect(() => {
-      if (socket == null || quill == null) return;
-    
-      const formatHandler = ({ format, value, range }) => {
-        if (!format || range == null) return;
-        quill.formatText(range.index, range.length, format, value, "silent");
-      };
-    
+  // 🔹 Receive format changes
+  useEffect(() => {
+    if (socket == null || quill == null) return;
+  
+    const formatHandler = ({ format, value, range }) => {
+      if (!format || range == null) return;
+      quill.formatText(range.index, range.length, format, value, "silent");
+    };
+  
+    socket.off("receive-format", formatHandler);
+    socket.on("receive-format", formatHandler);
+  
+    return () => {
       socket.off("receive-format", formatHandler);
-      socket.on("receive-format", formatHandler);
-    
-      return () => {
-        socket.off("receive-format", formatHandler);
-      };
-    }, [socket, quill]);
+    };
+  }, [socket, quill]);
 
-    // 🔹 Load document contents from server
-    useEffect(() => {
-      if (socket == null || quill == null) return;
-    
-      const loadDocumentHandler = (document) => {
-        quill.setContents(document);
-        quill.enable();
-      };
-    
+  // 🔹 Load document contents from server
+  useEffect(() => {
+    if (socket == null || quill == null) return;
+  
+    const loadDocumentHandler = (document) => {
+      quill.setContents(document);
+      quill.enable();
+    };
+  
+    socket.off("load-document", loadDocumentHandler);
+    socket.once("load-document", loadDocumentHandler);
+  
+    socket.emit("get-document", documentId);
+  
+    return () => {
       socket.off("load-document", loadDocumentHandler);
-      socket.once("load-document", loadDocumentHandler);
+    };
+  }, [socket, quill, documentId]);
+
+  // 🔹 Save document periodically
+  useEffect(() => {
+    if (socket == null || quill == null) return;
+
+    const interval = setInterval(() => {
+      socket.emit('save-document', quill.getContents());
+    }, SAVE_INTERVAL_MS);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [socket, quill]);
+
+  // 🔹 Handle text & format changes and send to server
+  useEffect(() => {
+    if (socket == null || quill == null) return;
+
+    const textChangeHandler = (delta, oldDelta, source) => {
+      if (source !== 'user') return;
+      socket.emit('send-changes', delta);
+    };
+
+    const formatChangeHandler = (range, oldRange, source) => {
+      if (source !== 'user' || range == null) return;
+      const format = quill.getFormat(range.index); // 🔥 Ensure we get the format at the cursor
+      if (format) {
+        setLastFormat(format); // Store last format used
+        socket.emit('send-format', { format, range }); // Send format update
+      }
+    };
     
-      socket.emit("get-document", documentId);
+
+    quill.on('text-change', textChangeHandler);
+    quill.on('selection-change', formatChangeHandler);
+
+    return () => {
+      quill.off('text-change', textChangeHandler);
+      quill.off('selection-change', formatChangeHandler);
+    };
+  }, [socket, quill]);
+
+  // 🔹 Ensure font persists when pressing "Enter"
+  useEffect(() => {
+    if (quill == null) return;
+
+    quill.keyboard.addBinding({ key: 13 }, {
+      handler: function(range, context) {
+        setTimeout(() => {
+          const format = quill.getFormat(range.index - 1); // Get previous line's format
+          if (format) {
+            Object.keys(format).forEach((key) => {
+              quill.format(key, format[key], 'silent'); // Apply previous format
+            });
+          }
+        }, 0);
+      }
+    });
     
-      return () => {
-        socket.off("load-document", loadDocumentHandler);
-      };
-    }, [socket, quill, documentId]);
+  }, [quill, lastFormat]);
 
-    // 🔹 Save document periodically
-    useEffect(() => {
-      if (socket == null || quill == null) return;
+  // ✅ Add Undo & Redo Buttons Manually
+  function addUndoRedoButtons(quill) {
+const undoButton = document.querySelector('.ql-undo');
+const redoButton = document.querySelector('.ql-redo');
 
-      const interval = setInterval(() => {
-        socket.emit('save-document', quill.getContents());
-      }, SAVE_INTERVAL_MS);
-
-      return () => {
-        clearInterval(interval);
-      };
-    }, [socket, quill]);
-
-    // 🔹 Handle text & format changes and send to server
-    useEffect(() => {
-      if (socket == null || quill == null) return;
-
-      const textChangeHandler = (delta, oldDelta, source) => {
-        if (source !== 'user') return;
-        socket.emit('send-changes', delta);
-      };
-
-      const formatChangeHandler = (range, oldRange, source) => {
-        if (source !== 'user' || range == null) return;
-        const format = quill.getFormat(range.index); // 🔥 Ensure we get the format at the cursor
-        if (format) {
-          setLastFormat(format); // Store last format used
-          socket.emit('send-format', { format, range }); // Send format update
-        }
-      };
-      
-
-      quill.on('text-change', textChangeHandler);
-      quill.on('selection-change', formatChangeHandler);
-
-      return () => {
-        quill.off('text-change', textChangeHandler);
-        quill.off('selection-change', formatChangeHandler);
-      };
-    }, [socket, quill]);
-
-    // 🔹 Ensure font persists when pressing "Enter"
-    useEffect(() => {
-      if (quill == null) return;
-
-      quill.keyboard.addBinding({ key: 13 }, {
-        handler: function(range, context) {
-          setTimeout(() => {
-            const format = quill.getFormat(range.index - 1); // Get previous line's format
-            if (format) {
-              Object.keys(format).forEach((key) => {
-                quill.format(key, format[key], 'silent'); // Apply previous format
-              });
-            }
-          }, 0);
-        }
-      });
-      
-    }, [quill, lastFormat]);
-
-    // ✅ Add Undo & Redo Buttons Manually
-function addUndoRedoButtons(quill) {
-  const undoButton = document.querySelector('.ql-undo');
-  const redoButton = document.querySelector('.ql-redo');
-
-  if (undoButton) {
-    undoButton.addEventListener('click', () => {
-      quill.history.undo(); // 🔄 Undo last change
-    });
-  }
-
-  if (redoButton) {
-    redoButton.addEventListener('click', () => {
-      quill.history.redo(); // 🔄 Redo last undone change
-    });
-  }
+if (undoButton) {
+  undoButton.addEventListener('click', () => {
+    quill.history.undo(); // 🔄 Undo last change
+  });
 }
 
-    // 🔹 Initialize Quill editor
-    const wrapperRef = useCallback((wrapper) => {
-      if (wrapper == null) return;
-      wrapper.innerHTML = '';
+if (redoButton) {
+  redoButton.addEventListener('click', () => {
+    quill.history.redo(); // 🔄 Redo last undone change
+  });
+}
+}
 
-      const editor = document.createElement('div');
-      wrapper.append(editor);
+  // Access the user from the Redux store
+const user = useSelector((state) => state.auth.user);
+console.log("User from Redux:", user); // Log user data to ensure it's being set correctly
 
-      const q = new Quill(editor, {
-        theme: 'snow',
-        modules: { toolbar: TOOLBAR_OPTIONS, history: { delay: 1000, maxStack: 500, userOnly: true }
-
-         },
-      });
-
-      q.disable();
-      q.setText('Loading...');
-      setQuill(q);
-
-        // ✅ Attach Undo & Redo event listeners
-  addUndoRedoButtons(q);
-    }, []);
-
-    return (
-      <div className="container live-editting">
-        <div className="wrapper" ref={wrapperRef}></div>
-        <div>Document ID: {documentId}</div>
-      </div>
-    );
+// Fetch user from Redux and set currentUser
+useEffect(() => {
+  if (user) {
+    setCurrentUser(user.firstName + ' ' + user.lastName); // Set full name of user
+  } else {
+    console.log("User is not yet available in Redux");
   }
+}, [user]);
+
+// Listen for user-editing socket events and handle Quill editor changes
+useEffect(() => {
+  if (!currentUser) {
+    console.error("Current User is not set yet.");
+    return; // Exit early if currentUser is undefined
+  }
+
+  // Listen for other users editing the document
+  const userStatusHandler = (data) => {
+    const { documentId: receivedDocumentId, users } = data;
+    if (!users) return; // Ensure valid users array
+
+    if (receivedDocumentId === documentId) {
+      // Update the editingUsers state to include all users editing the document
+      setEditingUsers(users);
+    }
+  };
+
+  socket.on("user-editing", userStatusHandler);
+
+  // Emit user status when Quill editor changes
+  const updateUserStatus = () => {
+    if (!currentUser) {
+      console.error("Cannot emit user status, currentUser is undefined.");
+      return; // Prevent emitting empty user data
+    }
+    socket.emit('update-user-status', { documentId, user: currentUser });
+  };
+
+  quill.on('text-change', updateUserStatus);
+
+  // Cleanup listeners on unmount
+  return () => {
+    socket.off("user-editing", userStatusHandler);
+    quill.off('text-change', updateUserStatus);
+  };
+}, [socket, quill, currentUser, documentId]); // Re-run whenever currentUser or documentId changes
+
+
+// Handle PDF generation with jsPDF
+const handleGeneratePDF = () => {
+  if (!quill) return;
+
+  // Get the Quill editor content as HTML
+  let editorContent = quill.root.innerHTML;
+
+  // Apply a default font size of 12px in the editor content
+  editorContent = editorContent.replace(/font-size:\s*\d+px/g, 'font-size: 12px'); // Ensure all inline font sizes are set to 12px
+
+  // Add a global style tag to ensure font size applies
+  editorContent = `
+    <style>
+      body { font-size: 12px; }
+    </style>
+    ${editorContent}
+  `;
+
+  // Generate PDF using jsPDF
+  const doc = new jsPDF();
+
+  doc.html(editorContent, {
+    callback: function (doc) {
+      doc.save('document.pdf'); // Save the PDF with the name "document.pdf"
+    },
+    margin: [10, 10, 10, 10],
+    x: 10,
+    y: 10,
+  });
+};
+
+// Handle the PDF export using html2pdf.js
+const handleGeneratePDFHtml2Pdf = () => {
+if (!quill) return;
+
+// Get the Quill editor content as HTML
+const editorContent = quill.root.innerHTML;
+
+// Create a temporary container to hold the content
+const tempElement = document.createElement('div');
+tempElement.innerHTML = editorContent;
+
+// Use html2pdf.js to generate the PDF
+html2pdf()
+  .from(tempElement)
+  .save('document.pdf'); // Save the PDF with the name "document.pdf"
+};
+
+// Function to insert a dynamic table into the Quill editor
+const insertDynamicTable = () => {
+  if (quill) {
+    const rows = prompt('Enter number of rows:'); // Prompt for number of rows
+    const columns = prompt('Enter number of columns:'); // Prompt for number of columns
+    
+    if (rows && columns) {
+      const rowCount = parseInt(rows, 10);
+      const colCount = parseInt(columns, 10);
+
+      if (isNaN(rowCount) || isNaN(colCount)) {
+        alert('Please enter valid numbers for rows and columns.');
+        return;
+      }
+
+      // Create table HTML dynamically
+      let tableHTML = `<table border="1" cellpadding="5" cellspacing="0">`;
+
+      // Add table rows and columns
+      for (let i = 0; i < rowCount; i++) {
+        tableHTML += `<tr>`;
+        for (let j = 0; j < colCount; j++) {
+          tableHTML += `<td> </td>`; // Empty cell
+        }
+        tableHTML += `</tr>`;
+      }
+
+      tableHTML += `</table>`;
+
+      // Get the current selection in Quill
+      const range = quill.getSelection();
+      if (range) {
+        // Insert the table at the current cursor position
+        quill.clipboard.dangerouslyPasteHTML(range.index, tableHTML);
+      }
+    }
+  }
+};
+  
+
+// 🔹 Initialize Quill editor
+  const wrapperRef = useCallback((wrapper) => {
+  if (wrapper == null) return;
+  wrapper.innerHTML = '';
+
+  // Create the Quill editor inside the wrapper
+  const editor = document.createElement('div');
+  wrapper.append(editor);
+
+  const q = new Quill(editor, {
+    theme: 'snow',
+    modules: { toolbar: TOOLBAR_OPTIONS, history: { delay: 1000, maxStack: 500, userOnly: true } },
+  });
+
+  q.disable();
+  q.setText('Loading...');
+  setQuill(q);
+
+      // ✅ Attach Undo & Redo event listeners
+addUndoRedoButtons(q);
+ 
+}, []); // Re-run on fileMenuOpen change
+
+return (
+  <div className="container live-editting">
+    <div className="editor-header">
+
+      <div className="editing-users">
+      <h4>Editing Users:</h4>
+      <ul>
+        {editingUsers.length > 0 ? (
+          editingUsers.map((user, index) => (
+            <li key={index} className="editing-user">
+              {user}
+            </li>
+          ))
+        ) : (
+          <li className="no-users-editing">
+            {currentUser ? `${currentUser} is editing` : 'No users editing'}
+          </li> // Display current user or 'No users editing'
+        )}
+      </ul>
+    </div>
+
+      <div className="header-menu">
+        <button onClick={handleGeneratePDF} className="download-btn">
+          <i className="fa fa-download"></i> Download
+        </button>
+        <button onClick={insertDynamicTable} className="download-btn">
+          <i className="fa fa-table"></i> Table
+        </button>
+      </div>
+    </div>
+
+    <div className="wrapper" ref={wrapperRef}></div>
+  </div>
+); 
+}
