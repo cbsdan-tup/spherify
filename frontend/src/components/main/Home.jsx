@@ -6,7 +6,7 @@ import { getToken } from "../../utils/helper";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { setTeamId } from "../../redux/teamSlice";
-import "../../styles/home.css";
+import "../../styles/Home.css";
 import moment from "moment";
 import Swal from "sweetalert2";
 import InviteMemberPopUp from "./InviteMemberPopUp";
