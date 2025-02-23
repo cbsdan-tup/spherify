@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 // Create a new message group
 exports.createMessageGroup = async (req, res) => {
   try {
-    const { teamId, name, members, createdBy } = req.body;
+    const { teamId, name, members = [], createdBy, isGeneral = false } = req.body;
 
     // Validate required fields
     if (!teamId || !name) {
@@ -22,6 +22,7 @@ exports.createMessageGroup = async (req, res) => {
       team: teamId,
       name,
       members,
+      isGeneral,
       createdBy
     });
 

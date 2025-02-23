@@ -609,6 +609,7 @@ exports.generatePublicLink = async (req, res) => {
     const { filePath } = req.query; // Get filePath from query parameters
 
     console.log("Generating public link for:", filePath);
+    
     if (!filePath) {
       return res
         .status(400)
@@ -632,18 +633,20 @@ exports.generatePublicLink = async (req, res) => {
 
     console.log("Relative path:", relativePath);
 
+    console.log("Auth Header:", Buffer.from(`${NEXTCLOUD_USER}:${NEXTCLOUD_PASSWORD}`).toString("base64"));
+
     const response = await axios.post(
       apiUrl,
       new URLSearchParams({
-        path: relativePath, // Nextcloud needs relative path
+        path: relativePath, 
         shareType: 3, // 3 = Public link
         permissions: 1, // 1 = Read-only
       }),
       {
-        auth: { username: NEXTCLOUD_USER, password: NEXTCLOUD_PASSWORD },
         headers: {
           "OCS-APIRequest": "true",
           Accept: "application/json",
+          Authorization: "Basic " + Buffer.from(`${NEXTCLOUD_USER}:${NEXTCLOUD_PASSWORD}`).toString("base64"),
         },
       }
     );

@@ -16,6 +16,7 @@ function Home({ refresh, setRefresh }) {
   const [teams, setTeams] = useState([]);
   const [activeMenu, setActiveMenu] = useState(null);
   const [showInvitePopup, setShowInvitePopup] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const initialData = {
     nickname: "",
@@ -26,7 +27,6 @@ function Home({ refresh, setRefresh }) {
   const dispatch = useDispatch();
   const authState = useSelector((state) => state.auth);
   const user = useSelector((state) => state.auth.user);
-  const currentTeamId = useSelector((state) => state.team.currentTeamId);
 
   const handleShow = () => setShowPopup(true);
   const handleClose = () => setShowPopup(false);
@@ -38,6 +38,8 @@ function Home({ refresh, setRefresh }) {
     console.log("Form Data:", data);
 
     try {
+      setIsLoading(true);
+
       const token = getToken(authState);
       const userId = getUser(authState)?._id;
 
@@ -83,6 +85,25 @@ function Home({ refresh, setRefresh }) {
       );
       console.log("Team folder created successfully:", createTeamFolder);
 
+      const createMessageGroup = await axios.post(
+        `${import.meta.env.VITE_API}/createMessageGroup`,
+        {
+          teamId: newTeamId,
+          name: "General",
+          members: [],
+          createdBy: userId,
+          isGeneral: true,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Message group created successfully:", createMessageGroup);
+
       succesMsg("Team created successfully!");
       fetchTeams();
 
@@ -90,6 +111,8 @@ function Home({ refresh, setRefresh }) {
     } catch (error) {
       console.error("Error submitting form:", error);
       errMsg(`Error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
 
     handleClose();
@@ -105,7 +128,7 @@ function Home({ refresh, setRefresh }) {
       );
       console.log(data);
       setTeams(
-        data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        data.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
       );
     } catch (error) {
       console.log(`Error fetching teams: ${error}`);
@@ -247,7 +270,7 @@ function Home({ refresh, setRefresh }) {
               </div>
               <div className="bottom">
                 <div className="created-at">
-                  Last Modified {moment(team?.createdAt).fromNow()}
+                  Last Modified {moment(team?.updatedAt).fromNow()}
                 </div>
               </div>
             </Link>
@@ -259,6 +282,7 @@ function Home({ refresh, setRefresh }) {
         handleSubmit={handleSubmit}
         initialData={initialData}
         authState={authState}
+        isLoading={isLoading}
       />
       <InviteMemberPopUp
         show={showInvitePopup}

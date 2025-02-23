@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
-import { getToken, getUser } from "../../utils/helper";
+import { getToken, getUser, succesMsg } from "../../utils/helper";
 
 const InviteMemberPopUp = ({ show, handleClose, authState, currentTeamId }) => {
   const [isEmailValid, setIsEmailValid] = useState(false);
@@ -38,7 +38,7 @@ const InviteMemberPopUp = ({ show, handleClose, authState, currentTeamId }) => {
   };
 
   const handleSubmit = async (membersEmail, teamId = currentTeamId) => {
-    try {
+    try { 
       const token = getToken(authState);
       const inviter = getUser(authState);
       
@@ -54,7 +54,7 @@ const InviteMemberPopUp = ({ show, handleClose, authState, currentTeamId }) => {
       );
       
       console.log("Invite Response:", response);
-      alert("Members invited successfully!");
+      succesMsg("Members invited successfully!");
       handleClose();
     } catch (error) {
       console.error("Error inviting members:", error);
@@ -66,7 +66,7 @@ const InviteMemberPopUp = ({ show, handleClose, authState, currentTeamId }) => {
 
   return (
     <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
-      <div className="modal-dialog">
+      <div className="modal-dialog maxWidth500px">
         <div className="modal-content">
           <div className="modal-header custom-primary-bg custom-text-white">
             <h5 className="modal-title fw-bold">Invite Members</h5>
@@ -102,7 +102,7 @@ const InviteMemberPopUp = ({ show, handleClose, authState, currentTeamId }) => {
 
               return (
                 <Form>
-                  <div className="modal-body">
+                  <div className="modal-body" style={{flexDirection: "column"}}>
                     <div className="mb-3">
                       <label htmlFor="emailInput" className="form-label custom-text-header">
                         Invite Member (Email)
@@ -141,7 +141,7 @@ const InviteMemberPopUp = ({ show, handleClose, authState, currentTeamId }) => {
                     </div>
 
                     <div className="mb-3">
-                      <label className="form-label custom-text-header">Invited Members</label>
+                      <label className="form-label custom-text-header">Members To be Invited</label>
                       <ul className="list-group">
                         {values.membersEmail.map((member, index) => (
                           <li key={index} className="list-group-item member-info">

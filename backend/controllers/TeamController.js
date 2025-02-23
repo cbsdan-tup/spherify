@@ -1,4 +1,4 @@
-const { Team } = require("../models/Team");
+const { Team, MessageGroup } = require("../models/Team");
 const cloudinary = require("cloudinary").v2;
 const TeamRequest = require("../models/TeamRequest");
 
@@ -219,5 +219,29 @@ exports.inviteMembers = async (req, res) => {
     res.status(201).json({ message: "Members invited successfully", teamRequests });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
+exports.getMessageGroupInfo = async (req, res) => {
+  try {
+    const { messageGroupId } = req.params;
+
+    if (!messageGroupId) {
+      return res.status(400).json({ message: "MessageGroup ID is required." });
+    }
+
+    const messageGroup = await MessageGroup.findById(messageGroupId)
+      .populate("team") 
+      .lean(); 
+
+    if (!messageGroup) {
+      return res.status(404).json({ message: "MessageGroup not found." });
+    }
+
+    res.status(200).json({ success: true, data: messageGroup });
+  } catch (error) {
+    console.error("Error fetching MessageGroup info:", error);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };

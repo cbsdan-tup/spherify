@@ -2,7 +2,13 @@ import React from "react";
 import ActiveStatus from "./ActiveStatus";
 import { Link } from "react-router-dom";
 
-function Header({ showRightPanel, setShowRightPanel, ...teamInfo }) {
+function Header({
+  showRightPanel,
+  setShowRightPanel,
+  showChats,
+  handleToggleChats,
+  ...teamInfo
+}) {
   const currentTeamId = teamInfo._id;
   return (
     <div className={`header ${!showRightPanel ? "full" : ""}`}>
@@ -20,9 +26,22 @@ function Header({ showRightPanel, setShowRightPanel, ...teamInfo }) {
         </div>
         <div className="team-name">{teamInfo.name}</div>
       </div>
-      <Link className="dashboard active" to={`/main/${currentTeamId}`}>
-          Dashboard
-      </Link>
+      <div
+        className="nav-button"
+        onClick={handleToggleChats}
+      >
+        {showChats ? (
+          <>
+            <i className="fa-solid fa-wrench"></i>
+            <span>Show Tools</span>
+          </>
+        ) : (
+          <>
+            <i className="fa-solid fa-comments"></i>
+            <span>Show Chats</span>
+          </>
+        )}
+      </div>
     </div>
   );
 }
