@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { getToken } from '../utils/helper';
 
-// Helper function for auth header
+// Helper function to get auth header
 const getAuthHeader = (getState) => ({
   headers: {
     'Content-Type': 'application/json',
@@ -16,7 +16,7 @@ export const fetchList = createAsyncThunk(
   async (listId, { getState, rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API}/list/${listId}`,
+        `${import.meta.env.VITE_API}/lists/getList/${listId}`,
         getAuthHeader(getState)
       );
       return response.data;
@@ -32,7 +32,7 @@ export const createList = createAsyncThunk(
   async (listData, { getState, rejectWithValue }) => {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API}/list/create`,
+        `${import.meta.env.VITE_API}/lists/createList`,
         listData,
         getAuthHeader(getState)
       );
@@ -46,11 +46,11 @@ export const createList = createAsyncThunk(
 // Update list
 export const updateList = createAsyncThunk(
   'lists/updateList',
-  async ({ listId, listData }, { getState, rejectWithValue }) => {
+  async ({ listId, updateData }, { getState, rejectWithValue }) => {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API}/list/${listId}`,
-        listData,
+        `${import.meta.env.VITE_API}/lists/updateList/${listId}`,
+        updateData,
         getAuthHeader(getState)
       );
       return response.data;
@@ -66,7 +66,7 @@ export const deleteList = createAsyncThunk(
   async (listId, { getState, rejectWithValue }) => {
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API}/list/${listId}`,
+        `${import.meta.env.VITE_API}/lists/deleteList/${listId}`,
         getAuthHeader(getState)
       );
       return listId;
@@ -93,6 +93,12 @@ const listSlice = createSlice({
     },
     reorderLists: (state, action) => {
       state.lists = action.payload;
+    },
+    clearListError: (state) => {
+      state.error = null;
+    },
+    setListLoading: (state, action) => {
+      state.loading = action.payload;
     }
   },
   extraReducers: (builder) => {
@@ -111,11 +117,25 @@ const listSlice = createSlice({
         state.error = action.payload;
       })
       // Create list
+      .addCase(createList.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(createList.fulfilled, (state, action) => {
+        state.loading = false;
         state.lists.push(action.payload);
       })
+      .addCase(createList.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       // Update list
+      .addCase(updateList.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(updateList.fulfilled, (state, action) => {
+        state.loading = false;
         const index = state.lists.findIndex(list => list._id === action.payload._id);
         if (index !== -1) {
           state.lists[index] = action.payload;
@@ -124,16 +144,29 @@ const listSlice = createSlice({
           state.currentList = action.payload;
         }
       })
+      .addCase(updateList.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       // Delete list
+      .addCase(deleteList.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(deleteList.fulfilled, (state, action) => {
+        state.loading = false;
         state.lists = state.lists.filter(list => list._id !== action.payload);
         if (state.currentList?._id === action.payload) {
           state.currentList = null;
         }
+      })
+      .addCase(deleteList.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   }
 });
 
-export const { setCurrentList, clearCurrentList, reorderLists } = listSlice.actions;
+export const { setCurrentList, clearCurrentList, reorderLists, clearListError, setListLoading } = listSlice.actions;
 
 export default listSlice.reducer;

@@ -5,7 +5,7 @@ const isTooClose = require('../../utils/isTooClose');
 const recalcItemsPos = require('../../utils/recalcItemsPos');
 
 // Get subtask by ID
-exports.subtask_get = async (req, res) => {
+exports.getSubtaskById = async (req, res) => {
   try {
     const subtask = await SubTask.findById(req.params.id)
       .populate('assignedTo', 'firstName lastName email')
@@ -32,7 +32,7 @@ exports.subtask_get = async (req, res) => {
 };
 
 // Create subtask
-exports.create_subtask_post = [
+exports.createSubtask = [
   body('taskName').trim().isLength({ min: 1, max: 64 }).withMessage('Task name must be between 1 and 64 characters'),
   body('position').isNumeric().withMessage('Position must be a number'),
   body('cardId').notEmpty().withMessage('Card ID is required'),
@@ -73,7 +73,7 @@ exports.create_subtask_post = [
 ];
 
 // Update subtask
-exports.update_subtask_put = [
+exports.updateSubtaskById = [
   body('taskName').optional().trim().isLength({ min: 1, max: 64 }),
   body('position').optional().isNumeric(),
   body('isDone').optional().isBoolean(),
@@ -125,7 +125,7 @@ exports.update_subtask_put = [
 ];
 
 // Delete subtask
-exports.subtask_delete = async (req, res) => {
+exports.deleteSubtaskById = async (req, res) => {
   try {
     const subtask = await SubTask.findById(req.params.id);
     if (!subtask) {

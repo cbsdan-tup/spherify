@@ -2,22 +2,15 @@ const express = require('express');
 const router = express.Router();
 const { isAuthenticatedUser } = require('../../middleware/auth');
 const {
-    list_get,
-    create_list_post,
-    update_list_put,
-    list_delete
+    getList,
+    createList,
+    updateList,
+    deleteList
 } = require('../../controllers/kanban/listController');
 
-// Get list
-router.get('/:id', isAuthenticatedUser, list_get);
-
-// Create list
-router.post('/create', isAuthenticatedUser, create_list_post);
-
-// Update list
-router.put('/:id', isAuthenticatedUser, update_list_put);
-
-// Delete list
-router.delete('/:id', isAuthenticatedUser, list_delete);
+router.get('/getList/:id', isAuthenticatedUser, getList);
+router.post('/createList', isAuthenticatedUser, createList);
+router.put('/updateList/:id', isAuthenticatedUser, updateList);
+router.delete('/deleteList/:id', isAuthenticatedUser, deleteList);
 
 module.exports = router;

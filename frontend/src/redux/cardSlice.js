@@ -9,13 +9,13 @@ const getAuthHeader = (getState) => ({
   }
 });
 
-// Get card by ID
+// Fetch card by ID
 export const fetchCard = createAsyncThunk(
   'cards/fetchCard',
   async (cardId, { getState, rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API}/card/${cardId}`,
+        `${import.meta.env.VITE_API}/cards/getCard/${cardId}`,
         getAuthHeader(getState)
       );
       return response.data;
@@ -31,7 +31,7 @@ export const createCard = createAsyncThunk(
   async (cardData, { getState, rejectWithValue }) => {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API}/card/create`,
+        `${import.meta.env.VITE_API}/cards/createCard`,
         cardData,
         getAuthHeader(getState)
       );
@@ -48,7 +48,7 @@ export const updateCard = createAsyncThunk(
   async ({ cardId, cardData }, { getState, rejectWithValue }) => {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API}/card/${cardId}`,
+        `${import.meta.env.VITE_API}/cards/updateCard/${cardId}`,
         cardData,
         getAuthHeader(getState)
       );
@@ -65,7 +65,7 @@ export const deleteCard = createAsyncThunk(
   async (cardId, { getState, rejectWithValue }) => {
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API}/card/${cardId}`,
+        `${import.meta.env.VITE_API}/cards/deleteCard/${cardId}`,
         getAuthHeader(getState)
       );
       return cardId;
@@ -93,15 +93,14 @@ const cardSlice = createSlice({
     reorderCards: (state, action) => {
       state.cards = action.payload;
     },
-    updateCardPosition: (state, action) => {
-      const { cardId, newPosition, newListId } = action.payload;
-      const cardIndex = state.cards.findIndex(card => card._id === cardId);
-      if (cardIndex !== -1) {
-        state.cards[cardIndex].position = newPosition;
-        if (newListId) {
-          state.cards[cardIndex].listId = newListId;
-        }
+    updateCardInState: (state, action) => {
+      const index = state.cards.findIndex(card => card._id === action.payload._id);
+      if (index !== -1) {
+        state.cards[index] = action.payload;
       }
+    },
+    clearCardError: (state) => {
+      state.error = null;
     }
   },
   extraReducers: (builder) => {
@@ -120,11 +119,25 @@ const cardSlice = createSlice({
         state.error = action.payload;
       })
       // Create card
+      .addCase(createCard.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(createCard.fulfilled, (state, action) => {
+        state.loading = false;
         state.cards.push(action.payload);
       })
+      .addCase(createCard.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       // Update card
+      .addCase(updateCard.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(updateCard.fulfilled, (state, action) => {
+        state.loading = false;
         const index = state.cards.findIndex(card => card._id === action.payload._id);
         if (index !== -1) {
           state.cards[index] = action.payload;
@@ -133,21 +146,29 @@ const cardSlice = createSlice({
           state.currentCard = action.payload;
         }
       })
+      .addCase(updateCard.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
       // Delete card
+      .addCase(deleteCard.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(deleteCard.fulfilled, (state, action) => {
+        state.loading = false;
         state.cards = state.cards.filter(card => card._id !== action.payload);
         if (state.currentCard?._id === action.payload) {
           state.currentCard = null;
         }
+      })
+      .addCase(deleteCard.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   }
 });
 
-export const { 
-  setCurrentCard, 
-  clearCurrentCard, 
-  reorderCards,
-  updateCardPosition
-} = cardSlice.actions;
+export const { setCurrentCard, clearCurrentCard, reorderCards, updateCardInState, clearCardError } = cardSlice.actions;
 
 export default cardSlice.reducer;

@@ -2,24 +2,18 @@ const express = require('express');
 const router = express.Router();
 const { isAuthenticatedUser } = require('../../middleware/auth');
 const cardController = require('../../controllers/kanban/cardController');
-const subtaskController = require('../../controllers/kanban/subtaskController');
+// const subtaskController = require('../../controllers/kanban/subtaskController');
 
-// Get card
-router.get('/:id', isAuthenticatedUser, cardController.card_get);
-
-// Create card
-router.post('/create', isAuthenticatedUser, cardController.create_card_post);
-
-// Update card
-router.put('/:id', isAuthenticatedUser, cardController.update_card_put);
-
-// Delete card
-router.delete('/:id', isAuthenticatedUser, cardController.card_delete);
+// Card routes
+router.get('/getCard/:id', isAuthenticatedUser, cardController.getCard);
+router.post('/createCard', isAuthenticatedUser, cardController.createCard);
+router.put('/updateCard/:id', isAuthenticatedUser, cardController.updateCard);
+router.delete('/deleteCard/:id', isAuthenticatedUser, cardController.deleteCard);
 
 // Subtask routes
-router.get('/subtask/:id', isAuthenticatedUser, subtaskController.subtask_get);
-router.post('/subtask/create', isAuthenticatedUser, subtaskController.create_subtask_post);
-router.put('/subtask/:id', isAuthenticatedUser, subtaskController.update_subtask_put);
-router.delete('/subtask/:id', isAuthenticatedUser, subtaskController.subtask_delete);
+// router.get('/subtask/:id', isAuthenticatedUser, subtaskController.getSubtask);
+// router.post('/subtask/create', isAuthenticatedUser, subtaskController.createSubtask);
+// router.put('/subtask/:id', isAuthenticatedUser, subtaskController.updateSubtask);
+// router.delete('/subtask/:id', isAuthenticatedUser, subtaskController.deleteSubtask);
 
 module.exports = router;
