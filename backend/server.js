@@ -34,6 +34,7 @@ const nextCloudRoutes = require("./routes/nextCloudUpload");
 const fileSharingRoutes = require("./routes/fileSharingRoutes");;
 const cardRoutes = require("./routes/kanban/cardRoutes");
 const teamRequest = require("./routes/teamRequests");
+const ganttRoutes = require("./routes/gantt/ganttRoutes");  // Add this line
 
 console.log(process.env.NODE_ENV);
 
@@ -68,6 +69,7 @@ app.use("/api/v1", cardRoutes);
 app.use("/api/v1", nextCloudRoutes);
 app.use("/api/v1", fileSharingRoutes);
 app.use("/api/v1", teamRequest);
+app.use("/api/v1", ganttRoutes);  // Add this line
 
 //404 not found routes
 app.all("*", (req, res) => {
