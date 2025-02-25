@@ -6,7 +6,7 @@ const isTooClose = require('../../utils/isTooClose');
 const recalcItemsPos = require('../../utils/recalcItemsPos');
 
 // Get list by ID
-exports.list_get = async (req, res) => {
+exports.getList = async (req, res) => {
   try {
     const list = await List.findById(req.params.id);
     if (!list) {
@@ -30,7 +30,7 @@ exports.list_get = async (req, res) => {
 };
 
 // Create new list
-exports.create_list_post = [
+exports.createList = [
   body('listTitle').trim().isLength({ min: 1, max: 64 }).withMessage('Title must be between 1 and 64 characters'),
   body('position').isNumeric().withMessage('Position must be a number'),
   body('boardId').notEmpty().withMessage('Board ID is required'),
@@ -66,7 +66,7 @@ exports.create_list_post = [
 ];
 
 // Update list
-exports.update_list_put = [
+exports.updateList = [
   body('listTitle').optional().trim().isLength({ min: 1, max: 64 }),
   body('position').optional().isNumeric(),
 
@@ -115,7 +115,7 @@ exports.update_list_put = [
 ];
 
 // Delete list
-exports.list_delete = async (req, res) => {
+exports.deleteList = async (req, res) => {
   try {
     const list = await List.findById(req.params.id);
     if (!list) {

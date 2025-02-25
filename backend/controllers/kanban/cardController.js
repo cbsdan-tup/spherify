@@ -5,7 +5,7 @@ const isTooClose = require('../../utils/isTooClose');
 const recalcItemsPos = require('../../utils/recalcItemsPos');
 
 // Get card by ID
-exports.card_get = async (req, res) => {
+exports.getCard = async (req, res) => {
   try {
     const card = await Card.findById(req.params.id)
       .populate('assignedTo', 'firstName lastName email')
@@ -32,7 +32,7 @@ exports.card_get = async (req, res) => {
 };
 
 // Create new card
-exports.create_card_post = [
+exports.createCard = [
   body('cardTitle').trim().isLength({ min: 1 }).withMessage('Title must not be empty'),
   body('position').isNumeric().withMessage('Card position must be a number'),
   body('listId').notEmpty().withMessage('List ID is required'),
@@ -73,7 +73,7 @@ exports.create_card_post = [
 ];
 
 // Update card
-exports.update_card_put = [
+exports.updateCard = [
   body('cardTitle').optional().trim().isLength({ min: 1 }),
   body('position').optional().isNumeric(),
   body('priority').optional().isIn(['low', 'medium', 'high', 'urgent']),
@@ -125,7 +125,7 @@ exports.update_card_put = [
 ];
 
 // Delete card
-exports.card_delete = async (req, res) => {
+exports.deleteCard = async (req, res) => {
   try {
     const card = await Card.findById(req.params.id);
     if (!card) {

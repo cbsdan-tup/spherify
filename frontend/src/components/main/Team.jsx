@@ -10,6 +10,7 @@ import Calendar from "./projectmanagement/Calendar";
 import Dashboard from "./team/Dashboard";
 import MessageGroup from "./textchats/MessageGroup";
 import FileSharingPage from "./file-sharing/FileSharingPage";
+import Kanban from './projectmanagement/Kanban';
 
 function Team({showRightPanel, setShowRightPanel, handleToggleChats, showChats}) {
   const { teamId } = useParams();
@@ -48,6 +49,7 @@ function Team({showRightPanel, setShowRightPanel, handleToggleChats, showChats})
             <Route path="/meeting/:meetId" element={<VideoCallPage />} />
             <Route path="/live-editing/:documentId" element={<TextEditor />} />
             <Route path="/file-sharing/:folderId" element={<FileSharingPage />} />
+            <Route path="/kanban/:boardId" element={<Kanban />} />
           </Routes>
         </div>
       ) : (

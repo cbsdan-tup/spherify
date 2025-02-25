@@ -16,7 +16,7 @@ export const fetchUserBoards = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API}/boards/user`,
+        `${import.meta.env.VITE_API}/boards/getBoards`,
         getAuthHeader(getState)
       );
       return response.data;
@@ -32,7 +32,7 @@ export const fetchTeamBoards = createAsyncThunk(
   async (teamId, { getState, rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API}/boards/team/${teamId}`,
+        `${import.meta.env.VITE_API}/boards/getBoardsByTeam/${teamId}`,
         getAuthHeader(getState)
       );
       return response.data;
@@ -48,7 +48,7 @@ export const fetchBoardDetails = createAsyncThunk(
   async (boardId, { getState, rejectWithValue }) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API}/board/${boardId}`,
+        `${import.meta.env.VITE_API}/boards/getBoard/${boardId}`,
         getAuthHeader(getState)
       );
       return response.data;
@@ -64,7 +64,7 @@ export const createBoard = createAsyncThunk(
   async (boardData, { getState, rejectWithValue }) => {
     try {
       const response = await axios.post(
-        `${import.meta.env.VITE_API}/board/create`,
+        `${import.meta.env.VITE_API}/boards/createBoard`,
         boardData,
         getAuthHeader(getState)
       );
@@ -80,8 +80,8 @@ export const updateBoard = createAsyncThunk(
   'boards/updateBoard',
   async ({ boardId, updateData }, { getState, rejectWithValue }) => {
     try {
-      const response = await axios.patch(
-        `${import.meta.env.VITE_API}/board/${boardId}`,
+      const response = await axios.put(
+        `${import.meta.env.VITE_API}/boards/updateBoard/${boardId}`,
         updateData,
         getAuthHeader(getState)
       );
@@ -98,7 +98,7 @@ export const deleteBoard = createAsyncThunk(
   async (boardId, { getState, rejectWithValue }) => {
     try {
       await axios.delete(
-        `${import.meta.env.VITE_API}/board/${boardId}`,
+        `${import.meta.env.VITE_API}/boards/deleteBoard/${boardId}`,
         getAuthHeader(getState)
       );
       return boardId;

@@ -7,7 +7,7 @@ const { Types } = require('mongoose');
 const { body, validationResult } = require('express-validator');
 
 // Get all user's boards
-exports.get_user_boards = async (req, res) => {
+exports.getBoards = async (req, res) => {
   try {
     const userId = Types.ObjectId(req.user.id);
     const boards = await Board.find({ creatorId: userId });
@@ -19,7 +19,7 @@ exports.get_user_boards = async (req, res) => {
 };
 
 // Get boards by team
-exports.get_team_boards = async (req, res) => {
+exports.getBoardsByTeam = async (req, res) => {
   try {
     const { teamId } = req.params;
     
@@ -45,7 +45,7 @@ exports.get_team_boards = async (req, res) => {
 };
 
 // Get selected board lists, cards and subtasks on GET
-exports.board_get = async (req, res) => {
+exports.getBoard = async (req, res) => {
   try {
     const boardId = Types.ObjectId(req.params.id);
 
@@ -124,7 +124,7 @@ exports.board_get = async (req, res) => {
 };
 
 // Create board on POST
-exports.create_board_post = [
+exports.createBoard = [
   body('boardTitle').trim().isLength({ min: 1, max: 64 }).withMessage('Title must be between 1 and 64 characters'),
   body('teamId').notEmpty().withMessage('Team ID is required'),
   body('description').optional().trim(),
@@ -163,7 +163,7 @@ exports.create_board_post = [
 ];
 
 // Handle board delete on DELETE
-exports.board_delete = async (req, res) => {
+exports.deleteBoard = async (req, res) => {
   try {
     const board = await Board.findById(req.params.id);
     if (!board) {
@@ -194,7 +194,7 @@ exports.board_delete = async (req, res) => {
 };
 
 // Handle board update on PATCH
-exports.update_board_patch = [
+exports.updateBoard = [
   body('boardTitle').optional().trim().isLength({ min: 1, max: 64 }),
   body('description').optional().trim(),
   body('background').optional(),
