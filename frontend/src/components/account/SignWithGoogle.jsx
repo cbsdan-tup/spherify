@@ -38,8 +38,9 @@ function SignWithGoogle({ method }) {
                 user: response.user,
               };
               succesMsg("Login Successfully!");
-
-              authenticate(userInfo, dispatch, () => {window.location = "/main"});
+              {
+                response?.user?.isAdmin ? authenticate(userInfo, dispatch, () => {window.location = "/admin"}) : authenticate(userInfo, dispatch, () => {window.location = "/main"});
+              }
             } else {
               console.log("No user found, proceeding to registration...");
               // Proceed with registration logic if user is not found
