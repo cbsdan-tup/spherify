@@ -1,21 +1,36 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
 
-const ListSchema = new Schema(
-  {
-    listTitle: { type: String, required: true },
-    position: { type: Number, required: true },
-    boardId: { type: Schema.Types.ObjectId, ref: 'Board', required: true },
-    teamId: { type: Schema.Types.ObjectId, ref: 'Team', required: true },
-    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-    isArchived: { type: Boolean, default: false }
+const listSchema = new mongoose.Schema({
+  title: {
+    type: String,
+    required: true
   },
-  {
-    timestamps: true
+  teamId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Team',
+    required: true
+  },
+  position: {
+    type: Number,
+    default: 0
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  cards: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Card'
+  }],
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
-);
+});
 
-// Add index for faster queries
-ListSchema.index({ boardId: 1, position: 1 });
-
-module.exports = mongoose.model('List', ListSchema);
+module.exports = mongoose.model('List', listSchema);

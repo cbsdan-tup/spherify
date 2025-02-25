@@ -10,8 +10,10 @@ import Calendar from "./projectmanagement/Calendar";
 import Dashboard from "./team/Dashboard";
 import MessageGroup from "./textchats/MessageGroup";
 import FileSharingPage from "./file-sharing/FileSharingPage";
+import Kanban from './projectmanagement/Kanban';
+import Gantt from './projectmanagement/Gantt';  
 
-function Team({showRightPanel, setShowRightPanel}) {
+function Team({showRightPanel, setShowRightPanel, handleToggleChats, showChats}) {
   const { teamId } = useParams();
   const [teamInfo, setTeamInfo] = useState({});
   const [loading, setLoading] = useState(true);
@@ -40,14 +42,16 @@ function Team({showRightPanel, setShowRightPanel}) {
     <>
       {teamInfo && teamInfo.name ? (
         <div className="team-container">
-          <Header {...teamInfo} showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} />
-          <Outlet />
+          <Header {...teamInfo} showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} handleToggleChats={handleToggleChats} showChats={showChats} />
           <Routes>
             <Route index element={<Dashboard />} />
-            <Route path="/message-group/:groupId" element={<MessageGroup />} />
-            <Route path="/meeting/:meetId" element={<VideoCallPage />} />
-            <Route path="/live-editing/:documentId" element={<TextEditor />} />
-            <Route path="/file-sharing/:folderId" element={<FileSharingPage />} />
+            <Route path="message-group/:groupId" element={<MessageGroup />} />
+            <Route path="meeting/:meetId" element={<VideoCallPage />} />
+            <Route path="live-editing/:documentId" element={<TextEditor />} />
+            <Route path="file-sharing/:folderId" element={<FileSharingPage />} />
+            <Route path="kanban" element={<Kanban />} /> {/* Changed this line */}
+            <Route path="calendar" element={<Calendar />} />
+            <Route path="gantt" element={<Gantt />} />
           </Routes>
         </div>
       ) : (
