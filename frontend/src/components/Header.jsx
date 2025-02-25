@@ -10,11 +10,11 @@ const Header = () => {
   const user = useSelector((state) => state.auth.user);
 
   const logoutHandler = () => {
-    toast.success("Log out successfully", {
-      position: "bottom-right",
-    });
     logout(dispatch, () => {
       navigate("/");
+      toast.success("Log out successfully", {
+        position: "bottom-right",
+      });
       window.location.reload();
     });
   };

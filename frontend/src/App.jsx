@@ -19,7 +19,7 @@ import { Navigate } from "react-router";
 import { useEffect } from "react";
 
 import { useSelector, useDispatch } from "react-redux";
-
+import { useCallback } from "react";
 import { refreshFirebaseToken } from "./config/firebase-config";
 import { updateToken } from "./redux/authSlice";
 import AdminPage from "./components/AdminPage";
@@ -28,25 +28,27 @@ function App() {
   const authState = useSelector((state) => state.auth);
 
   let dispatch = useDispatch();
-  useEffect(() => {
-    const refreshToken = async () => {
-      try {
-        console.log("Current token:", authState.token);
-        const token = await refreshFirebaseToken();
-        if (token) {
-          dispatch(updateToken(token));
-        }
-      } catch (error) {
-        console.error("Error refreshing token:", error);
-        errMsg("Error refreshing token", error);
-      }
-    };
 
-    const interval = setInterval(async () => {
-      refreshToken();
-    }, 55 * 60 * 1000);
+  const refreshToken = useCallback(async () => {
+    try {
+      console.log("Refreshing token...");
+      const token = await refreshFirebaseToken();
+      if (token) {
+        dispatch(updateToken(token));
+        console.log("token:", token);
+      }
+    } catch (error) {
+      console.error("Error refreshing token:", error);
+    }
+  }, [dispatch]); 
+
+  useEffect(() => {
+    refreshToken();
+
+    const interval = setInterval(refreshToken, 55 * 60 * 1000);
+
     return () => clearInterval(interval);
-  }, [dispatch]);
+  }, [refreshToken]); 
 
   const LandingRoutes = () => {
     return (

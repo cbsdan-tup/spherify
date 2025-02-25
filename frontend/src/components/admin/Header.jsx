@@ -2,18 +2,20 @@ import React from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import { logout } from "../../utils/helper";
 
 const Header = () => {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
   const logoutHandler = () => {
-    toast.success("Log out successfully", {
-      position: "bottom-right",
-    });
     logout(dispatch, () => {
       navigate("/");
+      toast.success("Log out successfully", {
+        position: "bottom-right",
+      });
       window.location.reload();
     });
+
   };
 
   return (

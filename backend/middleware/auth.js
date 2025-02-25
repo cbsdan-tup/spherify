@@ -49,11 +49,11 @@ exports.isAuthenticatedUser = async (req, res, next) => {
 exports.isAdmin = async (req, res, next) => {
     try {
         const user = await getUserFromToken(req);
-        if (!user.role) {
+        if (!user.isAdmin) {
             return res.status(401).json({message: "You must login first", user})
         }
         
-        if (user.role === 'admin') {
+        if (user.isAdmin) {
             next()
         } else {
             return res.status(401).json({message: "Access Denied! Admin Only!"})

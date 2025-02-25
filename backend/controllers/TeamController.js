@@ -245,3 +245,24 @@ exports.getMessageGroupInfo = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error", error: error.message });
   }
 };
+
+exports.getTeamStatistics = async (req, res) => {
+  try {
+    const totalTeams = await Team.countDocuments();
+    const totalActiveTeams = await Team.countDocuments({ isActive: true, isDisabled: false });
+    const totalDisabledTeams = await Team.countDocuments({ isDisabled: true });
+
+    return res.status(200).json({
+      success: true,
+      totalTeams,
+      totalActiveTeams,
+      totalDisabledTeams,
+    });
+  } catch (error) {
+    console.error("Error fetching team statistics:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};

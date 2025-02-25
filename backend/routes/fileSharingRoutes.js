@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const {isAdmin} = require("../middleware/auth");
 const multer = require("multer");
 const {
     createFileOrFolder,
@@ -11,7 +12,8 @@ const {
     getFilesAndFoldersByPath,
     createNewFolder,
     generatePublicLink,
-    deleteFileOrFolder
+    deleteFileOrFolder,
+    getStorageInfo
 } = require("../controllers/FileSharingController");
 
 const upload = multer({ dest: "uploads/" });
@@ -27,5 +29,7 @@ router.get("/getFilesAndFoldersByPath/:teamId", getFilesAndFoldersByPath);
 router.post("/createNewFolder", createNewFolder)
 router.get("/getPublicLink", generatePublicLink);
 router.delete("/delete/:fileId", deleteFileOrFolder);
+
+router.get("/getStorageInfo", isAdmin, getStorageInfo);
 
 module.exports = router;

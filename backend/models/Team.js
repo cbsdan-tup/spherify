@@ -54,6 +54,7 @@ const TeamSchema = new mongoose.Schema(
       { type: mongoose.Schema.Types.ObjectId, ref: "MessageGroup" },
     ],
     isActive: { type: Boolean, default: true },
+    isDisabled: { type: Boolean, default: false },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
