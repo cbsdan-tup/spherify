@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const upload = require("../utils/multer");
-const {isAuthenticatedUser} = require("../middleware/auth") 
+const {isAuthenticatedUser, isAdmin} = require("../middleware/auth") 
 
 const { 
     addTeam,
@@ -11,12 +11,14 @@ const {
     deleteTeamById,
     leaveTeam,
     inviteMembers,
-    getMessageGroupInfo
+    getMessageGroupInfo,
+    getTeamStatistics
 } = require('../controllers/TeamController');
 
 router.post('/addTeam', upload.single('logo'), addTeam);
 router.get('/getTeamByUser/:userId', getTeamByUser);
 router.get('/getTeamById/:teamId', getTeamById);
+router.get('/getTeamStatistics', isAdmin, getTeamStatistics);
 router.get('/getMessageGroupInfo/:messageGroupId', isAuthenticatedUser, getMessageGroupInfo);
 router.get('/getTeamMembers/:teamId', isAuthenticatedUser, getTeamMembers);
 router.delete('/deleteTeam/:teamId', isAuthenticatedUser, deleteTeamById);

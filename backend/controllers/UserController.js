@@ -330,3 +330,24 @@ exports.updateUserAvatar = async (req, res) => {
     });
   }
 };
+
+exports.getUserStatistics = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const totalActiveUsers = await User.countDocuments({ isDisable: false,  isDisable: false });
+    const totalDisabledUsers = await User.countDocuments({ isDisable: true });
+
+    return res.status(200).json({
+      success: true,
+      totalUsers,
+      totalActiveUsers,
+      totalDisabledUsers,
+    });
+  } catch (error) {
+    console.error("Error fetching user statistics:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};

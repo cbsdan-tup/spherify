@@ -751,3 +751,38 @@ exports.deleteFileOrFolder = async (req, res) => {
     res.status(500).json({ success: false, error: "Deletion failed" });
   }
 };
+
+exports.getStorageInfo = async (req, res) => {
+  try {
+    const { NEXTCLOUD_REST_URL, NEXTCLOUD_USER, NEXTCLOUD_PASSWORD } = await createWebDAVClient();
+
+    const response = await axios.get(
+      `${NEXTCLOUD_REST_URL}/ocs/v1.php/cloud/users/${NEXTCLOUD_USER}`,
+      {
+        headers: {
+          "OCS-APIRequest": "true",
+          Accept: "application/json",
+        },
+        auth: {
+          username: NEXTCLOUD_USER,
+          password: NEXTCLOUD_PASSWORD,
+        },
+      }
+    );
+
+    const data = response.data.ocs.data;
+
+    // Extract storage details
+    const storageInfo = {
+      totalStorage: data.quota.total / (1024 * 1024), 
+      usedStorage: data.quota.used / (1024 * 1024), 
+      freeStorage: data.quota.free / (1024 * 1024), 
+      relativeUsage: data.quota.relative, 
+    };
+
+    return res.status(200).json({ success: true, storageInfo });
+  } catch (error) {
+    console.error("Error fetching storage info:", error.message);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};

@@ -17,11 +17,11 @@ const Header = () => {
 
   const logoutHandler = () => {
     console.log("logout");
-    toast.success("Log out successfully", {
-      position: "bottom-right",
-    });
     logout(dispatch, () => {
       navigate("/");
+      toast.success("Log out successfully", {
+        position: "bottom-right",
+      });
       window.location.reload();
     });
   };
