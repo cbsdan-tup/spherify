@@ -482,7 +482,7 @@ function Gantt() {
               />
             </Form.Group>
 
-            <Form.Group className="mb-3">
+            {/* <Form.Group className="mb-3">
               <Form.Label>Progress (%)</Form.Label>
               <Form.Control
                 type="number"
@@ -491,7 +491,7 @@ function Gantt() {
                 value={taskForm.progress}
                 onChange={(e) => setTaskForm({ ...taskForm, progress: parseInt(e.target.value) })}
               />
-            </Form.Group>
+            </Form.Group> */}
 
             <div className="d-flex justify-content-end gap-2">
               <Button variant="secondary" onClick={handleCloseModal}>
