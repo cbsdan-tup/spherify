@@ -640,7 +640,7 @@ exports.generatePublicLink = async (req, res) => {
       new URLSearchParams({
         path: relativePath, 
         shareType: 3, // 3 = Public link
-        permissions: 1, // 1 = Read-only
+        permissions: 3, // 1 = Read-only
       }),
       {
         headers: {

@@ -28,7 +28,7 @@ function Header({
       </div>
       <div
         className="nav-button"
-        onClick={handleToggleChats}
+        onClick={()=>{handleToggleChats(); setShowRightPanel(true)}}
       >
         {showChats ? (
           <>

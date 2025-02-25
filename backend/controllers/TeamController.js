@@ -1,6 +1,8 @@
 const { Team, MessageGroup } = require("../models/Team");
 const cloudinary = require("cloudinary").v2;
 const TeamRequest = require("../models/TeamRequest");
+const moment = require("moment");
+const User = require("../models/User");
 
 exports.addTeam = async (req, res) => {
   try {
@@ -264,5 +266,84 @@ exports.getTeamStatistics = async (req, res) => {
       success: false,
       message: "Server error",
     });
+  }
+};
+
+exports.getPastTeamsChartData = async (req, res) => {
+  try {
+    const past30Days = moment().subtract(30, "days").startOf("day");
+    const past12Weeks = moment().subtract(12, "weeks").startOf("isoWeek");
+    const past12Months = moment().subtract(12, "months").startOf("month");
+
+    // Count teams grouped by day for the last 30 days
+    const dailyTeams = await Team.aggregate([
+      { $match: { createdAt: { $gte: past30Days.toDate() } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    // Count teams grouped by week for the last 12 weeks
+    const weeklyTeams = await Team.aggregate([
+      { $match: { createdAt: { $gte: past12Weeks.toDate() } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%U", date: "$createdAt" } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    // Count teams grouped by month for the last 12 months
+    const monthlyTeams = await Team.aggregate([
+      { $match: { createdAt: { $gte: past12Months.toDate() } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      dailyTeams,
+      weeklyTeams,
+      monthlyTeams,
+    });
+  } catch (error) {
+    console.error("Error fetching team stats:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
+exports.getRecentTeamAndUsers = async (req, res) => {
+  try {
+    const recentUsers = await User.find()
+      .sort({ createdAt: -1 }) 
+      .limit(10)
+      .select("firstName lastName avatar email createdAt");
+
+
+    const recentTeams = await Team.find()
+      .sort({ createdAt: -1 }) 
+      .limit(10)
+      .select("logo name members isActive createdAt");
+
+    return res.status(200).json({
+      success: true,
+      recentUsers,
+      recentTeams,
+    });
+  } catch (error) {
+    console.error("Error fetching recent users and teams:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
   }
 };

@@ -11,7 +11,7 @@ import Dashboard from "./team/Dashboard";
 import MessageGroup from "./textchats/MessageGroup";
 import FileSharingPage from "./file-sharing/FileSharingPage";
 
-function Team({showRightPanel, setShowRightPanel}) {
+function Team({showRightPanel, setShowRightPanel, showChats, handleToggleChats}) {
   const { teamId } = useParams();
   const [teamInfo, setTeamInfo] = useState({});
   const [loading, setLoading] = useState(true);
@@ -40,14 +40,10 @@ function Team({showRightPanel, setShowRightPanel}) {
     <>
       {teamInfo && teamInfo.name ? (
         <div className="team-container">
-          <Header {...teamInfo} showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} />
+          <Header showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} showChats={showChats} handleToggleChats={handleToggleChats} {...teamInfo} />
           <Outlet />
           <Routes>
             <Route index element={<Dashboard />} />
-            <Route path="/message-group/:groupId" element={<MessageGroup />} />
-            <Route path="/meeting/:meetId" element={<VideoCallPage />} />
-            <Route path="/live-editing/:documentId" element={<TextEditor />} />
-            <Route path="/file-sharing/:folderId" element={<FileSharingPage />} />
           </Routes>
         </div>
       ) : (

@@ -18,6 +18,10 @@ import Header from "./Header";
 
 import "../styles/MainHeader.css";
 import JitsiMeeting from "./main/conferencing/JitsiMeeting";
+import TextEditor from "./main/live-editing/TextEditor";
+import MessageGroup from "./main/textchats/MessageGroup";
+import FileSharingPage from "./main/file-sharing/FileSharingPage";
+
 function Main() {
   const [refresh, setRefresh] = useState(false);
   const location = useLocation();
@@ -54,11 +58,12 @@ function Main() {
 
   const handleToggleChats = () => {
     setShowChats(!showChats);
-    console.log("clicked")
+    console.log("clicked");
   };
 
-  const currentMeetingRoomName = useSelector((state)=>state.team.currentMeetingRoomName);
-
+  const currentMeetingRoomName = useSelector(
+    (state) => state.team.currentMeetingRoomName
+  );
 
   return (
     <>
@@ -87,6 +92,12 @@ function Main() {
               <Route path="calendar" element={<Calendar />} />
               <Route path="kanban" element={<Kanban />} />
               <Route path="gantt" element={<Gantt />} />
+              <Route path="live-editing/:documentId" element={<TextEditor />} />
+              <Route path="message-group/:groupId" element={<MessageGroup />} />
+              <Route
+                path="file-sharing/:folderId"
+                element={<FileSharingPage />}
+              />
             </Route>
             <Route path=":teamId/*" element={<Team />} />
             <Route path=":teamId" element={<Team />} />
@@ -116,9 +127,12 @@ function Main() {
           <RightToolPanel showChats={showChats} />
         ))}
 
-        {
-          currentMeetingRoomName && <JitsiMeeting roomName={currentMeetingRoomName} displayName={user.firstName + " " + user.lastName} />
-        }
+      {currentMeetingRoomName && (
+        <JitsiMeeting
+          roomName={currentMeetingRoomName}
+          displayName={user.firstName + " " + user.lastName}
+        />
+      )}
     </>
   );
 }

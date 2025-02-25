@@ -22,4 +22,8 @@
     /* Chats */
     --other-message-bg: #D9D9D9;
     --your-message-bg: #AAD0FF;
+
+    /* Admin */
+    --user-card-bg: #0B9C37;
+    --team-card-bg: #B74714;
   }
