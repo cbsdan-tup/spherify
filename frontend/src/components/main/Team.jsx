@@ -10,6 +10,8 @@ import Calendar from "./projectmanagement/Calendar";
 import Dashboard from "./team/Dashboard";
 import MessageGroup from "./textchats/MessageGroup";
 import FileSharingPage from "./file-sharing/FileSharingPage";
+import Kanban from './projectmanagement/Kanban';
+import Gantt from './projectmanagement/Gantt';  
 
 function Team({showRightPanel, setShowRightPanel, showChats, handleToggleChats}) {
   const { teamId } = useParams();
