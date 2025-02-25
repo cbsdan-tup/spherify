@@ -10,9 +10,8 @@ import Calendar from "./projectmanagement/Calendar";
 import Dashboard from "./team/Dashboard";
 import MessageGroup from "./textchats/MessageGroup";
 import FileSharingPage from "./file-sharing/FileSharingPage";
-import Kanban from './projectmanagement/Kanban';
 
-function Team({showRightPanel, setShowRightPanel, handleToggleChats, showChats}) {
+function Team({showRightPanel, setShowRightPanel}) {
   const { teamId } = useParams();
   const [teamInfo, setTeamInfo] = useState({});
   const [loading, setLoading] = useState(true);
@@ -41,7 +40,7 @@ function Team({showRightPanel, setShowRightPanel, handleToggleChats, showChats})
     <>
       {teamInfo && teamInfo.name ? (
         <div className="team-container">
-          <Header {...teamInfo} showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} handleToggleChats={handleToggleChats} showChats={showChats} />
+          <Header {...teamInfo} showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} />
           <Outlet />
           <Routes>
             <Route index element={<Dashboard />} />
@@ -49,7 +48,6 @@ function Team({showRightPanel, setShowRightPanel, handleToggleChats, showChats})
             <Route path="/meeting/:meetId" element={<VideoCallPage />} />
             <Route path="/live-editing/:documentId" element={<TextEditor />} />
             <Route path="/file-sharing/:folderId" element={<FileSharingPage />} />
-            <Route path="/kanban/:boardId" element={<Kanban />} />
           </Routes>
         </div>
       ) : (

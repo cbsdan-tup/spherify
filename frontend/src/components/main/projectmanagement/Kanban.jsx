@@ -1,14 +1,14 @@
-import React from 'react';
-import { useParams } from 'react-router-dom';
+import React from "react";
 
-const Kanban = () => {
-  const { boardId } = useParams();
-
+function Kanban() {
   return (
-    <div className="h-full bg-gray-100 p-4">
-      <h1>Kanban Board</h1>
+    <div className="kanban-container">
+      <h2>Team Kanban Board</h2>
+      <div className="pm-content">
+        Kanban Board Content Here
+      </div>
     </div>
   );
-};
+}
 
 export default Kanban;

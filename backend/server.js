@@ -28,11 +28,10 @@ const messageRoutes = require("./routes/messageRoutes");
 const meetingRoutes = require("./routes/meetingRoutes");
 const eventRoutes = require("./routes/calendar/events");
 const documentRoutes = require("./routes/documentRoutes");
-const boardRoutes = require("./routes/kanban/boardRoutes");
-
+const listRoutes = require("./routes/kanban/listRoutes");
+const cardRoutes = require("./routes/kanban/cardRoutes");
 const nextCloudRoutes = require("./routes/nextCloudUpload");
 const fileSharingRoutes = require("./routes/fileSharingRoutes");;
-
 const teamRequest = require("./routes/teamRequests");
 const ganttRoutes = require("./routes/gantt/ganttRoutes");  // Add this line
 
@@ -65,9 +64,9 @@ app.use("/api/v1", messageRoutes);
 app.use("/api/v1", meetingRoutes);
 app.use("/api/v1", eventRoutes);
 app.use("/api/v1", documentRoutes);
-app.use("/api/v1", boardRoutes);    
-// app.use("/api/v1", listRoutes);      
-// app.use("/api/v1", cardRoutes);      
+//app.use("/api/v1", boardRoutes);    
+app.use("/api/v1", listRoutes);      
+app.use("/api/v1", cardRoutes);      
 app.use("/api/v1", nextCloudRoutes);
 app.use("/api/v1", fileSharingRoutes);
 app.use("/api/v1", teamRequest);
