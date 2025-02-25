@@ -1,7 +1,4 @@
 const Board = require('../../models/kanban/Board');
-const List = require('../../models/kanban/List');
-const Card = require('../../models/kanban/Card');
-const SubTask = require('../../models/kanban/SubTask');
 const Team = require('../../models/Team').Team;
 const { Types } = require('mongoose');
 const { body, validationResult } = require('express-validator');

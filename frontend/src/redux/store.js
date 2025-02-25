@@ -6,8 +6,6 @@ import authReducer from './authSlice';
 import teamReducer from './teamSlice';
 import calendarReducer from './calendarSlice';
 import boardReducer from './boardSlice';
-import listReducer from './listSlice';
-import cardReducer from './cardSlice';
 import ganttReducer from './ganttSlice';
 
 const rootReducer = combineReducers({
@@ -15,8 +13,6 @@ const rootReducer = combineReducers({
   team: teamReducer,
   calendar: calendarReducer,
   boards: boardReducer,
-  lists: listReducer,
-  cards: cardReducer,
   gantt: ganttReducer,
 });
 
