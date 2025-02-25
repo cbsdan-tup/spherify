@@ -1,0 +1,202 @@
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Dancing+Script&family=Lexend:wght@100..900&family=Noto+Serif+Hentaigana:wght@200..900&family=Playwrite+IN:wght@100..400&family=Playwrite+VN:wght@100..400&display=swap');
+
+.header-admin-container {
+    position: fixed;
+    z-index: 1000;
+    top: 0;
+    right: 0;
+}
+.header-admin-container .content {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 1.2rem;
+    justify-content: flex-end;
+    font-family: "Lexend", serif;
+    background-color: var(--text-white);
+    padding: 0.3rem 1rem;
+    border-bottom-left-radius: 10px;
+}
+.header-admin-container  .profile {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-weight: 600;
+}
+.header-admin-container  .profile .user-name {
+    font-size: 1rem;
+    text-align: end;
+}
+.header-admin-container .content .profile img {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+}
+
+.header-admin-container  .button {
+    cursor: pointer;
+    color: var(--text-white);
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 1.5rem; 
+}
+
+.header-admin-container  .button.settings {
+    color: var(--secondary-color)
+}
+
+.header-admin-container  .button.logout {
+    color: var(--danger-color)
+}
+
+.admin-page-content {
+    padding: 1rem;
+    margin-left: 300px;
+}
+
+.admin-page-content.full {
+    margin-left: 0;
+}
+
+.left-side-panel {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 300px;
+    height: 100%;
+    background-color: var(--primary-color);
+    color: var(--text-white);
+    padding: 1rem;
+    z-index: 1000;
+    user-select: none;
+} 
+.left-side-panel.hide {
+    display: none;
+
+}
+.show-panel {
+    position: fixed;
+    bottom: 20px;
+    left: 0;
+    padding: 0.5rem 1rem;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    color: var(--secondary-color);
+    background-color: var(--primary-color);
+    font-size: 1.3rem;
+    user-select: none;
+    z-index: 1000;
+    opacity: 0.5;
+}
+.show-panel:hover {
+    opacity: 1;
+}
+.show-panel.hide {
+    display: none;
+}
+.left-side-panel .content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+    height: inherit;
+    font-family: "Lexend", serif;
+}
+
+.left-side-panel .content .component {
+    flex: 1;
+}
+.left-side-panel .content .body {
+    flex: 2;
+}
+.left-side-panel .content .top {
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.left-side-panel .content .label {
+    color: var(--secondary-color)
+}
+.left-side-panel .content .label, .left-side-panel .content .nav, .left-side-panel .content .hide-panel {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+
+.left-side-panel .content .label:hover, .left-side-panel .content .nav:hover, .left-side-panel .content .hide-panel:hover {
+    color: var(--secondary-color);
+}
+
+.left-side-panel .content .label i, .left-side-panel .content .nav i, .left-side-panel .content .hide-panel i{
+    width: 2rem;
+    text-align: center;
+}
+.left-side-panel .content .top .name {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+.left-side-panel .content .top .logo img {
+    width: 6rem;
+    height: 6rem;
+}
+.left-side-panel .content .top .name {
+    margin-top: -1rem;
+}
+.left-side-panel .content .top hr {
+    margin: 0.3rem 0;
+    background-color: aliceblue;
+    height: 1px;
+    width: 70%;
+}
+.left-side-panel .content .top, .left-side-panel .content .nav {
+    color: var(--text-white);
+    font-size: 1.2rem;
+    text-decoration: none;
+}
+
+.left-side-panel .content .body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 1rem;
+}
+.left-side-panel .content .nav.active {
+    color: var(--secondary-color)
+}
+.left-side-panel .content .nav:hover {
+    color: var(--secondary-color)
+}
+
+.left-side-panel .content .bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    justify-content: end;
+    margin-bottom: 1rem;
+}
+.left-side-panel .content .bottom .hide-panel i {
+    font-size: 1.4rem;
+    color: var(--secondary-color)
+}
+
+.left-side-panel .content .bottom .hide-panel span {
+    font-size: 1.3rem;
+    color: var(--secondary-color)
+}
+.admin-page-content {
+    margin-top: 60px;
+}
+
+.admin-page-content.full {
+    margin-left: 0;
+}

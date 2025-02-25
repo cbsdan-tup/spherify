@@ -42,7 +42,7 @@ const Header = () => {
         <nav className="nav-links">
           {user ? (
             <>
-              <Link className="border" to="/main">
+              <Link className="border" to={user?.isAdmin ? "/admin" : "/main"}>
                 Go to Spherify
               </Link>
             </>

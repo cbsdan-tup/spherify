@@ -20,8 +20,9 @@ import { useEffect } from "react";
 
 import { useSelector, useDispatch } from "react-redux";
 
-import {refreshFirebaseToken} from "./config/firebase-config";
+import { refreshFirebaseToken } from "./config/firebase-config";
 import { updateToken } from "./redux/authSlice";
+import AdminPage from "./components/AdminPage";
 
 function App() {
   const authState = useSelector((state) => state.auth);
@@ -33,7 +34,7 @@ function App() {
         console.log("Current token:", authState.token);
         const token = await refreshFirebaseToken();
         if (token) {
-          dispatch(updateToken(token)); 
+          dispatch(updateToken(token));
         }
       } catch (error) {
         console.error("Error refreshing token:", error);
@@ -45,7 +46,7 @@ function App() {
       refreshToken();
     }, 55 * 60 * 1000);
     return () => clearInterval(interval);
-  }, [dispatch]); 
+  }, [dispatch]);
 
   const LandingRoutes = () => {
     return (
@@ -65,8 +66,12 @@ function App() {
 
   const MainRoutes = () => {
     if (!isAuthenticated(authState)) {
-      console.log("not login", authState)
+      console.log("not login", authState);
       return <Navigate to="/login" />;
+    }
+
+    if (authState?.user?.isAdmin) {
+      return <Navigate to="/admin" />;
     }
 
     return (
@@ -77,11 +82,31 @@ function App() {
     );
   };
 
+  const AdminRoutes = () => {
+    if (!isAuthenticated(authState)) {
+      console.log("not login", authState);
+      return <Navigate to="/login" />;
+    }
+
+    if (!authState?.user?.isAdmin) {
+      return <Navigate to="/main" />;
+    }
+
+    return (
+      <Routes>
+        <Route path="/*" element={<AdminPage />} />
+        <Route path="*" element={<NotFound404 />} />
+      </Routes>
+    );
+  };
+
   return (
     <>
       <Routes>
         <Route path="/*" element={<LandingRoutes />} />
         <Route path="/main/*" element={<MainRoutes />} />
+
+        <Route path="/admin/*" element={<AdminRoutes />} />
       </Routes>
     </>
   );
