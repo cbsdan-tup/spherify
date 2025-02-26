@@ -1,6 +1,10 @@
 .kanban-container {
-  margin-top: 60px;
+  margin-top: 140px;
   padding: 20px;
+  margin-right: 210px;
+}
+.kanban-container.full {
+  margin-right: 0;
 }
 
 .kanban-header {
@@ -33,6 +37,11 @@
   background-color: #026aa7;
 }
 
+.add-icon {
+  font-size: 18px;
+  font-weight: bold;
+}
+
 .lists-container {
   display: flex;
   gap: 16px;
@@ -43,6 +52,8 @@
   white-space: nowrap;
   scrollbar-width: thin;
   scrollbar-color: #c3c3c3 #f1f1f1;
+  -webkit-overflow-scrolling: touch;
+  -ms-overflow-style: -ms-autohiding-scrollbar;
 }
 
 .lists-container::-webkit-scrollbar {
@@ -57,6 +68,28 @@
 .lists-container::-webkit-scrollbar-thumb {
   background-color: #c3c3c3;
   border-radius: 4px;
+}
+
+.drag-overlay {
+  width: 320px;
+  opacity: 0.8;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  cursor: grabbing;
+}
+
+.drag-overlay-header {
+  padding: 10px 16px;
+  background-color: #f1f2f4;
+  border-radius: 8px 8px 0 0;
+  font-weight: 600;
+}
+
+.drag-overlay-content {
+  height: 60px;
+  background-color: white;
+  border-radius: 0 0 8px 8px;
 }
 
 .modal-overlay {
@@ -78,6 +111,7 @@
   border-radius: 8px;
   width: 400px;
   max-width: 90%;
+  z-index: 1000;
 }
 
 .modal-title {

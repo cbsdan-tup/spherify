@@ -40,7 +40,7 @@ function App() {
     } catch (error) {
       console.error("Error refreshing token:", error);
     }
-  }, []); 
+  }, [dispatch]); 
 
   useEffect(() => {
     refreshToken();

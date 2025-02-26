@@ -90,7 +90,7 @@ function Main() {
               }
             >
               <Route path="calendar" element={<Calendar />} />
-              <Route path="kanban" element={<Kanban />} />
+              <Route path="kanban" element={<Kanban isFull={!showRightPanel} />} />
               <Route path="gantt" element={<Gantt />} />
               <Route path="live-editing/:documentId" element={<TextEditor />} />
               <Route path="message-group/:groupId" element={<MessageGroup />} />

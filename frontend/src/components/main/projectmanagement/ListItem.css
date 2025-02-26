@@ -2,6 +2,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  min-height: 100px;
 }
 
 .list-card {
@@ -17,6 +18,11 @@
 .list-header {
   padding: 8px 16px;
   border-bottom: 1px solid #e1e1e1;
+  cursor: grab;
+}
+
+.list-header:active {
+  cursor: grabbing;
 }
 
 .list-title-container {
@@ -32,6 +38,15 @@
   padding: 4px 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+}
+
+.drag-handle {
+  color: #777;
+  margin-right: 8px;
+  font-size: 14px;
+  cursor: grab;
 }
 
 .list-actions {
@@ -44,7 +59,7 @@
   border: none;
   cursor: pointer;
   font-size: 16px;
-  padding: 4px;
+  padding: 4px 8px;
   border-radius: 4px;
   transition: background-color 0.2s;
 }

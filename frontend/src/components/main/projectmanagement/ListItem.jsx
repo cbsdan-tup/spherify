@@ -1,21 +1,33 @@
 import React, { useState, memo, useCallback } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import "./ListItem.css"; // We'll create this CSS file
+import "./ListItem.css";
 
 const ListItem = memo(function ListItem({ list, id, onEdit, onDelete }) {
   const [editingTitle, setEditingTitle] = useState(list.title);
   const [isEditing, setIsEditing] = useState(false);
 
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ 
+    id,
+    data: {
+      type: "LIST",
+      list
+    }
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     width: 320,
-    minHeight: 100,
-    cursor: "grab",
-    flexShrink: 0,
+    opacity: isDragging ? 0.4 : 1,
+    flexShrink: 0
   };
 
   const handleEdit = useCallback((e) => {
@@ -39,27 +51,29 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete }) {
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="list-item-container">
+    <div ref={setNodeRef} style={style} className="list-item-container">
       <div className="list-card">
-        <div className="list-header">
+        <div className="list-header" {...attributes} {...listeners}>
           {isEditing ? (
             <div className="list-title-edit">
               <input
                 type="text"
+                className="title-input"
                 value={editingTitle}
                 onChange={(e) => setEditingTitle(e.target.value)}
                 onBlur={handleEdit}
                 onKeyPress={handleKeyPress}
                 autoFocus
-                className="title-input"
                 onClick={(e) => e.stopPropagation()}
               />
             </div>
           ) : (
             <div className="list-title-container">
-              <h3 className="list-title">{list.title}</h3>
+              <div className="list-title">
+                <span className="drag-handle">⋮⋮</span> {list.title}
+              </div>
               <div className="list-actions" onClick={(e) => e.stopPropagation()}>
-                <button 
+                <button
                   className="icon-button edit-button"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -67,10 +81,10 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete }) {
                     setEditingTitle(list.title);
                   }}
                 >
-                  ✏️
+                  ✎
                 </button>
                 <button className="icon-button delete-button" onClick={handleDelete}>
-                  🗑️
+                  ✕
                 </button>
               </div>
             </div>
@@ -85,3 +99,4 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete }) {
 });
 
 export default ListItem;
+

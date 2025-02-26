@@ -54,6 +54,10 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
           SHOW_POWERED_BY: false,
           SHOW_ROOM_NAME: false,
           HIDE_INVITE_MORE_HEADER: true,
+          TOOLBAR_BUTTONS: [
+            "microphone", "camera", "closedcaptions", "desktop",
+            "hangup", "raisehand", "tileview", "select-background", "recording", "security", "mute-everyone"
+          ],
         },
         width: "100%",
         height: "100%",
@@ -104,7 +108,7 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
   }
   return (
     <>
-      {loading && <LoadingSpinner />}
+      {loading && <LoadingSpinner message="Loading..."/>}
       <Rnd
         size={
           isFullScreen
