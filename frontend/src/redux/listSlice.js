@@ -134,6 +134,8 @@ const listSlice = createSlice({
       })
       // Create list
       .addCase(createList.fulfilled, (state, action) => {
+        // Find and remove any temporary list
+        state.lists = state.lists.filter(list => !list._id.startsWith('temp-'));
         // Initialize empty cards array for new list
         const newList = {
           ...action.payload,
