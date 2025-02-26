@@ -4,17 +4,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchLists, createList, updateList, deleteList, updateListPositions } from "../../../redux/listSlice";
 import { useParams } from "react-router-dom";
 import ListItem from './ListItem';
-import {
-  Box,
-  Typography,
-  TextField,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-} from "@mui/material";
-import { Add as AddIcon } from "@mui/icons-material";
 import { AnimatePresence } from "framer-motion";
 
 function Kanban() {
