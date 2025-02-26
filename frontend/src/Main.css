@@ -220,6 +220,7 @@ body {
   width: 100%;
 }
 .main-container .pages-container {
+  /* margin-left: 10px !important; */
   margin-left: 10px;
   margin-right: 350px;
   flex: 1;

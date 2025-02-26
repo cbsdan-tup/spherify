@@ -190,10 +190,19 @@ function Home({ refresh, setRefresh }) {
           teams.length > 0 &&
           teams.map((team) => (
             <Link
-              to={`/main/${team._id}`}
+              to={!team.isDisabled ? `/main/${team._id}` : "/main"}
               className="team"
               key={team._id}
-              onClick={() => dispatch(setTeamId(team._id))}
+              onClick={
+                !team.isDisabled
+                  ? () => dispatch(setTeamId(team._id))
+                  : () =>
+                      Swal.fire(
+                        "Team is disabled",
+                        "Please contact the team admin to enable the team",
+                        "warning"
+                      )
+              }
             >
               <div
                 className="menu"
@@ -255,16 +264,23 @@ function Home({ refresh, setRefresh }) {
                           .length
                       }
                     </div>
-                    <div className="team-detail">
-                      <i
-                        className={`fa-solid fa-circle-dot ${
-                          team?.isActive ? "active" : "inactive"
-                        }`}
-                      ></i>
-                      <span className="active-status">
-                        {team?.isActive ? "Active" : "Inactive"}
-                      </span>
-                    </div>
+                    {team?.isDisabled ? (
+                      <div className="team-detail">
+                        <i class="fa-solid fa-triangle-exclamation inactive"></i>
+                        <span className="disabled">This team has been Disabled</span>
+                      </div>
+                    ) : (
+                      <div className="team-detail">
+                        <i
+                          className={`fa-solid fa-circle-dot ${
+                            team?.isActive ? "active" : "inactive"
+                          }`}
+                        ></i>
+                        <span className="active-status">
+                          {team?.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

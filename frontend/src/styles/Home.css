@@ -159,6 +159,9 @@
   align-items: center;
   gap: 0.5rem;
 }
+.home .team-container .team .top .right .team-details .team-detail .disabled {
+  color: var(--danger-color);
+}
 .home .team-container .team .top .right .team-details .team-detail i.active {
   color: var(--active-color);
 }
