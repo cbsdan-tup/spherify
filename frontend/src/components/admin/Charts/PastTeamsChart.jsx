@@ -16,7 +16,7 @@ const PastTeamsChart = ({ chartData }) => {
 
   return (
     <div className="past-teams-chart">
-      <h5>Team Creation Trends</h5>
+      <h5>{chartType.charAt(0).toUpperCase() + chartType.slice(1)} New Team</h5>
 
       {/* Dropdown for selecting chart type */}
       <div style={{ marginBottom: "10px" }}>

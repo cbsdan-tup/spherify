@@ -13,7 +13,8 @@
   font-size: 1.2rem;
   justify-content: flex-end;
   font-family: "Lexend", serif;
-  background-color: var(--text-white);
+  background-color: var(--primary-color);
+  color: var(--text-white);
   padding: 0.3rem 1rem;
   border-bottom-left-radius: 10px;
 }
