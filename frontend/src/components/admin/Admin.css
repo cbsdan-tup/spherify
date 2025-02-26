@@ -498,7 +498,7 @@
   margin-top: 1rem;
 }
 
-.admin-page-content .team-management-container .pdf-download {
+.admin-page-content .team-management-container .pdf-download, .admin-page-content .user-management-container .pdf-download {
   align-self: end;
   justify-self: end;
   border: none;
@@ -509,13 +509,13 @@
   font-size: 1.1rem;
   background-color: transparent;
 }
-.admin-page-content .team-management-container .pdf-download:focus {
+.admin-page-content .team-management-container .pdf-download:focus, .admin-page-content .user-management-container .pdf-download:focus {
     outline: none;
 } 
 
-.admin-page-content .team-management-container .pdf-download:hover span {
+.admin-page-content .team-management-container .pdf-download:hover span, .admin-page-content .user-management-container .pdf-download:hover span {
   text-decoration: underline;
 }
-.admin-page-content .team-management-container .pdf-download i {
+.admin-page-content .team-management-container .pdf-download i, .admin-page-content .user-management-container .pdf-download i {
   font-size: 1.5rem;
 }

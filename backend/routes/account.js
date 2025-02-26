@@ -11,7 +11,10 @@ const {
     updateUser,
     getUserStatistics,
     getPastUsersChartData,
-    isAdminExists
+    isAdminExists,
+    disableUser,
+    enableUser,
+    getAllUsers
 } = require('../controllers/UserController');
 
 router.get('/getUserByEmail/:email', getUserByEmail);
@@ -21,6 +24,10 @@ router.get('/getUserStatistics', isAdmin, getUserStatistics);
 router.get('/getPastUsersChartData', isAdmin, getPastUsersChartData);
 router.put("/updateAvatar/:id", isAuthenticatedUser, upload.single('avatar'), updateUserAvatar);
 router.put("/updateUser/:id", isAuthenticatedUser, updateUser);
+
+router.put('/disableUser/:id', isAdmin, disableUser);
+router.put('/enableUser/:id', isAdmin, enableUser);
+router.get('/users', isAdmin, getAllUsers);
 
 router.get('/isAdminExists', isAdminExists);;
 module.exports = router
