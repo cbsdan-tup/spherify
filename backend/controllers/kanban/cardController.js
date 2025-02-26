@@ -157,7 +157,7 @@ exports.updateCard = [
     }
 
     try {
-      const card = await Card.findById(req.params.id);
+      const card = await Card.findById(req.params.cardId); // Changed from req.params.id
       if (!card) {
         return res.status(404).json({ message: "Card not found" });
       }
@@ -179,7 +179,7 @@ exports.updateCard = [
       };
 
       const updatedCard = await Card.findByIdAndUpdate(
-        req.params.id,
+        req.params.cardId,
         updateData,
         { new: true }
       ).populate('assignedTo', 'firstName lastName avatar');
@@ -194,7 +194,7 @@ exports.updateCard = [
 // Delete card
 exports.deleteCard = async (req, res) => {
   try {
-    const card = await Card.findById(req.params.id);
+    const card = await Card.findById(req.params.cardId); // Changed from req.params.id
     if (!card) {
       return res.status(404).json({ message: "Card not found" });
     }
@@ -208,9 +208,57 @@ exports.deleteCard = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to delete this card" });
     }
 
-    await Card.findByIdAndDelete(req.params.id);
-    res.json({ message: "Card deleted successfully", cardId: req.params.id });
+    await Card.findByIdAndDelete(req.params.cardId);
+    res.json({ message: "Card deleted successfully", cardId: req.params.cardId });
   } catch (error) {
     res.status(500).json({ message: "Error deleting card", error: error.message });
+  }
+};
+
+// Add this new controller function
+exports.updateCardPositions = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { cards } = req.body;
+
+    // Verify team access
+    const team = await Team.findOne({
+      _id: teamId,
+      'members.user': req.user._id
+    });
+
+    if (!team) {
+      return res.status(403).json({ 
+        message: "Not authorized to update cards in this team" 
+      });
+    }
+
+    // Update each card's position
+    const updatePromises = cards.map(card => 
+      Card.findByIdAndUpdate(
+        card._id,
+        { 
+          position: card.position,
+          listId: card.listId 
+        },
+        { new: true }
+      )
+    );
+
+    await Promise.all(updatePromises);
+
+    // Fetch updated cards
+    const updatedCards = await Card.find({
+      _id: { $in: cards.map(c => c._id) }
+    })
+    .populate('assignedTo', 'firstName lastName avatar')
+    .sort({ position: 1 });
+
+    res.json(updatedCards);
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Error updating card positions",
+      error: error.message 
+    });
   }
 };
