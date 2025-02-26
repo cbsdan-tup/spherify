@@ -1,16 +1,18 @@
 .card-item {
   background-color: white;
   border-radius: 4px;
-  padding: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   margin-bottom: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  padding: 8px;
   cursor: pointer;
   position: relative;
-  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
 }
 
 .card-item:hover {
-  background-color: #f8f9fa;
+  background-color: #f8f8f8;
 }
 
 .priority-marker {
@@ -18,31 +20,163 @@
   top: 0;
   left: 0;
   width: 32px;
-  height: 3px;
-  border-radius: 0 0 2px 2px;
+  height: 8px;
+  border-radius: 4px;
+  margin-top: 6px;
 }
 
 .card-title {
+  flex: 1;
+  word-break: break-word;
   font-size: 14px;
+  line-height: 1.4;
+  margin-right: 24px; /* Space for delete button */
   color: #172b4d;
-  word-wrap: break-word;
   padding-top: 4px;
 }
 
 .card-members {
   display: flex;
   gap: 4px;
-  margin-top: 8px;
+  margin-top: 4px;
 }
 
 .member-avatar {
   width: 24px;
   height: 24px;
   border-radius: 50%;
+  object-fit: cover;
   border: 2px solid white;
 }
 
 .member-avatar:hover {
   transform: scale(1.1);
   transition: transform 0.2s;
+}
+
+.card-actions {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.delete-button {
+  background: none;
+  border: none;
+  color: #6b778c;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.2s, background-color 0.2s;
+}
+
+.card-item:hover .delete-button {
+  opacity: 1;
+}
+
+.delete-button:hover {
+  background-color: #ebecf0;
+  color: #172b4d;
+}
+
+.card-priority {
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  display: inline-block;
+  margin: 4px 0;
+  background-color: #f4f5f7;
+  color: #5e6c84;
+}
+
+.card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 64px; /* Increased to accommodate avatar and delete button */
+}
+
+.checklist-progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  flex: 1;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background-color: #eee;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-right: 4px;
+}
+
+.progress-fill {
+  height: 100%;
+  background-color: #5ba4cf;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 11px;
+  color: #6b778c;
+  min-width: 35px;
+  margin-left: 4px;
+}
+
+.card-metadata {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.priority-tag {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: capitalize;
+  font-weight: 500;
+}
+
+.priority-tag.low {
+  background-color: #61bd4f;
+  color: white;
+}
+
+.priority-tag.medium {
+  background-color: #f2d600;
+  color: #172b4d;
+}
+
+.priority-tag.high {
+  background-color: #eb5a46;
+  color: white;
+}
+
+.card-assigned-user {
+  position: absolute;
+  top: 8px;
+  right: 32px; /* Leave space for delete button */
+  z-index: 1;
+}
+
+.assigned-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.assigned-avatar:hover {
+  transform: scale(1.1);
+  transition: transform 0.2s ease;
 }

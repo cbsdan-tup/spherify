@@ -276,7 +276,7 @@
 }
 
 .card-view-content {
-  padding: 20px;
+  padding: 16px;
 }
 
 .card-header {
@@ -336,3 +336,137 @@
 .priority-badge.low { background: #61bd4f; color: white; }
 .priority-badge.medium { background: #f2d600; color: black; }
 .priority-badge.high { background: #eb5a46; color: white; }
+
+.modal-header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.modal-header-actions button {
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modal-header-actions .edit-button {
+  background-color: #0079bf;
+  color: white;
+  border: none;
+}
+
+.modal-header-actions .delete-button {
+  background-color: #eb5a46;
+  color: white;
+  border: none;
+}
+
+.card-view-content .card-section {
+  margin-bottom: 24px;
+}
+
+.card-view-content h4 {
+  margin-bottom: 8px;
+  color: #5e6c84;
+}
+
+/* New/Updated Checklist Styles */
+.checklist-input {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.checklist-input input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.checklist-input button {
+  padding: 8px 16px;
+  background-color: #0079bf;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.checklist-items {
+  background-color: #f4f5f7;
+  border-radius: 4px;
+  padding: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.checklist-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background-color: white;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.checklist-item:last-child {
+  margin-bottom: 0;
+}
+
+.checklist-item input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.checklist-item span {
+  flex: 1;
+  font-size: 14px;
+  color: #172b4d;
+}
+
+.checklist-item button {
+  background: none;
+  border: none;
+  color: #6b778c;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 3px;
+  transition: background-color 0.2s;
+}
+
+.checklist-item button:hover {
+  background-color: #ebecf0;
+  color: #172b4d;
+}
+
+.checklist-item.completed span {
+  text-decoration: line-through;
+  color: #5e6c84;
+}
+
+/* Checklist view mode styles */
+.checklist-view {
+  background-color: #f4f5f7;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.checklist-item-view {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background-color: white;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.checklist-item-view:last-child {
