@@ -12,7 +12,7 @@ function Header({
   const currentTeamId = teamInfo._id;
   return (
     <div className={`header ${!showRightPanel ? "full" : ""}`}>
-      <div className="logo-name">
+      <Link className="logo-name" to={`/main/${currentTeamId}`}>
         <div key={teamInfo._id} className="team">
           {teamInfo.logo.url !== "" ? (
             <img
@@ -25,7 +25,7 @@ function Header({
           )}
         </div>
         <div className="team-name">{teamInfo.name}</div>
-      </div>
+      </Link>
       <div
         className="nav-button"
         onClick={()=>{handleToggleChats(); setShowRightPanel(true)}}

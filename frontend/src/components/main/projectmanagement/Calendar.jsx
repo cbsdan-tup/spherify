@@ -13,7 +13,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { fetchTeamMembers } from "../../../functions/TeamFunctions";
 
-function Calendar() {
+function Calendar({setRefresh}) {
   const dispatch = useDispatch();
   const { currentTeamId } = useSelector((state) => state.team);
   const { events, error } = useSelector((state) => state.calendar);
@@ -180,6 +180,7 @@ function Calendar() {
     try {
       if (eventAction === "create") {
         await dispatch(createEvent(eventData)).unwrap();
+        setRefresh(prev => !prev);
         setToastMessage("Event created successfully!");
       } else {
         await dispatch(updateEvent({
@@ -191,6 +192,7 @@ function Calendar() {
             end: eventForm.endDate
           }
         })).unwrap();
+        setRefresh(prev => !prev);
         setToastMessage("Event updated successfully!");
       }
       dispatch(fetchEvents(currentTeamId));
@@ -213,6 +215,7 @@ function Calendar() {
       await dispatch(deleteEvent(selectedEvent.id)).unwrap();
       // Add this line to refresh events after delete
       dispatch(fetchEvents(currentTeamId));
+      setRefresh(prev => !prev);
       setToastMessage("Event deleted successfully!");
       setShowToast(true);
       handleModalClose();
