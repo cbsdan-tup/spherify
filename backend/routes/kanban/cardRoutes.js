@@ -1,16 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const { isAuthenticatedUser } = require('../../middleware/auth');
-const { 
+const {
     getCard,
     createCard,
     updateCard,
-    deleteCard
+    deleteCard,
+    updateCardPositions
 } = require('../../controllers/kanban/cardController');
 
 router.get('/getCard/:id', isAuthenticatedUser, getCard);
 router.post('/createCard', isAuthenticatedUser, createCard);
 router.put('/updateCard/:id', isAuthenticatedUser, updateCard);
 router.delete('/deleteCard/:id', isAuthenticatedUser, deleteCard);
+router.put('/updateCardPositions', isAuthenticatedUser, updateCardPositions);
 
 module.exports = router;

@@ -1,112 +1,86 @@
-import React, { useState, memo } from 'react';
-import { motion } from "framer-motion";
-import { Draggable } from 'react-beautiful-dnd';
-import {
-  TextField,
-  IconButton,
-  Card,
-  CardHeader,
-  CardContent,
-  Box,
-} from "@mui/material";
-import { Edit as EditIcon, Delete as DeleteIcon } from "@mui/icons-material";
+import React, { useState, memo, useCallback } from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import "./ListItem.css"; // We'll create this CSS file
 
-const ListItem = memo(function ListItem({ list, index, onEdit, onDelete }) {
+const ListItem = memo(function ListItem({ list, id, onEdit, onDelete }) {
   const [editingTitle, setEditingTitle] = useState(list.title);
   const [isEditing, setIsEditing] = useState(false);
-  
-  const handleEdit = () => {
-    onEdit(editingTitle);
+
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    width: 320,
+    minHeight: 100,
+    cursor: "grab",
+    flexShrink: 0,
+  };
+
+  const handleEdit = useCallback((e) => {
+    e.stopPropagation();
+    if (editingTitle.trim() && editingTitle !== list.title) {
+      onEdit(editingTitle);
+    }
     setIsEditing(false);
+  }, [editingTitle, list.title, onEdit]);
+
+  const handleDelete = useCallback((e) => {
+    e.stopPropagation();
+    onDelete();
+  }, [onDelete]);
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleEdit(e);
+    }
   };
 
   return (
-    <Draggable draggableId={String(list._id)} index={index}>
-      {(provided, snapshot) => (
-        <motion.div
-          ref={provided.innerRef}
-          {...provided.draggableProps}
-          {...provided.dragHandleProps}
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ 
-            opacity: 1, 
-            x: 0,
-            scale: snapshot.isDragging ? 1.02 : 1,
-            rotate: snapshot.isDragging ? 2 : 0
-          }}
-          exit={{ opacity: 0, x: 20 }}
-          transition={{
-            type: "spring",
-            stiffness: 500,
-            damping: 30
-          }}
-          style={{
-            ...provided.draggableProps.style,
-          }}
-        >
-          <Card
-            sx={{
-              width: 300,
-              minHeight: 100,
-              '& .MuiCardHeader-root': {
-                borderBottom: 1,
-                borderColor: 'divider',
-              },
-              backgroundColor: snapshot.isDragging 
-                ? 'rgba(200, 200, 200, 0.2)' 
-                : 'background.paper',
-              transform: snapshot.isDragging ? 'rotate(2deg)' : 'none',
-            }}
-          >
-            {isEditing ? (
-              <CardHeader
-                title={
-                  <TextField
-                    fullWidth
-                    size="small"
-                    value={editingTitle}
-                    onChange={(e) => setEditingTitle(e.target.value)}
-                    onBlur={handleEdit}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        handleEdit();
-                      }
-                    }}
-                    autoFocus
-                  />
-                }
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="list-item-container">
+      <div className="list-card">
+        <div className="list-header">
+          {isEditing ? (
+            <div className="list-title-edit">
+              <input
+                type="text"
+                value={editingTitle}
+                onChange={(e) => setEditingTitle(e.target.value)}
+                onBlur={handleEdit}
+                onKeyPress={handleKeyPress}
+                autoFocus
+                className="title-input"
+                onClick={(e) => e.stopPropagation()}
               />
-            ) : (
-              <CardHeader
-                title={list.title}
-                action={
-                  <Box>
-                    <IconButton
-                      size="small"
-                      onClick={() => {
-                        setIsEditing(true);
-                        setEditingTitle(list.title);
-                      }}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={onDelete}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                }
-              />
-            )}
-            <CardContent>
-              {/* Cards will be added here later */}
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
-    </Draggable>
+            </div>
+          ) : (
+            <div className="list-title-container">
+              <h3 className="list-title">{list.title}</h3>
+              <div className="list-actions" onClick={(e) => e.stopPropagation()}>
+                <button 
+                  className="icon-button edit-button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditing(true);
+                    setEditingTitle(list.title);
+                  }}
+                >
+                  ✏️
+                </button>
+                <button className="icon-button delete-button" onClick={handleDelete}>
+                  🗑️
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="list-content">
+          {/* Cards will be added here later */}
+        </div>
+      </div>
+    </div>
   );
 });
 

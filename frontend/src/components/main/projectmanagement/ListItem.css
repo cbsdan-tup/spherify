@@ -1,0 +1,81 @@
+.list-item-container {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.list-card {
+  background-color: #f1f2f4;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  width: 100%;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+}
+
+.list-header {
+  padding: 8px 16px;
+  border-bottom: 1px solid #e1e1e1;
+}
+
+.list-title-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.list-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+  padding: 4px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.icon-button:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+}
+
+.edit-button, .delete-button {
+  opacity: 0.7;
+}
+
+.edit-button:hover, .delete-button:hover {
+  opacity: 1;
+}
+
+.list-title-edit {
+  width: 100%;
+}
+
+.title-input {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 16px;
+  border: 1px solid #b3b3b3;
+  border-radius: 4px;
+  background-color: white;
+}
+
+.list-content {
+  padding: 8px;
+  flex-grow: 1;
+  min-height: 20px;
+}

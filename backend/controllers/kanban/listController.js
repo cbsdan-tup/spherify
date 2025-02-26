@@ -126,7 +126,7 @@ exports.updateList = [
 exports.updateListPositions = async (req, res) => {
   try {
     const { teamId } = req.params;
-    const { positions } = req.body; // Array of { listId, position }
+    const { lists } = req.body; // Array of lists in their new order
 
     // Verify team membership
     const team = await Team.findOne({
@@ -138,21 +138,27 @@ exports.updateListPositions = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to update lists for this team" });
     }
 
-    // Update all positions in one transaction
-    const bulkOps = positions.map(({ listId, position }) => ({
-      updateOne: {
-        filter: { _id: listId, teamId },
-        update: { $set: { position, updatedAt: new Date() } }
-      }
-    }));
+    // Update positions for all lists
+    const updatePromises = lists.map((list, index) => {
+      const newPosition = index * 1000; // Calculate new position with 1000 increment
+      return List.findByIdAndUpdate(
+        list._id,
+        { 
+          position: newPosition,
+          updatedAt: new Date()
+        },
+        { new: true }
+      );
+    });
 
-    await List.bulkWrite(bulkOps);
+    await Promise.all(updatePromises);
     
-    // Return updated lists
+    // Return updated lists in new order
     const updatedLists = await List.find({ teamId }).sort({ position: 1 });
     res.json(updatedLists);
 
   } catch (error) {
+    console.error('Error updating list positions:', error);
     res.status(500).json({
       message: "Error updating list positions",
       error: error.message

@@ -73,10 +73,10 @@ export const deleteList = createAsyncThunk(
 
 export const updateListPositions = createAsyncThunk(
   'lists/updatePositions',
-  async (lists, { getState, rejectWithValue }) => {
+  async ({ teamId, lists }, { getState, rejectWithValue }) => {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API}/updateListPositions`,
+        `${import.meta.env.VITE_API}/updatePositions/${teamId}`,
         { lists },
         getAuthHeader(getState)
       );
@@ -104,15 +104,23 @@ const listSlice = createSlice({
     clearListErrors: (state) => {
       state.error = null;
       state.success = false;
+    },
+    addOptimistic: (state, action) => {
+      state.lists.push(action.payload);
+    },
+    updateOptimistic: (state, action) => {
+      const index = state.lists.findIndex(list => list._id === action.payload._id);
+      if (index !== -1) {
+        state.lists[index] = action.payload;
+      }
+    },
+    deleteOptimistic: (state, action) => {
+      state.lists = state.lists.filter(list => list._id !== action.payload);
     }
   },
   extraReducers: (builder) => {
     builder
       // Fetch lists
-      .addCase(fetchLists.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(fetchLists.fulfilled, (state, action) => {
         state.loading = false;
         state.lists = Array.isArray(action.payload) ? action.payload : [];
@@ -124,10 +132,6 @@ const listSlice = createSlice({
         state.success = false;
       })
       // Create list
-      .addCase(createList.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(createList.fulfilled, (state, action) => {
         state.lists = [...(Array.isArray(state.lists) ? state.lists : []), action.payload];
         state.loading = false;
@@ -139,10 +143,6 @@ const listSlice = createSlice({
         state.success = false;
       })
       // Update list
-      .addCase(updateList.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(updateList.fulfilled, (state, action) => {
         const index = state.lists.findIndex(list => list._id === action.payload._id);
         if (index !== -1) {
@@ -157,10 +157,6 @@ const listSlice = createSlice({
         state.success = false;
       })
       // Delete list
-      .addCase(deleteList.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
       .addCase(deleteList.fulfilled, (state, action) => {
         state.lists = state.lists.filter(list => list._id !== action.payload);
         state.loading = false;
@@ -171,23 +167,17 @@ const listSlice = createSlice({
         state.error = action.payload;
         state.success = false;
       })
-      // Update list positions
-      .addCase(updateListPositions.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
+      // Update list positions - remove the pending state
       .addCase(updateListPositions.fulfilled, (state, action) => {
         state.lists = action.payload;
-        state.loading = false;
         state.success = true;
       })
       .addCase(updateListPositions.rejected, (state, action) => {
-        state.loading = false;
         state.error = action.payload;
         state.success = false;
       });
   }
 });
 
-export const { clearLists, clearListErrors } = listSlice.actions;
+export const { clearLists, clearListErrors, addOptimistic, updateOptimistic, deleteOptimistic } = listSlice.actions;
 export default listSlice.reducer;
