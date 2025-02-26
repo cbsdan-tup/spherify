@@ -21,6 +21,8 @@ exports.registerUser = async (req, res, next) => {
       });
     }
 
+    const adminExists = await User.exists({ isAdmin: true });
+
     let avatar = {
       public_id: null,
       url: null,
@@ -54,6 +56,7 @@ exports.registerUser = async (req, res, next) => {
       lastName,
       email,
       avatar,
+      isAdmin: !adminExists, 
     });
 
     const validationError = user.validateSync();
@@ -407,3 +410,20 @@ exports.getPastUsersChartData = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 }
+
+exports.isAdminExists = async (req, res) => {
+  try {
+    const adminExists = await User.exists({ isAdmin: true });
+
+    return res.status(200).json({
+      success: true,
+      isAdminExists: !!adminExists,
+    });
+  } catch (error) {
+    console.error("Error checking admin existence:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
