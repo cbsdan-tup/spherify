@@ -14,7 +14,9 @@ const {
     getMessageGroupInfo,
     getTeamStatistics,
     getPastTeamsChartData,
-    getRecentTeamAndUsers
+    getRecentTeamAndUsers,
+    getAllTeams,
+    updateTeamStatus
 } = require('../controllers/TeamController');
 
 router.post('/addTeam', upload.single('logo'), addTeam);
@@ -28,5 +30,7 @@ router.post('/inviteMembers/:teamId', isAuthenticatedUser, inviteMembers);
 router.get('/getTeamStatistics', isAdmin, getTeamStatistics);
 router.get('/getPastTeamsChartData', isAdmin, getPastTeamsChartData);
 router.get('/getRecentTeamAndUsers', isAdmin, getRecentTeamAndUsers);
+router.get('/getAllTeams', isAdmin, getAllTeams);
+router.put('/updateTeamStatus/:teamId', isAdmin, updateTeamStatus);
 
 module.exports = router

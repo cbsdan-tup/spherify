@@ -427,3 +427,46 @@ exports.isAdminExists = async (req, res) => {
     });
   }
 };
+
+exports.disableUser = async (req, res) => {
+  try {
+    console.log(`Disabling user with ID: ${req.params.id}`); 
+    const user = await User.findByIdAndUpdate(req.params.id, { isDisable: true }, { new: true });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.status(200).json({ success: true, message: "User disabled successfully", user });
+  } catch (error) {
+    console.error("Error disabling user:", error); 
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+exports.enableUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, { isDisable: false }, { new: true });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    return res.status(200).json({ success: true, message: "User enabled successfully", user });
+  } catch (error) {
+    console.error("Error enabling user:", error); 
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await User.find();
+    return res.status(200).json({
+      success: true,
+      users,
+    });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};

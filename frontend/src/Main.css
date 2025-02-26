@@ -1,3 +1,8 @@
+@import url("https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:ital,wght@0,200..800;1,200..800&family=Dancing+Script&family=Lexend:wght@100..900&family=Noto+Serif+Hentaigana:wght@200..900&family=Playwrite+IN:wght@100..400&family=Playwrite+VN:wght@100..400&display=swap");
+
+body {
+  font-family: "Lexend", sans-serif;
+}
 .custom-primary-bg {
   background-color: var(--primary-color);
 }
@@ -215,6 +220,7 @@
   width: 100%;
 }
 .main-container .pages-container {
+  /* margin-left: 10px !important; */
   margin-left: 10px;
   margin-right: 350px;
   flex: 1;
@@ -292,6 +298,9 @@
   gap: 0.8rem;
   color: var(--primary-color);
 }
+.main-container .header .logo-name:hover {
+  text-decoration: none;
+}
 
 .main-container .header .team {
   background-color: var(--primary-color);
@@ -324,6 +333,20 @@
   padding: 1rem;
 }
 
+.main-container .team-container .team-content h1 {
+  color: var(--header-text-color);
+
+}
+
+.main-container .team-container .team-content .card-header {
+  color: var(--header-text-color);
+  font-weight: 600;
+}
+
+.team-members .card-body {
+  max-height: 500px !important;
+  overflow-y: auto;
+}
 .right-tool-panel {
   max-width: 350px;
   width: 100%;
@@ -474,7 +497,12 @@
 .chart-bg {
   background-color: var(--chart-bg-color);
 }
-
+.chart-bg .accordion-body {
+  background-color: #f8f9fa!important;
+  border: none !important;
+  border-top: 1px solid #8a949c !important;
+  border-radius: 0 !important;
+}
 .settings .divider {
   width: 100%;
   margin: 10px 0;
@@ -619,6 +647,10 @@
 
 .main-container .team-container .calendar-container {
   margin-top: 70px;
+}
+.calendar-main .calendar-container {
+  margin-top: 0 !important;
+  padding-top: 40px !important;
 }
 .gantt-container {
   background-color: var(--tertiary-color);

@@ -52,12 +52,14 @@
 }
 
 .admin-page-content {
+  max-width: 1150px!important;
   padding: 1rem;
-  margin-left: 300px;
+  margin-left: 300px !important;
 }
 
 .admin-page-content.full {
-  margin-left: 0;
+  margin-left: auto !important;
+  margin-right: auto !important;
 }
 
 .left-side-panel {
@@ -250,6 +252,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 1.1rem;
+  background-color: transparent;
 }
 .admin-page-content .dashboard .content .pdf-download:focus {
     outline: none;
@@ -386,6 +389,10 @@
   flex-direction: column;
   flex: 1;
 }
+.admin-page-content .dashboard .content .recent-data .table-container.teams {
+  margin-top: 1rem;
+}
+
 .admin-page-content .dashboard .content .recent-data .table-container .table {
   max-height: 270px !important;
   max-width: 100% !important;
@@ -399,6 +406,13 @@
 
 .admin-page-content .dashboard .content .recent-data .table-container h2 {
   font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-page-content .dashboard .content .recent-data .table-container h2 * {
+  color: var(--team-card-bg)
 }
 .admin-page-content .dashboard .content .recent-data .table-container .table table {
   width: 100% !important;
@@ -440,3 +454,68 @@
   justify-content: center;
 }
 
+.admin-page-content .team-management-container {
+  max-width: 1200px;
+  overflow: auto;
+}
+
+.admin-page-content .team-management-container .title {
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--header-text-color);
+  margin-bottom: 1.2rem;
+}
+
+.admin-page-content .team-management-container .logo{
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background-color: var(--header-text-color);
+  font-size: 1.3rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.admin-page-content .team-management-container table body {
+  max-height: 70vh;
+  overflow: auto;
+}
+
+.admin-page-content .team-management-container .status.active {
+  color: var(--active-color) !important;
+}
+.admin-page-content .team-management-container .status.inactive {
+  color: var(--inactive-color) !important;
+}
+
+.teams-datatable {
+  width: 100%;
+  background-color: var(--chart-bg-color) !important;
+  border-collapse: collapse;
+  border-spacing: 0;
+  margin-top: 1rem;
+}
+
+.admin-page-content .team-management-container .pdf-download, .admin-page-content .user-management-container .pdf-download {
+  align-self: end;
+  justify-self: end;
+  border: none;
+  color: var(--header-text-color);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  background-color: transparent;
+}
+.admin-page-content .team-management-container .pdf-download:focus, .admin-page-content .user-management-container .pdf-download:focus {
+    outline: none;
+} 
+
+.admin-page-content .team-management-container .pdf-download:hover span, .admin-page-content .user-management-container .pdf-download:hover span {
+  text-decoration: underline;
+}
+.admin-page-content .team-management-container .pdf-download i, .admin-page-content .user-management-container .pdf-download i {
+  font-size: 1.5rem;
+}

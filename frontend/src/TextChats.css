@@ -16,10 +16,15 @@
 .tool-content {
   margin-left: 1.5rem;
 }
+.tool-content .chat {
+  padding: 0.3rem 0.5rem !important;
+
+}
 .tool-content .add {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  padding: 0 0.5rem;
   margin-top: 0.3rem;
   cursor: pointer;
   color: var(--white-grey);

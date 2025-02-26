@@ -347,3 +347,45 @@ exports.getRecentTeamAndUsers = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
+exports.getAllTeams = async (req, res) => {
+  try {
+    const teams = await Team.find().populate("createdBy", "avatar firstName lastName email");
+
+    return res.status(200).json({
+      success: true,
+      teams,
+    });
+  } catch (error) {
+    console.error("Error fetching teams:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+exports.updateTeamStatus = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { isDisabled } = req.body;
+
+    if (isDisabled === undefined) {
+      return res.status(400).json({ message: "isDisabled is required." });
+    }
+
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found." });
+    }
+
+    team.isDisabled = isDisabled;
+    await team.save();
+
+    return res.status(200).json({ message: "Team status updated successfully." });
+  } catch (error) {
+    console.error("Error updating team status:", error);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+

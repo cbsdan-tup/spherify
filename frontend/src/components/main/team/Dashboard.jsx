@@ -57,6 +57,10 @@ const Dashboard = () => {
   const [members, setMembers] = useState([]);
 
   const [showInvitePopup, setShowInvitePopup] = useState(false);
+  const [teamCalendarEvents, setTeamCalendarEvents] = useState([]);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [eventId, setEventId] = useState(null);
+  const [refresh, setRefresh] = useState(false);
 
   const handleOpenInvitePopUp = () => {
     setShowInvitePopup(true);
@@ -66,15 +70,18 @@ const Dashboard = () => {
   };
   const fetchTeamMembers = async () => {
     try {
-      const token = getToken(authState); 
+      const token = getToken(authState);
       // Fetch team members
       const config = {
         headers: {
           Authorization: `Bearer ${token}`,
-        }
-      }
-      const {data} = await axios.get(`${import.meta.env.VITE_API}/getTeamMembers/${currentTeamId}`, config);
-  
+        },
+      };
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API}/getTeamMembers/${currentTeamId}`,
+        config
+      );
+
       setMembers(data.members);
 
       console.log("Team members:", data.members);
@@ -82,25 +89,49 @@ const Dashboard = () => {
       console.error("Error fetching team members:", error);
       errMsg("Error fetching team members", error);
     }
+  };
 
-  }
+  const fetchTeamCalendarEvents = async () => {
+    try {
+      const token = getToken(authState);
+      // Fetch team members
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API}/getEventsByTeam/${currentTeamId}`,
+        config
+      );
+
+      setTeamCalendarEvents(data);
+
+      console.log("Calendar:", data);
+    } catch (error) {
+      console.error("Error fetching team calendar events:", error);
+      errMsg("Error fetching team calendar events", error);
+    }
+  };
+
   useEffect(() => {
     if (currentTeamId !== null) {
       fetchTeamMembers();
+      fetchTeamCalendarEvents();
     }
-  }, [currentTeamId]);
+  }, [currentTeamId, refresh]);
 
   return (
     <div className="team-content container">
-      <h1 className="fw-bold text-primary">Data Analytics & Dashboard</h1>
+      <h1 className="fw-bold">Data Analytics & Dashboard</h1>
       <hr />
       <FileShare />
       {/* Main Grid Layout */}
-      <div className="row g-4 mt-4">
+      <div className="row g-4 mt-4 cards">
         {/* Kanban Board */}
         <div className="col-md-4">
           <div className="card shadow chart-bg">
-            <div className="card-header text-primary fw-semibold">
+            <div className="card-header fw-semibold">
               Kanban Board
             </div>
             <div className="card-body">
@@ -112,7 +143,9 @@ const Dashboard = () => {
         {/* Working Hours */}
         <div className="col-md-4">
           <div className="card shadow position-relative chart-bg">
-            <div className="card-header fw-semibold text-primary">Working Hours</div>
+            <div className="card-header fw-semibold">
+              Working Hours
+            </div>
             <div className="card-body">
               <Bar data={barData} />
               <div className="dropdown position-absolute top-0 end-0 m-2">
@@ -140,43 +173,55 @@ const Dashboard = () => {
         </div>
 
         {/* Team Members */}
-        <div className="col-md-4">
+        <div className="col-md-4 team-members">
           <div className="card shadow chart-bg">
             <div className="card-header d-flex justify-content-between align-items-center">
-              <span className="fw-semibold text-primary">Team Members</span>
-              <span className="badge bg-primary text-white">{members && members.length}</span>
+              <span className="fw-semibold">Team Members</span>
+              <span className="badge bg-primary text-white">
+                {members && members.length}
+              </span>
             </div>
             <div className="card-body">
               {/* Team Member List */}
-              {members && members.map((member, index) => (
-                <div
-                  key={index}
-                  className="d-flex justify-content-between align-items-center bg-light p-2 mb-2 rounded"
-                >
-                  <div className="d-flex align-items-center gap-2">
-                    <img
-                      src={member.user?.avatar?.url ? member.user.avatar.url : "/images/account.png"}
-                      alt={member?.user?.firstName}
-                      className="rounded-circle"
-                      width="35"
-                    />
-                    <div className="px-2">
-                      <p className="mb-0 fw-semibold">{member.user.firstName} {member.user.lastName}</p>
-                      <p
-                        className={`mb-0 text-sm ${
-                          member.active ? "text-success" : "text-muted"
-                        }`}
-                      >
-                        {member.status ? member.status : "Active"}
-                      </p>
+              {members &&
+                members.map((member, index) => (
+                  <div
+                    key={index}
+                    className="d-flex justify-content-between align-items-center bg-light p-2 mb-2 rounded"
+                  >
+                    <div className="d-flex align-items-center gap-2">
+                      <img
+                        src={
+                          member.user?.avatar?.url
+                            ? member.user.avatar.url
+                            : "/images/account.png"
+                        }
+                        alt={member?.user?.firstName}
+                        className="rounded-circle"
+                        width="35"
+                      />
+                      <div className="px-2">
+                        <p className="mb-0 fw-semibold">
+                          {member.user.firstName} {member.user.lastName}
+                        </p>
+                        <p
+                          className={`mb-0 text-sm ${
+                            member.active ? "text-success" : "text-muted"
+                          }`}
+                        >
+                          {member.status ? member.status : "Active"}
+                        </p>
+                      </div>
                     </div>
+                    <FaPencilAlt className="text-muted" />
                   </div>
-                  <FaPencilAlt className="text-muted" />
-                </div>
-              ))}
+                ))}
             </div>
             <div className="card-footer text-center">
-              <button className="btn btn-primary rounded-circle p-2" onClick={handleOpenInvitePopUp}>
+              <button
+                className="btn btn-primary rounded-circle p-2"
+                onClick={handleOpenInvitePopUp}
+              >
                 <FaPlus size={16} />
               </button>
             </div>
@@ -184,26 +229,65 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Project Calendar */}
-      <Calendar />
       <div className="card shadow mt-4 chart-bg">
-        <div className="card-header fw-semibold text-primary">
+        <div className="card-header fw-semibold">
           Project Calendar
         </div>
         <div className="card-body">
-          {[
-            { date: "01/16/2025", task: "Finish Documentation" },
-            { date: "01/21/2025", task: "Testing" },
-            { date: "01/27/2025", task: "Implementation" },
-          ].map((event, index) => (
-            <div key={index} className="bg-light p-2 mb-2 rounded">
-              <p className="mb-0 fw-medium">
-                {event.date} - {event.task}
-              </p>
-            </div>
-          ))}
+          {teamCalendarEvents.length > 0 ? (
+            teamCalendarEvents.map((event, index) => {
+              return (
+                <div key={index} className="accordion-item">
+                  <div
+                    className="accordion-header bg-light p-2 mb-2 rounded"
+                    onClick={() => {
+                      setIsExpanded(!isExpanded);
+                      setEventId(event._id);
+                    }}
+                    style={{ cursor: "pointer" }}
+                  >
+                    <p className="mb-0 fw-medium">
+                      {new Date(event.startDate).toLocaleString()} -{" "}
+                      {event.name}
+                    </p>
+                    {isExpanded && eventId === event._id && (
+                      <div
+                        className="accordion-body p-2 bg-white rounded border mt-2"
+                        
+                      >
+                        {event.description && (
+                          <p className="text-muted small mb-1">
+                            <strong>Description:</strong> {event.description}
+                          </p>
+                        )}
+                        {event.location && (
+                          <p className="text-muted small mb-1">
+                            📍 {event.location}
+                          </p>
+                        )}
+                        <p className="text-muted small mb-1">
+                          <strong>Start:</strong>{" "}
+                          {new Date(event.startDate).toLocaleString()}
+                        </p>
+                        <p className="text-muted small mb-0">
+                          <strong>End:</strong>{" "}
+                          {new Date(event.endDate).toLocaleString()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-muted text-center">No upcoming events.</p>
+          )}
         </div>
       </div>
+      <div className="calendar-main">
+        <Calendar setRefresh={setRefresh}/>
+      </div>
+
       <InviteMemberPopUp
         show={showInvitePopup}
         handleClose={handleCloseInvitePopUp}

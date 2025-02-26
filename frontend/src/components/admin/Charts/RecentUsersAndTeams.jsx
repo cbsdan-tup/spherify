@@ -1,11 +1,12 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 const RecentUsersAndTeams = ({ recentUsers, recentTeams }) => {
   return (
     <div className="recent-data">
       {/* Recent Users Table */}
       <div className="table-container users">
-        <h2>Recent Users</h2>
+      <h2><span>Recent Users</span><Link to="/admin/user-management"><i className="fa-solid fa-right-from-bracket"></i></Link></h2>
 
         <div className="table">
           <table>
@@ -41,7 +42,7 @@ const RecentUsersAndTeams = ({ recentUsers, recentTeams }) => {
 
       {/* Recent Teams Table */}
       <div className="table-container teams">
-        <h2>Recent Teams</h2>
+        <h2><span>Recent Teams</span><Link to="/admin/team-management"><i className="fa-solid fa-right-from-bracket"></i></Link></h2>
         <div className="table">
           <table className="table">
             <thead>
