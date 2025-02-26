@@ -8,6 +8,7 @@ import PastTeamsChart from "./Charts/PastTeamsChart";
 import StorageChart from "./Charts/StorageChart";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import RecentUsersAndTeams from "./Charts/RecentUsersAndTeams";
 
 const Dashboard = () => {
   const [recentUsers, setRecentUsers] = useState([]);
@@ -198,7 +199,9 @@ const Dashboard = () => {
             <div className="row-content">
               <PastTeamsChart chartData={pastTeamsChartData} />
             </div>
-            <div className="row-content"></div>
+            <div className="row-content recent-users-teams">
+              <RecentUsersAndTeams recentUsers={recentUsers} recentTeams={recentTeams} />
+            </div>
           </>
         )}
       </div>
