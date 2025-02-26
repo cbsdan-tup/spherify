@@ -8,7 +8,6 @@ exports.getCard = async (req, res) => {
   try {
     const { id, teamId } = req.params;
     
-    // Verify team membership
     const team = await Team.findOne({
       _id: teamId,
       'members.user': req.user._id
@@ -18,189 +17,138 @@ exports.getCard = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to access this team's cards" });
     }
 
-    const card = await Card.findById(id);
+    const card = await Card.findById(id).populate('assignedTo', 'firstName lastName avatar');
     if (!card) {
       return res.status(404).json({ message: "Card not found" });
     }
 
-    // Verify card belongs to the team
     if (card.teamId.toString() !== teamId) {
-      return res.status(403).json({ message: "This card does not belong to the specified team" });
+      return res.status(403).json({ message: "Card does not belong to specified team" });
     }
 
     res.json(card);
   } catch (error) {
+    res.status(500).json({ message: "Error fetching card", error: error.message });
+  }
+};
+
+// Get all cards for a list
+exports.getAllCardsByList = async (req, res) => {
+  try {
+    const { teamId, listId } = req.params;
+    
+    // First verify team membership
+    const team = await Team.findOne({
+      _id: teamId,
+      'members.user': req.user._id
+    });
+
+    if (!team) {
+      return res.status(403).json({ 
+        message: "Not authorized to access this team's cards" 
+      });
+    }
+
+    // Then verify list belongs to team
+    const list = await List.findOne({
+      _id: listId,
+      teamId: teamId
+    });
+
+    if (!list) {
+      return res.status(404).json({ 
+        message: "List not found or does not belong to this team" 
+      });
+    }
+
+    // Fetch cards with proper sorting
+    const cards = await Card.find({ 
+      teamId, 
+      listId 
+    })
+    .populate('assignedTo', 'firstName lastName avatar')
+    .sort({ position: 1 })
+    .lean();
+
+    res.json(cards);
+
+  } catch (error) {
+    console.error('Error in getAllCardsByList:', error);
     res.status(500).json({ 
-      message: "Error fetching card",
-      error: error.message
+      message: "Error fetching cards", 
+      error: error.message 
     });
   }
 };
 
 // Create card
 exports.createCard = [
-  body('cardTitle').trim().isLength({ min: 1 }).withMessage('Title is required'),
+  body('cardTitle').trim().isLength({ min: 1 }).withMessage('Card title is required'),
   body('listId').notEmpty().withMessage('List ID is required'),
   body('teamId').notEmpty().withMessage('Team ID is required'),
-  body('description').optional().trim(),
-  body('dueDate').optional().isISO8601().toDate(),
-  body('attachments.*.url').optional().trim(),
+  body('priority').isIn(['low', 'medium', 'high']).withMessage('Invalid priority'),
+  body('checklist').optional().isArray(),
   body('assignedTo').optional().isArray(),
-  body('position').optional().isNumeric(),
 
   async (req, res) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-
     try {
-      const list = await List.findById(req.body.listId);
-      if (!list) {
-        return res.status(404).json({ message: "List not found" });
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
       }
 
-      // Verify team membership
+      // Verify team access
       const team = await Team.findOne({
-        _id: list.teamId,
+        _id: req.body.teamId,
         'members.user': req.user._id
       });
 
       if (!team) {
-        return res.status(403).json({ message: "Not authorized to create cards in this list" });
+        return res.status(403).json({ 
+          message: "Not authorized to create cards in this team" 
+        });
       }
 
-      // Calculate position for new card (at the end of the list)
-      const lastCard = await Card.findOne({ listId: req.body.listId })
-        .sort({ position: -1 });
-      const position = lastCard ? lastCard.position + 1000 : 1000;
+      // Get highest position in the list
+      const highestCard = await Card.findOne({ 
+        listId: req.body.listId 
+      })
+      .sort({ position: -1 });
 
-      const card = await Card.create({
+      const position = highestCard ? highestCard.position + 16384 : 16384;
+
+      // Create card with position
+      const card = new Card({
         cardTitle: req.body.cardTitle,
-        description: req.body.description,
-        dueDate: req.body.dueDate,
+        description: req.body.description || '',
+        position,
+        checklist: req.body.checklist || [],
         priority: req.body.priority || 'low',
-        labels: req.body.labels || [],
-        attachments: req.body.attachments || [],
         assignedTo: req.body.assignedTo || [],
         listId: req.body.listId,
-        teamId: req.body.teamId,
-        position,
-        createdBy: req.user._id
+        teamId: req.body.teamId
       });
 
-      res.status(201).json(card);
+      const savedCard = await card.save();
+      const populatedCard = await Card.findById(savedCard._id)
+        .populate('assignedTo', 'firstName lastName avatar');
+
+      res.status(201).json(populatedCard);
     } catch (error) {
-      res.status(500).json({ message: "Error creating card", error: error.message });
+      res.status(500).json({ 
+        message: "Error creating card",
+        error: error.message 
+      });
     }
   }
 ];
 
-// Update card positions (handles both vertical and horizontal moves)
-exports.updateCardPositions = async (req, res) => {
-  try {
-    const { sourceListId, destinationListId, cards } = req.body;
-
-    // Verify list exists and user has access
-    const list = await List.findById(sourceListId);
-    if (!list) {
-      return res.status(404).json({ message: "Source list not found" });
-    }
-
-    // Verify team membership
-    const team = await Team.findOne({
-      _id: list.teamId,
-      'members.user': req.user._id
-    });
-
-    if (!team) {
-      return res.status(403).json({ message: "Not authorized to update cards" });
-    }
-
-    // Handle both same list reordering and cross-list movement
-    if (sourceListId === destinationListId) {
-      // Same list reordering - update positions vertically
-      const updatePromises = cards.map((card, index) => {
-        return Card.findByIdAndUpdate(
-          card._id,
-          { 
-            position: (index + 1) * 1000,
-            updatedAt: new Date()
-          },
-          { new: true }
-        );
-      });
-
-      await Promise.all(updatePromises);
-    } else {
-      // Cross-list movement - update card's list and position
-      const destCards = await Card.find({ listId: destinationListId })
-        .sort({ position: 1 });
-      
-      // Recalculate positions for all affected cards
-      const updatePromises = cards.map((card, index) => {
-        return Card.findByIdAndUpdate(
-          card._id,
-          {
-            listId: destinationListId,
-            position: (index + 1) * 1000,
-            updatedAt: new Date()
-          },
-          { new: true }
-        );
-      });
-
-      await Promise.all(updatePromises);
-
-      // Reorder remaining cards in source list
-      const sourceCards = await Card.find({ listId: sourceListId })
-        .sort({ position: 1 });
-      
-      const sourceUpdatePromises = sourceCards.map((card, index) => {
-        return Card.findByIdAndUpdate(
-          card._id,
-          { position: (index + 1) * 1000 },
-          { new: true }
-        );
-      });
-
-      await Promise.all(sourceUpdatePromises);
-    }
-
-    // Return updated cards for both lists
-    const updatedSourceCards = await Card.find({ listId: sourceListId })
-      .sort({ position: 1 });
-    const updatedDestCards = sourceListId === destinationListId ? [] :
-      await Card.find({ listId: destinationListId }).sort({ position: 1 });
-
-    res.json({
-      sourceListCards: updatedSourceCards,
-      destinationListCards: updatedDestCards
-    });
-
-  } catch (error) {
-    console.error('Error updating card positions:', error);
-    res.status(500).json({
-      message: "Error updating card positions",
-      error: error.message
-    });
-  }
-};
-
 // Update card
 exports.updateCard = [
-  body('cardTitle').optional().trim(),
-  body('description').optional().trim(),
-  body('dueDate').optional().isISO8601().toDate(),
-  body('priority').optional().isIn(['low', 'medium', 'high', 'urgent']),
-  body('labels').optional().isArray(),
-  body('labels.*.name').optional().trim(),
-  body('labels.*.color').optional().trim(),
-  body('attachments').optional().isArray(),
-  body('attachments.*.name').optional().trim(),
-  body('attachments.*.url').optional().trim(),
+  body('title').optional().trim(),
+  body('priority').optional().isIn(['low', 'medium', 'high']),
+  body('checklist').optional().isArray(),
   body('assignedTo').optional().isArray(),
-  body('isArchived').optional().isBoolean(),
   
   async (req, res) => {
     const errors = validationResult(req);
@@ -214,10 +162,8 @@ exports.updateCard = [
         return res.status(404).json({ message: "Card not found" });
       }
 
-      // Verify team membership through list
-      const list = await List.findById(card.listId);
       const team = await Team.findOne({
-        _id: list.teamId,
+        _id: card.teamId,
         'members.user': req.user._id
       });
 
@@ -226,22 +172,17 @@ exports.updateCard = [
       }
 
       const updateData = {
-        ...(req.body.cardTitle && { cardTitle: req.body.cardTitle }),
-        ...(req.body.description !== undefined && { description: req.body.description }),
-        ...(req.body.dueDate && { dueDate: req.body.dueDate }),
+        ...(req.body.title && { title: req.body.title }),
         ...(req.body.priority && { priority: req.body.priority }),
-        ...(req.body.labels && { labels: req.body.labels }),
-        ...(req.body.attachments && { attachments: req.body.attachments }),
-        ...(req.body.assignedTo && { assignedTo: req.body.assignedTo }),
-        ...(req.body.isArchived !== undefined && { isArchived: req.body.isArchived }),
-        updatedAt: new Date()
+        ...(req.body.checklist && { checklist: req.body.checklist }),
+        ...(req.body.assignedTo && { assignedTo: req.body.assignedTo })
       };
 
       const updatedCard = await Card.findByIdAndUpdate(
         req.params.id,
         updateData,
         { new: true }
-      );
+      ).populate('assignedTo', 'firstName lastName avatar');
 
       res.json(updatedCard);
     } catch (error) {
@@ -258,10 +199,8 @@ exports.deleteCard = async (req, res) => {
       return res.status(404).json({ message: "Card not found" });
     }
 
-    // Verify team membership through list
-    const list = await List.findById(card.listId);
     const team = await Team.findOne({
-      _id: list.teamId,
+      _id: card.teamId,
       'members.user': req.user._id
     });
 
@@ -269,24 +208,9 @@ exports.deleteCard = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to delete this card" });
     }
 
-    await card.remove();
-
-    // Reorder remaining cards in the list
-    const remainingCards = await Card.find({ listId: card.listId })
-      .sort({ position: 1 });
-    
-    const updatePromises = remainingCards.map((card, index) => {
-      return Card.findByIdAndUpdate(
-        card._id,
-        { position: (index + 1) * 1000 },
-        { new: true }
-      );
-    });
-
-    await Promise.all(updatePromises);
-
+    await Card.findByIdAndDelete(req.params.id);
     res.json({ message: "Card deleted successfully", cardId: req.params.id });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting card" });
+    res.status(500).json({ message: "Error deleting card", error: error.message });
   }
 };

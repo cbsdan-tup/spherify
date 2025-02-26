@@ -36,7 +36,7 @@ function Kanban({isFull}) {
   const handleAddList = (e) => {
     e.preventDefault();
     if (newListTitle.trim()) {
-      // Create optimistic list
+      // Create optimistic list with a specific temporary ID pattern
       const optimisticList = {
         _id: `temp-${Date.now()}`,
         title: newListTitle.trim(),
@@ -175,6 +175,7 @@ function Kanban({isFull}) {
                 key={list._id}
                 id={list._id}
                 list={list}
+                teamId={teamId} // Pass the teamId to ListItem
                 onEdit={(newTitle) => handleEditList(list._id, newTitle)}
                 onDelete={() => handleDeleteList(list._id)}
               />

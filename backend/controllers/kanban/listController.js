@@ -1,4 +1,5 @@
 const List = require('../../models/kanban/List');
+const Card = require('../../models/kanban/Card'); // Add this line
 const Team = require('../../models/Team').Team;
 const { body, validationResult } = require('express-validator');
 
@@ -17,8 +18,33 @@ exports.getLists = async (req, res) => {
       return res.status(403).json({ message: "Not authorized to access this team's lists" });
     }
 
+    // Get lists with their cards
     const lists = await List.find({ teamId }).sort({ position: 1 });
-    res.json(lists);
+    
+    // Fetch cards for each list in a single query
+    const cards = await Card.find({ 
+      teamId,
+      listId: { $in: lists.map(list => list._id) }
+    })
+    .populate('assignedTo', 'firstName lastName avatar')
+    .sort({ position: 1 });
+
+    // Group cards by listId
+    const cardsByList = cards.reduce((acc, card) => {
+      if (!acc[card.listId]) {
+        acc[card.listId] = [];
+      }
+      acc[card.listId].push(card);
+      return acc;
+    }, {});
+
+    // Attach cards to their lists
+    const listsWithCards = lists.map(list => ({
+      ...list.toObject(),
+      cards: cardsByList[list._id] || []
+    }));
+
+    res.json(listsWithCards);
   } catch (error) {
     res.status(500).json({
       message: "Error fetching lists",
@@ -161,6 +187,57 @@ exports.updateListPositions = async (req, res) => {
     console.error('Error updating list positions:', error);
     res.status(500).json({
       message: "Error updating list positions",
+      error: error.message
+    });
+  }
+};
+
+// Add this new controller method
+exports.getListsWithCards = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+
+    // Verify team membership
+    const team = await Team.findOne({
+      _id: teamId,
+      'members.user': req.user._id
+    });
+
+    if (!team) {
+      return res.status(403).json({ message: "Not authorized to access this team's lists" });
+    }
+
+    // Get lists with populated cards
+    const lists = await List.find({ teamId })
+      .sort({ position: 1 })
+      .lean(); // Use lean() for better performance
+
+    // Fetch all cards for this team in one query
+    const cards = await Card.find({ teamId })
+      .populate('assignedTo', 'firstName lastName avatar')
+      .sort({ position: 1 })
+      .lean();
+
+    // Group cards by listId
+    const cardsByList = cards.reduce((acc, card) => {
+      if (!acc[card.listId]) {
+        acc[card.listId] = [];
+      }
+      acc[card.listId].push(card);
+      return acc;
+    }, {});
+
+    // Attach cards to their respective lists
+    const listsWithCards = lists.map(list => ({
+      ...list,
+      cards: cardsByList[list._id] || []
+    }));
+
+    res.json(listsWithCards);
+  } catch (error) {
+    console.error('Error fetching lists with cards:', error);
+    res.status(500).json({
+      message: "Error fetching lists with cards",
       error: error.message
     });
   }

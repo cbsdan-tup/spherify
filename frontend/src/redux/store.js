@@ -7,7 +7,7 @@ import teamReducer from './teamSlice';
 import calendarReducer from './calendarSlice';
 import ganttReducer from './ganttSlice';
 import listReducer from './listSlice';
-//import cardReducer from './cardSlice';
+import cardReducer from './cardSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -15,7 +15,7 @@ const rootReducer = combineReducers({
   calendar: calendarReducer,
   gantt: ganttReducer,
   lists: listReducer,
-  //card: cardReducer,
+  cards: cardReducer, // Changed from 'card' to 'cards'
 });
 
 const persistConfig = {

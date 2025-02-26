@@ -1,0 +1,338 @@
+.card-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.card-modal-content {
+  background-color: white;
+  padding: 24px;
+  border-radius: 8px;
+  width: 800px;  /* Increased from 500px */
+  max-width: 95%;
+  max-height: 85vh;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* Create two columns */
+  gap: 24px;
+}
+
+.card-modal-header {
+  grid-column: 1 / -1; /* Span full width */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.card-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+}
+
+.card-modal-main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card-modal-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group input[name="cardTitle"] {
+  font-size: 18px;
+  padding: 12px;
+  font-weight: 500;
+}
+
+.form-group textarea[name="description"] {
+  min-height: 120px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  font-size: 14px;
+  color: #333;
+}
+
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.form-group select {
+  background-color: white;
+}
+
+.modal-actions {
+  grid-column: 1 / -1; /* Span full width */
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.cancel-button {
+  background-color: #f1f1f1;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.submit-button {
+  background-color: #0079bf;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.submit-button:hover {
+  background-color: #026aa7;
+}
+
+.label-input-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.label-input-group input[type="text"] {
+  flex: 1;
+}
+
+.label-input-group input[type="color"] {
+  width: 50px;
+  padding: 0 2px;
+}
+
+.add-label-button {
+  padding: 4px 8px;
+  background-color: #0079bf;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.labels-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.label-chip {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: white;
+}
+
+.label-chip button {
+  background: none;
+  border: none;
+  color: white;
+  margin-left: 4px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.file-input {
+  margin-bottom: 8px;
+}
+
+.attachments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.attachment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  background-color: #f1f2f4;
+  border-radius: 4px;
+}
+
+.attachment-item a {
+  color: #0079bf;
+  text-decoration: none;
+}
+
+.attachment-item a:hover {
+  text-decoration: underline;
+}
+
+.members-list {
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.member-item {
+  margin-bottom: 8px;
+}
+
+.member-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.member-label:hover {
+  background-color: #f0f0f0;
+}
+
+.member-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.member-name {
+  font-size: 14px;
+  color: #172b4d;
+}
+
+/* Customize checkbox appearance */
+.member-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+/* Add scrollbar styling */
+.members-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.members-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.members-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.members-list::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+.card-view-content {
+  padding: 20px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.card-section {
+  margin-bottom: 24px;
+}
+
+.card-section h4 {
+  color: #5e6c84;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.checklist-item-view {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.assigned-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.assigned-member {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: #f4f5f7;
+  border-radius: 3px;
+}
+
+.assigned-member img {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.priority-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.priority-badge.low { background: #61bd4f; color: white; }
+.priority-badge.medium { background: #f2d600; color: black; }
+.priority-badge.high { background: #eb5a46; color: white; }

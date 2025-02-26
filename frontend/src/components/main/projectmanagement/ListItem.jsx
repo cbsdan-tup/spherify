@@ -1,11 +1,27 @@
-import React, { useState, memo, useCallback } from "react";
+import React, { useState, memo, useCallback, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import "./ListItem.css";
+import CardItem from "./CardItem";
+import CardModal from "./CardModal";
+import { fetchCards } from "../../../redux/cardSlice";
 
-const ListItem = memo(function ListItem({ list, id, onEdit, onDelete }) {
-  const [editingTitle, setEditingTitle] = useState(list.title);
+const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) {
+  const dispatch = useDispatch();
+  
+  // Get cards from the Redux store instead of the list prop
+  const cards = useSelector(state => state.cards.cardsByList[list._id] || []);
+
+  // Fetch cards when the component mounts
+  useEffect(() => {
+    dispatch(fetchCards({ teamId, listId: list._id }));
+  }, [dispatch, teamId, list._id]);
+
+  // State and sortable setup
   const [isEditing, setIsEditing] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(list.title);
+  const [showCardModal, setShowCardModal] = useState(false);
 
   const {
     attributes,
@@ -14,7 +30,7 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete }) {
     transform,
     transition,
     isDragging
-  } = useSortable({ 
+  } = useSortable({
     id,
     data: {
       type: "LIST",
@@ -50,9 +66,18 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete }) {
     }
   };
 
+  const openAddCardModal = () => {
+    setShowCardModal(true);
+  };
+
+  const closeCardModal = () => {
+    setShowCardModal(false);
+  };
+
   return (
     <div ref={setNodeRef} style={style} className="list-item-container">
       <div className="list-card">
+        {/* List Header */}
         <div className="list-header" {...attributes} {...listeners}>
           {isEditing ? (
             <div className="list-title-edit">
@@ -72,28 +97,53 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete }) {
               <div className="list-title">
                 <span className="drag-handle">⋮⋮</span> {list.title}
               </div>
-              <div className="list-actions" onClick={(e) => e.stopPropagation()}>
-                <button
-                  className="icon-button edit-button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditing(true);
-                    setEditingTitle(list.title);
-                  }}
-                >
-                  ✎
-                </button>
-                <button className="icon-button delete-button" onClick={handleDelete}>
-                  ✕
-                </button>
+              <div className="list-actions">
+                <button className="icon-button edit-button" onClick={() => setIsEditing(true)}>✎</button>
+                <button className="icon-button delete-button" onClick={handleDelete}>✕</button>
               </div>
             </div>
           )}
         </div>
+
+        {/* Cards Container */}
         <div className="list-content">
-          {/* Cards will be added here later */}
+          <div className="cards-container">
+            {cards && cards.length > 0 ? (
+              cards.map(card => (
+                <div key={card._id} className="card-wrapper">
+                  <CardItem 
+                    key={card._id} 
+                    card={card}
+                    listId={list._id}
+                    teamId={teamId}
+                  />
+                </div>
+              ))
+            ) : (
+              <div className="empty-list-message">
+                No cards in {list.title}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* List Footer */}
+        <div className="list-footer">
+          <button className="add-card-button" onClick={() => setShowCardModal(true)}>
+            <span className="add-icon">+</span> Add Card
+          </button>
         </div>
       </div>
+
+      {/* Card Modal */}
+      {showCardModal && (
+        <CardModal 
+          onClose={() => setShowCardModal(false)}
+          listId={list._id}
+          teamId={teamId}
+          mode="create"
+        />
+      )}
     </div>
   );
 });

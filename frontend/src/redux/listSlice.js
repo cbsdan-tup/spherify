@@ -90,7 +90,7 @@ export const updateListPositions = createAsyncThunk(
 const listSlice = createSlice({
   name: 'lists',
   initialState: {
-    lists: [],
+    lists: [], // Will now contain lists with their cards
     loading: false,
     error: null,
     success: false
@@ -123,6 +123,7 @@ const listSlice = createSlice({
       // Fetch lists
       .addCase(fetchLists.fulfilled, (state, action) => {
         state.loading = false;
+        // Each list now includes its cards array
         state.lists = Array.isArray(action.payload) ? action.payload : [];
         state.success = true;
       })
@@ -133,14 +134,14 @@ const listSlice = createSlice({
       })
       // Create list
       .addCase(createList.fulfilled, (state, action) => {
-        state.lists = [...(Array.isArray(state.lists) ? state.lists : []), action.payload];
+        // Initialize empty cards array for new list
+        const newList = {
+          ...action.payload,
+          cards: []
+        };
+        state.lists.push(newList);
         state.loading = false;
         state.success = true;
-      })
-      .addCase(createList.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-        state.success = false;
       })
       // Update list
       .addCase(updateList.fulfilled, (state, action) => {
