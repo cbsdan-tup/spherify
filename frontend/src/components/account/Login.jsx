@@ -10,6 +10,7 @@ import SignInwithGoogle from "./SignWithGoogle";
 import { toast } from "react-toastify";
 import "../../index.css";
 import { useDispatch } from "react-redux";
+import Swal from "sweetalert2";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -47,7 +48,7 @@ const Login = () => {
         config
       );
 
-      if (response.success) {
+      if (response.success && !response.user.isDisable) {
         const userInfo = {
           token: idToken,
           user: response.user,
@@ -56,6 +57,10 @@ const Login = () => {
         authenticate(userInfo, dispatch, () => (window.location = "/main"));
       } else {
         errMsg("Login Failed");
+        if (response.user.isDisable) {
+          Swal.fire("Account Disabled", "Your account has been disabled. Contact Administrator for assistance.", "error");
+          return;
+        }
       }
     } catch (error) {
       if (

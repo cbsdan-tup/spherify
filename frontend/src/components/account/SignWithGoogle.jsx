@@ -3,6 +3,7 @@ import { auth } from "../../config/firebase-config";
 import { authenticate, succesMsg, errMsg } from "../../utils/helper";
 import axios from "axios";
 import { useDispatch } from "react-redux";
+import Swal from "sweetalert2";
 
 function SignWithGoogle({ method }) {
   const dispatch = useDispatch();
@@ -32,16 +33,30 @@ function SignWithGoogle({ method }) {
               config
             );
 
-            if (response.success && response.user) {
+            if (response.success && response.user && !response.user.isDisable) {
               const userInfo = {
                 token: idToken,
                 user: response.user,
               };
               succesMsg("Login Successfully!");
               {
-                response?.user?.isAdmin ? authenticate(userInfo, dispatch, () => {window.location = "/admin"}) : authenticate(userInfo, dispatch, () => {window.location = "/main"});
+                response?.user?.isAdmin
+                  ? authenticate(userInfo, dispatch, () => {
+                      window.location = "/admin";
+                    })
+                  : authenticate(userInfo, dispatch, () => {
+                      window.location = "/main";
+                    });
               }
             } else {
+              if (response.user.isDisable) {
+                Swal.fire(
+                  "Account Disabled",
+                  "Your account has been disabled. Contact Administrator for assistant.",
+                  "error"
+                );
+                return;
+              }
               console.log("No user found, proceeding to registration...");
               // Proceed with registration logic if user is not found
               const config = {
@@ -124,7 +139,11 @@ function SignWithGoogle({ method }) {
                   token: idToken,
                   user: newUser,
                 };
-                authenticate(userInfo, dispatch, () => (window.location = "/main"));
+                authenticate(
+                  userInfo,
+                  dispatch,
+                  () => (window.location = "/main")
+                );
               }
             } catch (registerError) {
               console.error("Error during registration:", registerError);
@@ -141,11 +160,12 @@ function SignWithGoogle({ method }) {
 
   return (
     <div>
-      <div
-        className="login-google-sign-in"
-        onClick={googleLogin}
-      >
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/2048px-Google_%22G%22_logo.svg.png" alt="Google" /> {method} with Google
+      <div className="login-google-sign-in" onClick={googleLogin}>
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/2048px-Google_%22G%22_logo.svg.png"
+          alt="Google"
+        />{" "}
+        {method} with Google
       </div>
     </div>
   );
