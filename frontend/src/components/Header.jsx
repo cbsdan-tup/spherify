@@ -4,10 +4,13 @@ import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 import { logout } from "../utils/helper";
 import { clearTeamId, clearMsgGroupId } from "../redux/teamSlice";
+import {useNavigate} from "react-router-dom";
 
 const Header = () => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
+
+  let navigate = useNavigate();
 
   const logoutHandler = () => {
     logout(dispatch, () => {

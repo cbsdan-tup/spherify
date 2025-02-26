@@ -56,7 +56,7 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
           HIDE_INVITE_MORE_HEADER: true,
           TOOLBAR_BUTTONS: [
             "microphone", "camera", "closedcaptions", "desktop",
-            "hangup", "raisehand", "tileview", "select-background", "recording", "security", "mute-everyone"
+            "hangup", "raisehand", "tileview", "select-background", "recording", "security", "mute-everyone"  
           ],
         },
         width: "100%",
@@ -130,7 +130,7 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
       >
         <div className={`drag-handle ${isFullScreen && "opacity-1"}`}>
           <div className="left">
-            <i class="fa-solid fa-video"></i> {chatName}
+            <i className="fa-solid fa-video"></i> {chatName}
           </div>
           {!isFullScreen && (
             <div className="center">
