@@ -193,7 +193,7 @@ function Kanban({isFull}) {
       </DndContext>
 
       {openDialog && (
-        <div className="modal-overlay" onClick={handleCloseDialog}>
+        <div className="kanban-card modal-overlay" onClick={handleCloseDialog}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <h3 className="modal-title">Add New List</h3>
             <form onSubmit={handleAddList}>

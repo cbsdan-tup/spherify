@@ -15,6 +15,7 @@ import { useSelector } from "react-redux";
 import { errMsg, getToken } from "../../../utils/helper";
 import FileShare from "../file-sharing/FileShare";
 import InviteMemberPopUp from "../InviteMemberPopUp";
+import Calendar from "../projectmanagement/Calendar";
 
 // Register chart elements
 ChartJS.register(
@@ -184,6 +185,7 @@ const Dashboard = () => {
       </div>
 
       {/* Project Calendar */}
+      <Calendar />
       <div className="card shadow mt-4 chart-bg">
         <div className="card-header fw-semibold text-primary">
           Project Calendar
