@@ -80,7 +80,7 @@ function RightToolPanel({ showChats }) {
           </div>
           <Link to={`/main/${currentTeamId}`} className="header" >
             <div style={{display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8rem"}}>
-              <i class="fa-solid arrow fa-arrow-right"></i>
+              <i className="fa-solid arrow fa-arrow-right"></i>
               <span className="tool-title">Dashboard</span>
             </div>
           </Link>
@@ -93,7 +93,7 @@ function RightToolPanel({ showChats }) {
             <div className="chat-info">
               <i className="fa-solid fa-comments"></i>
               <span className="name"> {currentChatId?.name || "General"}</span>
-              <i class="fa-solid fa-caret-down"></i>
+              <i className="fa-solid fa-caret-down"></i>
             </div>
             <div className="conferencing" onClick={handleConferenceClick}>
               <i className="fa-solid fa-video"></i>

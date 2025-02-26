@@ -73,7 +73,7 @@ const Home = () => {
     <section className="features-section">
         <h2 className="features-heading">
           <span className="highlight">Features</span></h2>
-          <div class="features-carousel">
+          <div className="features-carousel">
         <div className="features-grid">
           <div className="feature-item">
             <img

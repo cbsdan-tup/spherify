@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const cloudinary = require("cloudinary").v2;
+const moment = require("moment");
 
 exports.registerUser = async (req, res, next) => {
   try {
@@ -351,3 +352,58 @@ exports.getUserStatistics = async (req, res) => {
     });
   }
 };
+
+exports.getPastUsersChartData = async (req, res) => {
+  try {
+    const today = moment().endOf("day"); // Today at 23:59:59
+    const past30Days = moment().subtract(30, "days").startOf("day");
+    const past12Weeks = moment().subtract(12, "weeks").startOf("isoWeek");
+    const past12Months = moment().subtract(12, "months").startOf("month");
+
+    // Count users grouped by day for the last 30 days
+    const dailyUsers = await User.aggregate([
+      { $match: { createdAt: { $gte: past30Days.toDate() } } },
+      { 
+        $group: { 
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, 
+          count: { $sum: 1 } 
+        } 
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Count users grouped by week for the last 12 weeks
+    const weeklyUsers = await User.aggregate([
+      { $match: { createdAt: { $gte: past12Weeks.toDate() } } },
+      { 
+        $group: { 
+          _id: { $dateToString: { format: "%Y-%U", date: "$createdAt" } }, 
+          count: { $sum: 1 } 
+        } 
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    // Count users grouped by month for the last 12 months
+    const monthlyUsers = await User.aggregate([
+      { $match: { createdAt: { $gte: past12Months.toDate() } } },
+      { 
+        $group: { 
+          _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } }, 
+          count: { $sum: 1 } 
+        } 
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      dailyUsers,
+      weeklyUsers,
+      monthlyUsers,
+    });
+  } catch (error) {
+    console.error("Error fetching user stats:", error);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+}
