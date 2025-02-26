@@ -34,10 +34,20 @@ export const createCard = createAsyncThunk(
   'cards/createCard',
   async (cardData, { getState, rejectWithValue }) => {
     try {
-      console.log('Making API call to create card:', cardData);
+      // Sanitize the card data before sending
+      const sanitizedCardData = {
+        cardTitle: cardData.cardTitle,
+        checklist: cardData.checklist,
+        priority: cardData.priority,
+        assignedTo: cardData.assignedTo,
+        listId: cardData.listId,
+        teamId: cardData.teamId
+      };
+
+      console.log('Making API call to create card:', sanitizedCardData);
       const response = await axios.post(
         `${import.meta.env.VITE_API}/createCard`,
-        cardData,
+        sanitizedCardData,
         getAuthHeader(getState)
       );
       
@@ -49,7 +59,7 @@ export const createCard = createAsyncThunk(
       
       return { ...response.data, listId: cardData.listId };
     } catch (error) {
-      console.error('API Error:', error.response || error);
+      console.error('API Error:', error.message || error);
       return rejectWithValue(
         error.response?.data?.message || 
         error.message || 

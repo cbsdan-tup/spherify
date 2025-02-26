@@ -73,27 +73,29 @@ const CardModal = ({ onClose, listId, teamId, mode = "create", initialData = {} 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    const cardData = {
-      cardTitle,
-      checklist: [],
-      priority,
-      assignedTo: [],
-      listId,
-      teamId
+    // Create a new object with only the necessary data
+    const newCardData = {
+      cardTitle: cardData.cardTitle,
+      checklist: cardData.checklist,
+      priority: cardData.priority,
+      assignedTo: cardData.assignedTo,
+      listId: cardData.listId,
+      teamId: cardData.teamId
     };
 
     try {
-      const resultAction = await dispatch(createCard(cardData));
+      const resultAction = await dispatch(createCard(newCardData));
       if (createCard.fulfilled.match(resultAction)) {
         console.log('Card created successfully:', resultAction.payload);
         // Refresh the cards for this list
         dispatch(fetchCards({ teamId, listId }));
         onClose();
       } else {
-        console.error('Failed to create card:', resultAction.error);
+        setError(resultAction.error.message || 'Failed to create card');
       }
     } catch (error) {
       console.error('Error creating card:', error);
+      setError('Failed to create card');
     }
   };
 
