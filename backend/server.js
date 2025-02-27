@@ -59,7 +59,7 @@ app.use("/", express.static(path.join(__dirname, "public")));
 app.use(errorHandler);
 
 // Routes
-// app.use("/", root);
+app.use("/", root);
 app.use("/api/v1", account);
 app.use("/api/v1", teamRoutes);
 app.use("/api/v1", messageRoutes);
@@ -67,12 +67,12 @@ app.use("/api/v1", meetingRoutes);
 app.use("/api/v1", eventRoutes);
 app.use("/api/v1", documentRoutes);
 app.use("/api/v1", listRoutes);
-app.use("/api/v1", cardRoutes); // Ensure this is registered
+app.use("/api/v1", cardRoutes); 
 app.use("/api/v1", nextCloudRoutes);
 app.use("/api/v1", fileSharingRoutes);
 app.use("/api/v1", teamRequest);
 app.use("/api/v1", teamRequest);
-app.use("/api/v1", ganttRoutes);  // Add this line
+app.use("/api/v1", ganttRoutes);  
 
 //404 not found routes
 app.all("*", (req, res) => {
