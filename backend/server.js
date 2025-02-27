@@ -22,6 +22,7 @@ const PORT = process.env.PORT || 8000;
 
 const cloudinary = require("cloudinary");
 
+const root = require("./routes/root");
 const account = require("./routes/account");
 const teamRoutes = require("./routes/teamRoutes");
 const messageRoutes = require("./routes/messageRoutes");
@@ -58,6 +59,7 @@ app.use("/", express.static(path.join(__dirname, "public")));
 app.use(errorHandler);
 
 // Routes
+app.use("/", root);
 app.use("/api/v1", account);
 app.use("/api/v1", teamRoutes);
 app.use("/api/v1", messageRoutes);
