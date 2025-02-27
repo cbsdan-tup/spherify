@@ -59,7 +59,7 @@ app.use("/", express.static(path.join(__dirname, "public")));
 app.use(errorHandler);
 
 // Routes
-app.use("/", root);
+// app.use("/", root);
 app.use("/api/v1", account);
 app.use("/api/v1", teamRoutes);
 app.use("/api/v1", messageRoutes);
