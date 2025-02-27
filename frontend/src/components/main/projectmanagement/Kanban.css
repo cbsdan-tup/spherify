@@ -102,7 +102,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 9900;
 }
 
 .kanban-card .modal-content {
@@ -111,7 +111,8 @@
   border-radius: 8px;
   width: 400px;
   max-width: 90%;
-  z-index: 1000;
+  position: fixed;
+  z-index: 1150 !important;
 }
 
 .kanban-card .modal-title {
