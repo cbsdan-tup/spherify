@@ -102,8 +102,8 @@ const InviteMemberPopUp = ({ show, handleClose, authState, currentTeamId }) => {
 
               return (
                 <Form>
-                  <div className="modal-body" style={{flexDirection: "column"}}>
-                    <div className="mb-3">
+                  <div className="modal-body" style={{display: "flex", flexDirection: "column", alignItems: "unset"}}>
+                    <div className="mb-3" style={{flex: "1 1 100%"}}>
                       <label htmlFor="emailInput" className="form-label custom-text-header">
                         Invite Member (Email)
                       </label>
@@ -140,7 +140,7 @@ const InviteMemberPopUp = ({ show, handleClose, authState, currentTeamId }) => {
                       <ErrorMessage name="membersEmail" component="div" className="text-danger" />
                     </div>
 
-                    <div className="mb-3">
+                    <div className="mb-3" style={{flex: "1 1 100%"}}>
                       <label className="form-label custom-text-header">Members To be Invited</label>
                       <ul className="list-group">
                         {values.membersEmail.map((member, index) => (

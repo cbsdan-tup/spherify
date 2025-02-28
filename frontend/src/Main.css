@@ -333,6 +333,39 @@ body {
   padding: 1rem;
 }
 
+.main-container .team-container .team-content .kanban-team-members .card-header {
+  margin-bottom: 0;
+}
+.main-container .team-container .team-content .team-members .card-body {
+  max-height: 500px !important;
+  overflow-y: auto;
+} 
+.main-container .team-container .team-content .kanban-team-members {
+  display: flex;
+  gap: 1rem;
+}
+
+.main-container .team-container .team-content .kanban-team-members .card {
+  flex: 1;
+
+}
+
+.main-container .team-container .team-content .team-members .badge {
+  background-color: var(--header-text-color) !important;
+  height: 25px;
+  width: 25px;
+  font-size: 1rem;
+}
+.main-container .team-container .team-content .team-members .invite-member-btn {
+  background-color: var(--header-text-color) !important;
+  border: none;
+}
+
+.main-container .team-container .team-content .kanban-team-members .card.kanban-board .card-body{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .main-container .team-container .team-content h1 {
   color: var(--header-text-color);
 
@@ -341,6 +374,7 @@ body {
 .main-container .team-container .team-content .card-header {
   color: var(--header-text-color);
   font-weight: 600;
+  margin-bottom: 0;
 }
 
 .team-members .card-body {
@@ -683,6 +717,9 @@ body {
   position: fixed !important;
   z-index: 1200;
 }
+.jitsi-wrapper.fullscreen {
+  transform: translate(0, 0) !important;
+}
 .jitsi-wrapper .jitsi-container {
   background-color: var(--secondary-color);
 }
@@ -701,6 +738,7 @@ body {
   border: 1px solid var(--light-yellow-bg);
   user-select: none;
   opacity: 0;
+  margin: 0
 }
 .jitsi-wrapper:hover .drag-handle {
   opacity: 1;

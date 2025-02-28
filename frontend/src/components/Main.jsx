@@ -49,7 +49,7 @@ function Main() {
     };
 
     refreshToken();
-  }, []);
+  }, [refresh]);
 
   const handleToggleShow = () => {
     console.log("Show right panel");

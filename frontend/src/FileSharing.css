@@ -115,7 +115,7 @@
 .fs-content {
   background-color: var(--tertiary-color);
   padding: 0.7rem;
-  max-height: 60vh;
+  max-height: 50vh;
   overflow-y: auto;
 }
 .fs-content .empty {

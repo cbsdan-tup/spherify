@@ -34,7 +34,7 @@ const Dashboard = () => {
     datasets: [
       {
         data: [2, 3],
-        backgroundColor: ["red", "green"],
+        backgroundColor: ["#0B9C37", "#B74714"],
       },
     ],
   };
@@ -127,10 +127,10 @@ const Dashboard = () => {
       <hr />
       <FileShare />
       {/* Main Grid Layout */}
-      <div className="row g-4 mt-4 cards">
+      <div className="kanban-team-members cards">
         {/* Kanban Board */}
-        <div className="col-md-4">
-          <div className="card shadow chart-bg">
+        <div className="card">
+          <div className="card shadow chart-bg kanban-board">
             <div className="card-header fw-semibold">
               Kanban Board
             </div>
@@ -140,40 +140,9 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Working Hours */}
-        <div className="col-md-4">
-          <div className="card shadow position-relative chart-bg">
-            <div className="card-header fw-semibold">
-              Working Hours
-            </div>
-            <div className="card-body">
-              <Bar data={barData} />
-              <div className="dropdown position-absolute top-0 end-0 m-2">
-                <button
-                  className="btn btn-sm btn-secondary dropdown-toggle"
-                  data-bs-toggle="dropdown"
-                >
-                  Today
-                </button>
-                <ul className="dropdown-menu">
-                  <li>
-                    <a className="dropdown-item" href="#">
-                      Last Week
-                    </a>
-                  </li>
-                  <li>
-                    <a className="dropdown-item" href="#">
-                      Last Month
-                    </a>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
 
         {/* Team Members */}
-        <div className="col-md-4 team-members">
+        <div className="team-members card">
           <div className="card shadow chart-bg">
             <div className="card-header d-flex justify-content-between align-items-center">
               <span className="fw-semibold">Team Members</span>
@@ -219,8 +188,9 @@ const Dashboard = () => {
             </div>
             <div className="card-footer text-center">
               <button
-                className="btn btn-primary rounded-circle p-2"
+                className="btn btn-primary rounded-circle p-2 invite-member-btn"
                 onClick={handleOpenInvitePopUp}
+                style={{width: "40px", height: "40px"}}
               >
                 <FaPlus size={16} />
               </button>
