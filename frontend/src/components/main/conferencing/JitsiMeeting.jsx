@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import LoadingSpinner from "../../layout/LoadingSpinner";
 import { Rnd } from "react-rnd";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { clearCurrentMeetingRoomName } from "../../../redux/teamSlice";
 
 const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
@@ -15,11 +15,16 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
 
   const dispatch = useDispatch();
 
+  const conferencingUrl = useSelector(
+    (state) => state.configurations.conferencing?.url
+  );
+
   useEffect(() => {
+    console.log("Url: ", conferencingUrl);
     const loadJitsi = () => {
       if (!window.JitsiMeetExternalAPI) {
         const script = document.createElement("script");
-        script.src = "https://spherify-meet.mooo.com/external_api.js";
+        script.src = `https://${conferencingUrl ? conferencingUrl : "meet.jit.si"}/external_api.js`;
         script.async = true;
         script.onload = () => {
           if (jitsiContainer.current) initializeJitsi();
@@ -40,7 +45,7 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
         jitsiApi.current.dispose();
       }
 
-      const domain = "spherify-meet.mooo.com";
+      const domain = `${conferencingUrl ? conferencingUrl : "meet.jit.si"}`;
 
       const options = {
         roomName,
@@ -55,8 +60,17 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
           SHOW_ROOM_NAME: false,
           HIDE_INVITE_MORE_HEADER: true,
           TOOLBAR_BUTTONS: [
-            "microphone", "camera", "closedcaptions", "desktop",
-            "hangup", "raisehand", "tileview", "select-background", "recording", "security", "mute-everyone"  
+            "microphone",
+            "camera",
+            "closedcaptions",
+            "desktop",
+            "hangup",
+            "raisehand",
+            "tileview",
+            "select-background",
+            "recording",
+            "security",
+            "mute-everyone",
           ],
         },
         width: "100%",
@@ -108,7 +122,7 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
   }
   return (
     <>
-      {loading && <LoadingSpinner message="Loading..."/>}
+      {loading && <LoadingSpinner message="Loading..." />}
       <Rnd
         size={
           isFullScreen

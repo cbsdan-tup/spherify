@@ -7,6 +7,7 @@ const { Server } = require("socket.io");
 const { MessageGroup } = require("./models/Team");
 const User = require("./models/User");
 const Document = require("./models/Document");
+const AdminConfigurations = require("./models/AdminConfiguration");
 
 const app = express();
 const path = require("path");
@@ -30,22 +31,46 @@ const meetingRoutes = require("./routes/meetingRoutes");
 const eventRoutes = require("./routes/calendar/events");
 const documentRoutes = require("./routes/documentRoutes");
 const listRoutes = require("./routes/kanban/listRoutes");
-const cardRoutes = require("./routes/kanban/cardRoutes"); // Add this line
+const cardRoutes = require("./routes/kanban/cardRoutes"); 
 const nextCloudRoutes = require("./routes/nextCloudUpload");
 const fileSharingRoutes = require("./routes/fileSharingRoutes");;
 const teamRequest = require("./routes/teamRequests");
-const ganttRoutes = require("./routes/gantt/ganttRoutes");  // Add this line
+const ganttRoutes = require("./routes/gantt/ganttRoutes"); 
+const adminRoutes = require("./routes/adminRoutes")
 
 console.log(process.env.NODE_ENV);
 
-let usersEditing = {}; // Initialize the object to track users editing documents
+let usersEditing = {}; 
 
 connectDatabase();
 
+async function getCloudinaryConfig() {
+  try {
+    const config = await AdminConfigurations.findOne({}, "cloudinary");
+    if (!config) {
+      throw new Error("Cloudinary configuration not found in database.");
+    }
+    cloud_name = `${config.cloudinary.name || ""}`;
+    api_key = `${config.cloudinary.api_key || ""}`;
+    api_secret = `${config.cloudinary.api_secret || ""}`;
+   
+
+  } catch (error) {
+    console.error("Error fetching Nextcloud configuration:", error);
+    throw error;
+  }
+}
+
+let cloud_name = ""
+let api_key = ""
+let api_secret = ""
+
+getCloudinaryConfig();
+
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  cloud_name: cloud_name,
+  api_key: api_key,
+  api_secret: api_secret,
 });
 
 //middleware
@@ -73,7 +98,7 @@ app.use("/api/v1", fileSharingRoutes);
 app.use("/api/v1", teamRequest);
 app.use("/api/v1", teamRequest);
 app.use("/api/v1", ganttRoutes);  
-
+app.use("/api/v1", adminRoutes)
 //404 not found routes
 app.all("*", (req, res) => {
   res.status(404);

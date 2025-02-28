@@ -7,6 +7,9 @@ const mongoose = require("mongoose");
 const path = require("path");
 const { promisify } = require("util");
 const setTimeoutPromise = promisify(setTimeout);
+const base64 = require("base-64");
+const { DOMParser } = require("xmldom");
+
 /**
  * Create a new file or folder and upload it to Nextcloud with progress tracking
  */
@@ -336,7 +339,6 @@ exports.uploadFolders = async (req, res) => {
   }
 };
 
-
 exports.uploadFiles = async (req, res) => {
   try {
     const { teamId, createdBy, owner, parentFolder } = req.body;
@@ -344,9 +346,7 @@ exports.uploadFiles = async (req, res) => {
     console.log("Relative Path:", relativePath);
 
     if (!req.files || req.files.length === 0) {
-      return res
-        .status(400)
-        .json({ success: false, error: "No file uploaded" });
+      return res.status(400).json({ success: false, error: "No file uploaded" });
     }
 
     const { webdavClient, BASE_URL } = await createWebDAVClient();
@@ -364,6 +364,10 @@ exports.uploadFiles = async (req, res) => {
       }
     }
 
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+
     for (const file of req.files) {
       const filePath = file.path;
       const fileName = file.originalname;
@@ -377,10 +381,7 @@ exports.uploadFiles = async (req, res) => {
         onUploadProgress: (progress) => {
           uploadedBytes = progress.loaded;
           const percentage = ((uploadedBytes / fileSize) * 100).toFixed(2);
-          res.write(
-            JSON.stringify({ file: fileName, progress: `${percentage}%` }) +
-              "\n"
-          );
+          res.write(`data: ${JSON.stringify({ file: fileName, progress: `${percentage}%` })}\n\n`);
         },
       });
 
@@ -393,21 +394,13 @@ exports.uploadFiles = async (req, res) => {
         url: `${BASE_URL}/${nextcloudPath}`,
         createdBy,
         owner,
-        parentFolder: mongoose.Types.ObjectId.isValid(parentFolder)
-          ? parentFolder
-          : null,
+        parentFolder: mongoose.Types.ObjectId.isValid(parentFolder) ? parentFolder : null,
       });
       await fileRecord.save();
       uploadedFiles.push(fileRecord);
     }
 
-    res.write(
-      JSON.stringify({
-        success: true,
-        message: "Files uploaded successfully",
-        uploadedFiles,
-      }) + "\n"
-    );
+    res.write(`data: ${JSON.stringify({ success: true, message: "Files uploaded successfully", uploadedFiles })}\n\n`);
     res.end();
   } catch (error) {
     console.error("File upload error:", error);
@@ -459,6 +452,8 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
 
     const escapedPath = relativePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+    const { NEXTCLOUD_URL, NEXTCLOUD_USER, NEXTCLOUD_PASSWORD } = await createWebDAVClient();
+
     // Correct base path
     const basePath = `https://spherify-cloud.mooo.com/remote.php/dav/files/spherify/Spherify_Data`;
     const pathRegex = relativePath
@@ -471,11 +466,49 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
     }).populate("createdBy owner parentFolder branchParent");
 
     console.log("pathRegex", pathRegex);
-    // 🔥 **Exclude the queried folder itself**
+
+    // 🔥 Exclude the queried folder itself
     const currentFolderUrl = `${basePath}/${relativePath}`;
     files = files.filter((file) => file.url != currentFolderUrl);
 
-    res.status(200).json({ success: true, files });
+    let totalFolderSize = 0; // Initialize total folder size
+
+    // Fetch file sizes from Nextcloud
+    const updatedFiles = await Promise.all(
+      files.map(async (file) => {
+        let fileSize = null;
+        try {
+          const response = await axios({
+            method: "PROPFIND",
+            url: file.url,
+            auth: {
+              username: NEXTCLOUD_USER, // Replace with Nextcloud credentials
+              password: NEXTCLOUD_PASSWORD,
+            },
+            headers: {
+              Depth: 1,
+            },
+          });
+
+          // Extract all file sizes
+          const sizeMatches = response.data.match(/<d:getcontentlength>(\d+)<\/d:getcontentlength>/g);
+          if (sizeMatches) {
+            fileSize = sizeMatches.reduce((sum, match) => {
+              const size = parseInt(match.match(/\d+/)[0], 10);
+              return sum + size;
+            }, 0);
+          }
+
+          // Add to total folder size
+          totalFolderSize += fileSize || 0;
+        } catch (err) {
+          console.error("Error fetching file size for", file.url, err);
+        }
+        return { ...file.toObject(), size: fileSize };
+      })
+    );
+
+    res.status(200).json({ success: true, files: updatedFiles, totalFolderSize });
   } catch (error) {
     console.error("Fetch files and folders by path error:", error);
     res.status(500).json({
@@ -484,6 +517,8 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
     });
   }
 };
+
+
 
 exports.createFolder = async (req, res) => {
   try {
@@ -609,7 +644,7 @@ exports.generatePublicLink = async (req, res) => {
     const { filePath } = req.query; // Get filePath from query parameters
 
     console.log("Generating public link for:", filePath);
-    
+
     if (!filePath) {
       return res
         .status(400)
@@ -633,12 +668,15 @@ exports.generatePublicLink = async (req, res) => {
 
     console.log("Relative path:", relativePath);
 
-    console.log("Auth Header:", Buffer.from(`${NEXTCLOUD_USER}:${NEXTCLOUD_PASSWORD}`).toString("base64"));
+    console.log(
+      "Auth Header:",
+      Buffer.from(`${NEXTCLOUD_USER}:${NEXTCLOUD_PASSWORD}`).toString("base64")
+    );
 
     const response = await axios.post(
       apiUrl,
       new URLSearchParams({
-        path: relativePath, 
+        path: relativePath,
         shareType: 3, // 3 = Public link
         permissions: 3, // 1 = Read-only
       }),
@@ -646,7 +684,11 @@ exports.generatePublicLink = async (req, res) => {
         headers: {
           "OCS-APIRequest": "true",
           Accept: "application/json",
-          Authorization: "Basic " + Buffer.from(`${NEXTCLOUD_USER}:${NEXTCLOUD_PASSWORD}`).toString("base64"),
+          Authorization:
+            "Basic " +
+            Buffer.from(`${NEXTCLOUD_USER}:${NEXTCLOUD_PASSWORD}`).toString(
+              "base64"
+            ),
         },
       }
     );
@@ -754,7 +796,8 @@ exports.deleteFileOrFolder = async (req, res) => {
 
 exports.getStorageInfo = async (req, res) => {
   try {
-    const { NEXTCLOUD_REST_URL, NEXTCLOUD_USER, NEXTCLOUD_PASSWORD } = await createWebDAVClient();
+    const { NEXTCLOUD_REST_URL, NEXTCLOUD_USER, NEXTCLOUD_PASSWORD } =
+      await createWebDAVClient();
 
     const response = await axios.get(
       `${NEXTCLOUD_REST_URL}/ocs/v1.php/cloud/users/${NEXTCLOUD_USER}`,
@@ -774,15 +817,69 @@ exports.getStorageInfo = async (req, res) => {
 
     // Extract storage details
     const storageInfo = {
-      totalStorage: data.quota.total / (1024 * 1024), 
-      usedStorage: data.quota.used / (1024 * 1024), 
-      freeStorage: data.quota.free / (1024 * 1024), 
-      relativeUsage: data.quota.relative, 
+      totalStorage: data.quota.total / (1024 * 1024),
+      usedStorage: data.quota.used / (1024 * 1024),
+      freeStorage: data.quota.free / (1024 * 1024),
+      relativeUsage: data.quota.relative,
     };
 
     return res.status(200).json({ success: true, storageInfo });
   } catch (error) {
     console.error("Error fetching storage info:", error.message);
     return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+exports.getFolderSize = async (req, res) => {
+  try {
+    const folderPath = req.query.path;
+    if (!folderPath) {
+      return res.status(400).json({ error: "Folder path is required" });
+    }
+
+    const { NEXTCLOUD_URL, NEXTCLOUD_USER, NEXTCLOUD_PASSWORD } =
+      await createWebDAVClient();
+
+    const url = `${NEXTCLOUD_URL}/${NEXTCLOUD_USER}/Spherify_Data/${folderPath}`;
+
+    console.log("URL: ", url);
+
+    const response = await axios.request({
+      method: "PROPFIND",
+      url: url,
+      headers: {
+        Authorization:
+          "Basic " + base64.encode(`${NEXTCLOUD_USER}:${NEXTCLOUD_PASSWORD}`),
+        Depth: "1",
+        "Content-Type": "application/xml",
+      },
+    });
+
+    console.log(response.data);
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(response.data, "text/xml");
+
+    const responses = xmlDoc.getElementsByTagName("d:response");
+    let folderSize = 0;
+
+    for (let i = 0; i < responses.length; i++) {
+      const hrefNode = responses[i].getElementsByTagName("d:href")[0];
+      if (hrefNode && hrefNode.textContent.includes(folderPath)) {
+        const quotaUsedNode =
+          responses[i].getElementsByTagName("d:quota-used-bytes")[0];
+        if (quotaUsedNode) {
+          folderSize = parseInt(quotaUsedNode.textContent, 10);
+          break; 
+        }
+      }
+    }
+
+    return res.json({ folderPath, size: folderSize }); 
+  } catch (error) {
+    console.error(
+      "Error fetching folder size:",
+      error.response?.data || error.message
+    );
+    return res.status(500).json({ error: "Failed to fetch folder size" });
   }
 };

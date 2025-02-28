@@ -23,11 +23,16 @@ import { useCallback } from "react";
 import { refreshFirebaseToken } from "./config/firebase-config";
 import { updateToken } from "./redux/authSlice";
 import AdminPage from "./components/AdminPage";
+import { fetchConfigurations } from "./redux/configurationSlice";
+import UseFavicon from "./configurations/UseFavIcon";
 
 function App() {
   const authState = useSelector((state) => state.auth);
 
   let dispatch = useDispatch();
+
+  const favIcon = useSelector((state) => state.configurations.site?.favicon);
+  UseFavicon(favIcon);
 
   const refreshToken = useCallback(async () => {
     try {
@@ -40,7 +45,7 @@ function App() {
     } catch (error) {
       console.error("Error refreshing token:", error);
     }
-  }, [dispatch]); 
+  }, [dispatch]);
 
   useEffect(() => {
     refreshToken();
@@ -48,7 +53,11 @@ function App() {
     const interval = setInterval(refreshToken, 55 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [refreshToken]); 
+  }, [refreshToken]);
+
+  useEffect(() => {
+    dispatch(fetchConfigurations());
+  }, []);
 
   const LandingRoutes = () => {
     return (

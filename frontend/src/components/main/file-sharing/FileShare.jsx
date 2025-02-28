@@ -26,6 +26,10 @@ const FileUpload = () => {
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
 
+  const [isFileFetching, setIsFileFetching] = useState(true);
+
+  const [folderConsume, setFolderConsume] = useState(0);
+
   useEffect(() => {
     // Reset path when team changes
     setCurrentPath("");
@@ -49,8 +53,43 @@ const FileUpload = () => {
     }
   }, [currentTeamId, currentPath, refresh, progress]);
 
+  useEffect(() => {
+    const getFolderSize = async () => {
+      if (currentTeamId) {
+        const size = await fetchFolderConsume(currentTeamId);
+        setFolderConsume(size);
+      }
+    };
+
+    getFolderSize();
+  }, [currentTeamId]);
+
+  const fetchFolderConsume = async (path) => {
+    try {
+      setIsFileFetching(true);
+      const response = await axios.get(
+        `${import.meta.env.VITE_API}/getFolderSize/?path=${encodeURIComponent(
+          path
+        )}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log("Folder size:", response.data);
+      return response.data?.size;
+    } catch (error) {
+      console.error("Error fetching folder size:", error);
+      errMsg("Error fetching folder size", error);
+    } finally {
+      setIsFileFetching(false);
+    }
+  };
+
   const fetchFilesAndFolders = async (path = "") => {
     try {
+      setIsFileFetching(true);
       const response = await axios.get(
         `${
           import.meta.env.VITE_API
@@ -70,6 +109,8 @@ const FileUpload = () => {
       setFiles(sortedFiles.filter((file) => file.type === "file"));
     } catch (error) {
       console.error("Error fetching files and folders:", error);
+    } finally {
+      setIsFileFetching(false);
     }
   };
 
@@ -192,6 +233,29 @@ const FileUpload = () => {
 
   return (
     <div className="file-sharing">
+      <div className="file-cards">
+        <div className="card">
+          <div className="card-header">File Storage</div>
+          <div className="card-body">
+            {folderConsume !== null && (
+              <div className="progress-container">
+                <div
+                  className="progress-bar"
+                  style={{
+                    width: `${
+                      (folderConsume / (10 * 1024 * 1024 * 1024)) * 1000
+                    }%`, // Max storage = 10GB
+                  }}
+                ></div>
+                <div className="progress-text">
+                  {(folderConsume / (1024 * 1024 )).toFixed(2)} MB / 1 GB
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="fs-container">
         <div className="fs-header">
           {currentPath === currentTeamId ? (
@@ -281,53 +345,81 @@ const FileUpload = () => {
           )}
         </div>
         <div className="fs-content">
-          {folders.map((folder) => (
-            <div key={folder._id} className="folder">
-              <div
-                onClick={() => navigateToFolder(folder.name, folder._id)}
-                className="name"
-              >
-                📁 {folder.name}
-              </div>
-              <div className="modification-delete">
-                <div className="modification">
-                  {getTimeFeedback(folder.createdAt)} by{" "}
-                  {folder.owner?.firstName} {folder.owner?.lastName}{" "}
-                </div>
-                {folder.name !== currentTeamId && (
+          {isFileFetching ? (
+            <div className="loader text-center mx-2"></div>
+          ) : (
+            <>
+              {folders.map((folder) => (
+                <div key={folder._id} className="folder">
                   <div
-                    className="delete"
-                    onClick={() =>
-                      handleDelete(folder._id, folder.name, "folder")
-                    }
+                    onClick={() => navigateToFolder(folder.name, folder._id)}
+                    className="name"
                   >
-                    <i className="fa-solid fa-trash"></i>
+                    📁 {folder.name}
                   </div>
-                )}
-              </div>
-            </div>
-          ))}
-          {files.map((file) => (
-            <div key={file._id} className="file">
-              <div onClick={() => handleFileClick(file.url)} className="name">
-                📄 {file.name}
-              </div>
-              <div className="modification-delete">
-                <div className="modification">
-                  {getTimeFeedback(file.createdAt)} by {file.owner?.firstName}{" "}
-                  {file.owner?.lastName}{" "}
+                  <div className="modification-delete">
+                    <div className="filesize">
+                      {folder.size >= 1024 * 1024 * 1024
+                        ? (folder.size / (1024 * 1024 * 1024)).toFixed(2) +
+                          " GB"
+                        : folder.size >= 1024 * 1024
+                        ? (folder.size / (1024 * 1024)).toFixed(2) + " MB"
+                        : folder.size > 0
+                        ? (folder.size / 1024).toFixed(2) + " KB"
+                        : "0 KB"}
+                    </div>
+                    <div className="modification">
+                      {getTimeFeedback(folder.createdAt)} by{" "}
+                      {folder.owner?.firstName} {folder.owner?.lastName}{" "}
+                    </div>
+                    {folder.name !== currentTeamId && (
+                      <div
+                        className="delete"
+                        onClick={() =>
+                          handleDelete(folder._id, folder.name, "folder")
+                        }
+                      >
+                        <i className="fa-solid fa-trash"></i>
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div
-                  className="delete"
-                  onClick={() => handleDelete(file._id, file.name, "file")}
-                >
-                  <i className="fa-solid fa-trash"></i>
+              ))}
+              {files.map((file) => (
+                <div key={file._id} className="file">
+                  <div
+                    onClick={() => handleFileClick(file.url)}
+                    className="name"
+                  >
+                    📄 {file.name}
+                  </div>
+                  <div className="modification-delete">
+                    <div className="filesize">
+                      {file.size >= 1024 * 1024 * 1024
+                        ? (file.size / (1024 * 1024 * 1024)).toFixed(2) + " GB"
+                        : file.size >= 1024 * 1024
+                        ? (file.size / (1024 * 1024)).toFixed(2) + " MB"
+                        : file.size > 0
+                        ? (file.size / 1024).toFixed(2) + " KB"
+                        : "0 KB"}
+                    </div>
+                    <div className="modification">
+                      {getTimeFeedback(file.createdAt)} by{" "}
+                      {file.owner?.firstName} {file.owner?.lastName}{" "}
+                    </div>
+                    <div
+                      className="delete"
+                      onClick={() => handleDelete(file._id, file.name, "file")}
+                    >
+                      <i className="fa-solid fa-trash"></i>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ))}
-          {files.length === 0 && folders.length === 0 && (
-            <div className="empty">No files or folders</div>
+              ))}
+              {files.length === 0 && folders.length === 0 && (
+                <div className="empty">No files or folders</div>
+              )}
+            </>
           )}
         </div>
         <div className="fs-footer">

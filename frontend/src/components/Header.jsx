@@ -9,6 +9,8 @@ import {useNavigate} from "react-router-dom";
 const Header = () => {
   const dispatch = useDispatch();
   const user = useSelector((state) => state.auth.user);
+  const systemLogoSrc = useSelector((state) => state.configurations.site?.logo);
+  const systemTitle = useSelector((state) => state.configurations.site?.title) || "Spherify";
 
   let navigate = useNavigate();
 
@@ -26,11 +28,11 @@ const Header = () => {
       <div className="header">
         <div className="brand content">
           <img
-            src="/images/default-team-logo.png"
+            src={`${systemLogoSrc ? systemLogoSrc : "/images/default-team-logo.png"}`}
             alt="Team Logo"
             className="logo"
           />
-          <span className="name">Spherify</span>
+          <span className="name">{systemTitle}</span>
         </div>
         <div className="go-to-main content">
           <Link

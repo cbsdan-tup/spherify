@@ -1,15 +1,36 @@
 const axios = require("axios"); // Import axios
+const AdminConfigurations = require("../models/AdminConfiguration");
 
-const NEXTCLOUD_URL = "https://spherify-cloud.mooo.com/remote.php/dav/files";
-const NEXTCLOUD_REST_URL = "https://spherify-cloud.mooo.com";
-const NEXTCLOUD_USER = "spherify";
-const NEXTCLOUD_PASSWORD = "spherify";
-const NEXTCLOUD_API = "https://spherify-cloud.mooo.com/ocs/v2.php/apps/files_sharing/api/v1/shares";
+let NEXTCLOUD_URL = "";
+let NEXTCLOUD_REST_URL = "";
+let NEXTCLOUD_USER = "";
+let NEXTCLOUD_PASSWORD = "";
+let NEXTCLOUD_API = "";
 
 const BASE_URL = `${NEXTCLOUD_URL}/${NEXTCLOUD_USER}/Spherify_Data`;
 
 const https = require("https");
 const keepAliveAgent = new https.Agent({ keepAlive: true });
+
+async function getNextcloudConfig() {
+  try {
+    const config = await AdminConfigurations.findOne({}, "nextcloud");
+    if (!config) {
+      throw new Error("Nextcloud configuration not found in database.");
+    }
+    NEXTCLOUD_URL = `${config.nextcloud.url || "https://spherify-cloud.mooo.com"}/remote.php/dav/files`;
+    NEXTCLOUD_REST_URL = config.nextcloud.url || "https://spherify-cloud.mooo.com";
+    NEXTCLOUD_USER = config.nextcloud.adminUser || "";
+    NEXTCLOUD_PASSWORD = config.nextcloud.adminPassword || "";
+    NEXTCLOUD_API = `${config.nextcloud.url || "https://spherify-cloud.mooo.com"}/ocs/v2.php/apps/files_sharing/api/v1/shares`;
+
+  } catch (error) {
+    console.error("Error fetching Nextcloud configuration:", error);
+    throw error;
+  }
+}
+
+getNextcloudConfig();
 
 async function createWebDAVClient() {
   const { createClient } = await import("webdav");
@@ -25,11 +46,11 @@ async function createWebDAVClient() {
     }
   );
 
-  return { webdavClient, nextcloudAPI, NEXTCLOUD_URL, NEXTCLOUD_REST_URL, NEXTCLOUD_USER, BASE_URL, NEXTCLOUD_API, NEXTCLOUD_PASSWORD }; // Return all
+  return { webdavClient, nextcloudAPI, NEXTCLOUD_URL, NEXTCLOUD_REST_URL, NEXTCLOUD_USER, BASE_URL, NEXTCLOUD_API, NEXTCLOUD_PASSWORD }; 
 }
 
 const nextcloudAPI = axios.create({
-  baseURL: NEXTCLOUD_REST_URL, // Corrected baseURL
+  baseURL: NEXTCLOUD_REST_URL,
   auth: {
     username: NEXTCLOUD_USER,
     password: NEXTCLOUD_PASSWORD,

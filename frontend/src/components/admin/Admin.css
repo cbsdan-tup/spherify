@@ -519,3 +519,95 @@
 .admin-page-content .team-management-container .pdf-download i, .admin-page-content .user-management-container .pdf-download i {
   font-size: 1.5rem;
 }
+
+.admin-page-content .admin-configurations {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 1000px;
+}
+
+.admin-page-content .admin-configurations h2 {
+  font-size: 2.3rem;
+  font-weight: 600;
+  color: var(--header-text-color);
+}
+
+.admin-page-content .admin-configurations hr {
+  max-width: 1000px;
+  margin: 0.5rem 0;
+}
+.admin-page-content .admin-configurations fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 1000px;
+  padding: 1rem 0;
+}
+
+.admin-page-content .admin-configurations fieldset .custom-size {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.admin-page-content .admin-configurations fieldset .custom-size * {
+  flex: 1;
+  height: 32px;
+}
+.admin-page-content .admin-configurations fieldset legend {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+
+.admin-page-content .admin-configurations fieldset input, .admin-page-content .admin-configurations fieldset select {
+  border: 2px solid var(--header-text-color);
+  border-radius: 3px;
+  padding: 0.3rem 0.5rem;
+}
+
+.admin-page-content .admin-configurations fieldset input:focus, .admin-page-content .admin-configurations fieldset select:focus {
+  outline: none;
+  border: 2px solid var(--active-color);
+}
+.admin-page-content .admin-configurations fieldset label {
+  font-size: 1.1rem;
+  color: var(--header-text-color);
+  max-width: 1000px;
+  display: flex;
+  flex-direction: row;
+  gap: 0.5rem;
+  position: relative;
+}
+
+.admin-page-content .admin-configurations fieldset label *{
+  flex: 1;
+}
+
+.admin-page-content .admin-configurations button {
+  padding: 0.5rem 1rem;
+  background-color: var(--dark-grey);
+  color: var(--text-white);
+  border: none;
+  border-radius: 8px;
+  display: block !important;
+  margin-left: auto;
+  opacity: 0.7;
+}
+
+.admin-page-content .admin-configurations button.active {
+  background-color: var(--active-color);
+  opacity: 1;
+}
+
+.admin-page-content .admin-configurations .show-password {
+  position: absolute;
+  right: 0;
+  padding: 0.5rem;
+  cursor: pointer;
+}

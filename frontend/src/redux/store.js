@@ -8,10 +8,12 @@ import calendarReducer from './calendarSlice';
 import ganttReducer from './ganttSlice';
 import listReducer from './listSlice';
 import cardReducer from './cardSlice';
+import configurationsReducer from './configurationSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
   team: teamReducer,
+  configurations: configurationsReducer,
   calendar: calendarReducer,
   gantt: ganttReducer,
   lists: listReducer,
@@ -21,7 +23,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['auth', 'team'], 
+  whitelist: ['auth', 'team', 'configurations'], 
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
