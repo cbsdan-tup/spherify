@@ -23,6 +23,8 @@ const FileUpload = () => {
   const [folderConsume, setFolderConsume] = useState(0);
   const [showStorage, setShowStorage] = useState(false);
   const [availableUploadSize, setAvailableUploadSize] = useState(0);
+  const [showMenu, setShowMenu] = useState(false);
+  const [fileSelected, setFileSelected] = useState(null);
 
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const user = useSelector((state) => state.auth.user);
@@ -30,6 +32,10 @@ const FileUpload = () => {
   const nextcloudConfig = useSelector(
     (state) => state.configurations.nextcloud
   );
+
+  const toggleShowMenu = () => {
+    setShowMenu((prev) => !prev);
+  };
 
   // useEffect(() => {
   //   setCurrentPath("");
@@ -259,6 +265,28 @@ const FileUpload = () => {
     }
   }, [folderConsume, nextcloudConfig]);
 
+  const handleDownload = async (filePath, isFolder) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API}/downloadFileOrFolder`,
+        {
+          params: { filePath, isFolder },
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+  
+      if (response.data.success) {
+        window.open(response.data.downloadUrl, "_blank"); // Open download link in new tab
+        succesMsg("Download link opened successfully.");
+      } else {
+        errMsg("Failed to get download link");
+      }
+    } catch (error) {
+      console.error("Download error:", error);
+      errMsg("Failed to download file or folder");
+    }
+  };
+
   return (
     <div className="file-sharing">
       <div className={`fs-container ${showStorage ? "half-border" : ""}`}>
@@ -388,16 +416,40 @@ const FileUpload = () => {
                       {getTimeFeedback(folder.createdAt)} by{" "}
                       {folder.owner?.firstName} {folder.owner?.lastName}{" "}
                     </div>
-                    {folder.name !== currentTeamId && (
-                      <div
-                        className="delete"
-                        onClick={() =>
-                          handleDelete(folder._id, folder.name, "folder")
-                        }
-                      >
-                        <i className="fa-solid fa-trash"></i>
-                      </div>
-                    )}
+                    <div className="menu">
+                      <i
+                        className="fa-solid fa-ellipsis-v menu-icon"
+                        onClick={() => {
+                          toggleShowMenu();
+                          setFileSelected(folder._id);
+                        }}
+                      ></i>
+                      {showMenu && fileSelected === folder._id && (
+                        <div className="menu-options">
+                          {folder.name !== currentTeamId && (
+                            <>
+                              <div className="save option" onClick={() => {handleDownload(folder.url, true)}}>
+                                <i className="fa-solid fa-download"></i>
+                                <span>Download</span>
+                              </div>
+                              <div
+                                className="delete option"
+                                onClick={() =>
+                                  handleDelete(
+                                    folder._id,
+                                    folder.name,
+                                    "folder"
+                                  )
+                                }
+                              >
+                                <i className="fa-solid fa-trash"></i>
+                                <span>Trash</span>
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -423,11 +475,31 @@ const FileUpload = () => {
                       {getTimeFeedback(file.createdAt)} by{" "}
                       {file.owner?.firstName} {file.owner?.lastName}{" "}
                     </div>
-                    <div
-                      className="delete"
-                      onClick={() => handleDelete(file._id, file.name, "file")}
-                    >
-                      <i className="fa-solid fa-trash"></i>
+                    <div className="menu">
+                      <i
+                        className="fa-solid fa-ellipsis-v menu-icon"
+                        onClick={() => {
+                          toggleShowMenu();
+                          setFileSelected(file._id);
+                        }}
+                      ></i>
+                      {showMenu && fileSelected === file._id && (
+                        <div className="menu-options">
+                          <div className="save option" onClick={() => {handleDownload(file.url, false)}}>
+                            <i className="fa-solid fa-download"></i>
+                            <span>Download</span>
+                          </div>
+                          <div
+                            className="delete option"
+                            onClick={() =>
+                              handleDelete(file._id, file.name, "file")
+                            }
+                          >
+                            <i className="fa-solid fa-trash"></i>
+                            <span>Trash</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

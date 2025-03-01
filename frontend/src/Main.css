@@ -715,7 +715,6 @@ body {
 }
 .calendar-main .calendar-container {
   margin-top: 0 !important;
-  padding-top: 40px !important;
 }
 .gantt-container {
   background-color: var(--tertiary-color);
@@ -820,3 +819,51 @@ body {
   font-size: 1.5rem;
 }
 
+.calendar-main {
+  display: flex;
+  margin-top: 2rem;
+  max-height: 630px;
+  overflow: hidden;
+}
+.calendar-main .calendar-container {
+  background-color: white;
+  color: var(--primary-color);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 1rem;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 1px solid var(--white-grey);
+}
+.calendar-main .card {
+  background-color: var(--header-text-color);
+  border: none;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-top-right-radius: 10px;
+  border-bottom-right-radius: 10px !important;
+}
+
+.calendar-main .card .card-header {
+  justify-content: center;
+  gap: 0.7rem;
+  border: none;
+  padding: 1.2rem 1rem;
+  color: var(--text-white) !important;
+  font-size: 1.2rem;
+}
+.calendar-main .card  .card-body {
+  background-color: var(--secondary-color);
+  border-bottom-right-radius: 10px !important;
+}
+.calendar-main .card  .card-body .accordion-item {
+  /* background-color: var(--tertiary-color) !important; */
+}
+.calendar-main .calendar-container {
+  flex: 2;
+}
+
+.calendar-main .upcoming-events {
+  flex: 1;
+}

@@ -14,7 +14,8 @@ const {
     generatePublicLink,
     deleteFileOrFolder,
     getStorageInfo,
-    getFolderSize
+    getFolderSize,
+    downloadFileOrFolder
 } = require("../controllers/FileSharingController");
 
 const upload = multer({ dest: "uploads/" });
@@ -33,5 +34,6 @@ router.delete("/delete/:fileId", deleteFileOrFolder);
 
 router.get("/getStorageInfo", isAdmin, getStorageInfo);
 router.get("/getFolderSize", isAuthenticatedUser, getFolderSize);
+router.get("/downloadFileOrFolder", downloadFileOrFolder);
 
 module.exports = router;

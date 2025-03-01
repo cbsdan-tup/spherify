@@ -214,7 +214,9 @@ exports.uploadFolders = async (req, res) => {
 
     // 🔹 Sort folder paths to create parents before children
     const folderPaths = new Set(relativePaths.filter((p) => p.endsWith("/")));
-    const sortedPaths = [...folderPaths].sort((a, b) => a.split("/").length - b.split("/").length);    
+    const sortedPaths = [...folderPaths].sort(
+      (a, b) => a.split("/").length - b.split("/").length
+    );
 
     // 🔹 Ensure all folders exist in Nextcloud
     for (const folderPath of sortedPaths) {
@@ -345,7 +347,9 @@ exports.uploadFiles = async (req, res) => {
     console.log("Relative Path:", relativePath);
 
     if (!req.files || req.files.length === 0) {
-      return res.status(400).json({ success: false, error: "No file uploaded" });
+      return res
+        .status(400)
+        .json({ success: false, error: "No file uploaded" });
     }
 
     const { webdavClient, BASE_URL } = await createWebDAVClient();
@@ -380,7 +384,12 @@ exports.uploadFiles = async (req, res) => {
         onUploadProgress: (progress) => {
           uploadedBytes = progress.loaded;
           const percentage = ((uploadedBytes / fileSize) * 100).toFixed(2);
-          res.write(`data: ${JSON.stringify({ file: fileName, progress: `${percentage}%` })}\n\n`);
+          res.write(
+            `data: ${JSON.stringify({
+              file: fileName,
+              progress: `${percentage}%`,
+            })}\n\n`
+          );
         },
       });
 
@@ -393,13 +402,21 @@ exports.uploadFiles = async (req, res) => {
         url: `${BASE_URL}/${nextcloudPath}`,
         createdBy,
         owner,
-        parentFolder: mongoose.Types.ObjectId.isValid(parentFolder) ? parentFolder : null,
+        parentFolder: mongoose.Types.ObjectId.isValid(parentFolder)
+          ? parentFolder
+          : null,
       });
       await fileRecord.save();
       uploadedFiles.push(fileRecord);
     }
 
-    res.write(`data: ${JSON.stringify({ success: true, message: "Files uploaded successfully", uploadedFiles })}\n\n`);
+    res.write(
+      `data: ${JSON.stringify({
+        success: true,
+        message: "Files uploaded successfully",
+        uploadedFiles,
+      })}\n\n`
+    );
     res.end();
   } catch (error) {
     console.error("File upload error:", error);
@@ -451,7 +468,8 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
 
     const escapedPath = relativePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-    const { NEXTCLOUD_URL, NEXTCLOUD_USER, NEXTCLOUD_PASSWORD } = await createWebDAVClient();
+    const { NEXTCLOUD_URL, NEXTCLOUD_USER, NEXTCLOUD_PASSWORD } =
+      await createWebDAVClient();
 
     // Correct base path
     const basePath = `https://spherify-cloud.mooo.com/remote.php/dav/files/spherify/Spherify_Data`;
@@ -490,7 +508,9 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
           });
 
           // Extract all file sizes
-          const sizeMatches = response.data.match(/<d:getcontentlength>(\d+)<\/d:getcontentlength>/g);
+          const sizeMatches = response.data.match(
+            /<d:getcontentlength>(\d+)<\/d:getcontentlength>/g
+          );
           if (sizeMatches) {
             fileSize = sizeMatches.reduce((sum, match) => {
               const size = parseInt(match.match(/\d+/)[0], 10);
@@ -507,7 +527,9 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
       })
     );
 
-    res.status(200).json({ success: true, files: updatedFiles, totalFolderSize });
+    res
+      .status(200)
+      .json({ success: true, files: updatedFiles, totalFolderSize });
   } catch (error) {
     console.error("Fetch files and folders by path error:", error);
     res.status(500).json({
@@ -516,8 +538,6 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
     });
   }
 };
-
-
 
 exports.createFolder = async (req, res) => {
   try {
@@ -868,12 +888,12 @@ exports.getFolderSize = async (req, res) => {
           responses[i].getElementsByTagName("d:quota-used-bytes")[0];
         if (quotaUsedNode) {
           folderSize = parseInt(quotaUsedNode.textContent, 10);
-          break; 
+          break;
         }
       }
     }
 
-    return res.json({ folderPath, size: folderSize }); 
+    return res.json({ folderPath, size: folderSize });
   } catch (error) {
     console.error(
       "Error fetching folder size:",
@@ -882,3 +902,59 @@ exports.getFolderSize = async (req, res) => {
     return res.status(500).json({ error: "Failed to fetch folder size" });
   }
 };
+
+exports.downloadFileOrFolder = async (req, res) => {
+  try {
+    let { filePath, isFolder } = req.query;
+
+    if (!filePath) {
+      return res.status(400).json({ success: false, error: "File path is required." });
+    }
+
+    const { NEXTCLOUD_USER, NEXTCLOUD_PASSWORD, NEXTCLOUD_REST_URL } = await createWebDAVClient();
+
+    console.log("Requested File/Folder:", filePath);
+    console.log("Is Folder:", isFolder === "true");
+
+    // Extract the relative path (Nextcloud requires this format)
+    const relativePath = filePath.replace(
+      "https://spherify-cloud.mooo.com/remote.php/dav/files/spherify/",
+      ""
+    );
+
+    console.log("Relative Path:", relativePath);
+
+    // ✅ Generate a public share link (for both files and folders)
+    const shareResponse = await axios.post(
+      `${NEXTCLOUD_REST_URL}/ocs/v2.php/apps/files_sharing/api/v1/shares`,
+      new URLSearchParams({
+        path: relativePath,
+        shareType: 3, // Public link
+        permissions: 1, // Read-only
+      }),
+      {
+        headers: {
+          "OCS-APIRequest": "true",
+          Accept: "application/json",
+          Authorization: "Basic " + base64.encode(`${NEXTCLOUD_USER}:${NEXTCLOUD_PASSWORD}`),
+        },
+      }
+    );
+
+    const shareUrl = shareResponse.data?.ocs?.data?.url;
+    if (!shareUrl) {
+      return res.status(500).json({ success: false, error: "Failed to create share link." });
+    }
+
+    console.log("Generated Public Share Link:", shareUrl);
+
+    // ✅ Append `/download` for direct file download
+    const downloadUrl = `${shareUrl}/download`;
+
+    return res.status(200).json({ success: true, downloadUrl });
+  } catch (error) {
+    console.error("Download error:", error.response?.data || error.message);
+    return res.status(500).json({ success: false, error: "Failed to generate download link." });
+  }
+};
+

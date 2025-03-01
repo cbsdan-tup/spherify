@@ -34,7 +34,7 @@ const Dashboard = () => {
       day: "numeric",
     });
     let content = [];
-  
+
     // 🎨 Styling Configuration
     const styles = {
       header: {
@@ -47,7 +47,7 @@ const Dashboard = () => {
         fontSize: 14,
         alignment: "center",
         color: "#7f8c8d",
-        margin: [0, 5, 0, 20],
+        margin: [0, 5, 0, 10],
       },
       sectionHeader: {
         fontSize: 18,
@@ -55,14 +55,14 @@ const Dashboard = () => {
         color: "#2980b9",
         margin: [0, 15, 0, 10],
       },
-      paragraph: { fontSize: 12, margin: [0, 10, 0, 10], lineHeight: 1.6 },
-      warning: { fontSize: 12, color: "#e67e22", bold: true },
-      error: { fontSize: 12, color: "#e74c3c", bold: true },
-      keyMetric: { fontSize: 14, bold: true, color: "#27ae60" },
-      positiveTrend: { fontSize: 12, color: "#27ae60", bold: true }, // Green for positive trends
-      negativeTrend: { fontSize: 12, color: "#e74c3c", bold: true }, // Red for negative trends
+      paragraph: { fontSize: 12, margin: [0, 10, 0, 10], lineHeight: 1.6, textIndent: 20 },
+      warning: { fontSize: 12, color: "#e67e22", bold: true, lineHeight: 1.6 },
+      error: { fontSize: 12, color: "#e74c3c", bold: true, lineHeight: 1.6 },
+      keyMetric: { fontSize: 12, bold: true, color: "#27ae60", lineHeight: 1.6  },
+      positiveTrend: { fontSize: 12, color: "#27ae60", bold: true, lineHeight: 1.6  }, // Green for positive trends
+      negativeTrend: { fontSize: 12, color: "#e74c3c", bold: true, lineHeight: 1.6  }, // Red for negative trends
     };
-  
+
     const addWatermark = (docDefinition) => {
       docDefinition.watermark = {
         text: "spherify",
@@ -73,7 +73,7 @@ const Dashboard = () => {
         color: "#bdc3c7",
       };
     };
-  
+
     const captureChart = async (chartId) => {
       const chartElement = document.getElementById(chartId);
       if (!chartElement) return null;
@@ -89,7 +89,7 @@ const Dashboard = () => {
         return null;
       }
     };
-  
+
     const addChartWithAnalysis = async (chartId, analysisText) => {
       const chartImage = await captureChart(chartId);
       return [
@@ -97,18 +97,17 @@ const Dashboard = () => {
         chartImage
           ? {
               image: chartImage,
-              width: 500,
+              width: 400,
               alignment: "center",
-              margin: [0, 10, 0, 20],
+              margin: [0, 10, 0, 10],
             }
           : {
               text: "Chart unavailable - data visualization missing",
               style: "warning",
             },
-        { text: "\n" },
       ];
     };
-  
+
     // 📄 PDF Header Section
     content.push(
       { text: "Spherify Analytics Report", style: "header" },
@@ -116,12 +115,11 @@ const Dashboard = () => {
       {
         canvas: [{ type: "line", x1: 0, y1: 5, x2: 515, y2: 5, lineWidth: 1 }],
       },
-      { text: "\n\n" }
     );
-  
+
     // 📊 User Growth Analysis
     content.push({ text: "User Growth Analysis", style: "sectionHeader" });
-  
+    let teamGrowthTrend, userGrowthTrend = null
     if (userStats && pastUsersChartData) {
       const last7DaysUsers = pastUsersChartData.dailyUsers
         ?.slice(-7)
@@ -129,12 +127,12 @@ const Dashboard = () => {
       const previous7DaysUsers = pastUsersChartData.dailyUsers
         ?.slice(-14, -7)
         .reduce((a, b) => a + b.count, 0);
-  
-      const userGrowthTrend =
+
+      userGrowthTrend =
         last7DaysUsers && previous7DaysUsers
           ? ((last7DaysUsers - previous7DaysUsers) / previous7DaysUsers) * 100
           : null;
-  
+
       content.push({
         text: [
           "The platform currently has ",
@@ -153,12 +151,17 @@ const Dashboard = () => {
                 "This represents a ",
                 {
                   text: `${userGrowthTrend.toFixed(2)}%`,
-                  style: userGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
+                  style:
+                    userGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
                 },
                 " change compared to the previous 7 days, indicating a ",
                 {
-                  text: userGrowthTrend >= 0 ? "positive growth trend" : "decline in growth",
-                  style: userGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
+                  text:
+                    userGrowthTrend >= 0
+                      ? "positive growth trend"
+                      : "decline in growth",
+                  style:
+                    userGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
                 },
                 ".",
               ]
@@ -166,17 +169,17 @@ const Dashboard = () => {
         ],
         style: "paragraph",
       });
-      content.push(...(await addChartWithAnalysis("pastUsersChart", "\n")));
+      content.push(...(await addChartWithAnalysis("pastUsersChart")));
     } else {
       content.push({
         text: "Analyzing User Growth Data...",
         style: "paragraph",
       });
     }
-  
+
     // 📊 Team Engagement Analysis
     content.push({ text: "Team Engagement Analysis", style: "sectionHeader" });
-  
+
     if (teamStats && pastTeamsChartData) {
       const last7DaysTeams = pastTeamsChartData.dailyTeams
         ?.slice(-7)
@@ -184,12 +187,38 @@ const Dashboard = () => {
       const previous7DaysTeams = pastTeamsChartData.dailyTeams
         ?.slice(-14, -7)
         .reduce((a, b) => a + b.count, 0);
-  
-      const teamGrowthTrend =
+
+      teamGrowthTrend =
         last7DaysTeams && previous7DaysTeams
           ? ((last7DaysTeams - previous7DaysTeams) / previous7DaysTeams) * 100
           : null;
-  
+
+      console.log("Team growth trend:", teamGrowthTrend); // Debugging
+
+      let teamAnalysisText;
+
+      if (teamGrowthTrend !== null && !isNaN(teamGrowthTrend)) {
+        teamAnalysisText = [
+          "This represents a ",
+          {
+            text: `${teamGrowthTrend.toFixed(2)}%`,
+            style: teamGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
+          },
+          " change compared to the previous 7 days, indicating a ",
+          {
+            text:
+              teamGrowthTrend >= 0
+                ? "positive growth trend"
+                : "decline in growth",
+            style: teamGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
+          },
+          ".",
+        ];
+      } else {
+        teamAnalysisText =
+          "There is an insufficient data to determine growth trend.";
+      }
+
       content.push({
         text: [
           "The platform hosts ",
@@ -203,39 +232,30 @@ const Dashboard = () => {
           "In the last week, ",
           { text: `${last7DaysTeams || 0}`, style: "keyMetric" },
           " new teams were created. ",
-          teamGrowthTrend !== null
-            ? [
-                "This represents a ",
-                {
-                  text: `${teamGrowthTrend.toFixed(2)}%`,
-                  style: teamGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
-                },
-                " change compared to the previous 7 days, indicating a ",
-                {
-                  text: teamGrowthTrend >= 0 ? "positive growth trend" : "decline in growth",
-                  style: teamGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
-                },
-                ".",
-              ]
-            : "There is an insufficient data to determine growth trend.",
+         
         ],
         style: "paragraph",
       });
-      content.push(...(await addChartWithAnalysis("pastTeamsChart", "\n")));
+      content.push({ text: teamAnalysisText, style: "paragraph" });
+
+      content.push(...(await addChartWithAnalysis("pastTeamsChart")));
     } else {
       content.push({
         text: "Analyzing Team Engagement Data...",
         style: "paragraph",
       });
     }
-  
+
     // 📊 Storage Utilization Analysis
-    content.push({ text: "Storage Utilization Analysis", style: "sectionHeader" });
-  
+    content.push({
+      text: "Storage Utilization Analysis",
+      style: "sectionHeader",
+    });
+
     if (fileSharingStorage) {
       const storageUtilizationTrend =
         fileSharingStorage.usedStorage / fileSharingStorage.totalStorage;
-  
+
       content.push({
         text: [
           "The total storage capacity is ",
@@ -263,34 +283,78 @@ const Dashboard = () => {
               storageUtilizationTrend > 0.8
                 ? "Storage utilization is high, indicating a potential need for expansion."
                 : "Storage utilization is within acceptable limits.",
-            style: storageUtilizationTrend > 0.8 ? "negativeTrend" : "positiveTrend",
+            style:
+              storageUtilizationTrend > 0.8 ? "negativeTrend" : "positiveTrend",
           },
         ],
         style: "paragraph",
       });
-      content.push(...(await addChartWithAnalysis("storageChart", "\n")));
+      content.push(...(await addChartWithAnalysis("storageChart")));
     } else {
       content.push({
         text: "Analyzing Storage Utilization Data...",
         style: "paragraph",
       });
     }
-  
+
     // 📌 Conclusion
     content.push({ text: "Conclusion", style: "sectionHeader" });
+
+    // User Growth Analysis
+    let userGrowthConclusion;
+    if (userGrowthTrend !== null && !isNaN(userGrowthTrend)) {
+      userGrowthConclusion = `User growth is ${
+        userGrowthTrend >= 0 ? "positive" : "declining"
+      } (${userGrowthTrend.toFixed(2)}% change compared to the previous 7 days).`;
+    } else {
+      userGrowthConclusion = "Insufficient data to determine user growth trends.";
+    }
+    
+    // Team Engagement Analysis
+    let teamEngagementConclusion;
+    if (teamGrowthTrend !== null && !isNaN(teamGrowthTrend)) {
+      teamEngagementConclusion = `Team engagement is ${
+        teamGrowthTrend >= 0 ? "positive" : "declining"
+      } (${teamGrowthTrend.toFixed(2)}% change compared to the previous 7 days).`;
+    } else {
+      teamEngagementConclusion = "Insufficient data to determine team engagement trends.";
+    }
+    
+    // Cloud Usage Analysis
+    let cloudUsageConclusion;
+    if (fileSharingStorage) {
+      const storageUtilizationTrend =
+        fileSharingStorage.usedStorage / fileSharingStorage.totalStorage;
+      cloudUsageConclusion = `Cloud storage utilization is ${
+        storageUtilizationTrend > 0.8 ? "high" : "within acceptable limits"
+      } (${((storageUtilizationTrend) * 100).toFixed(2)}% used).`;
+    } else {
+      cloudUsageConclusion = "Insufficient data to determine cloud storage utilization.";
+    }
+    
+    // Build the Conclusion Text
     content.push({
       text: [
         "The platform demonstrates ",
         { text: "consistent growth", style: "keyMetric" },
         " in user engagement and team formation, with ",
         { text: "stable storage utilization", style: "keyMetric" },
-        ". The data highlights the platform's effectiveness in fostering collaboration and data sharing. ",
-        { text: "Key recommendations", style: "keyMetric" },
-        " include enhancing user retention strategies, optimizing storage management, and continuing to support team-based workflows to sustain growth and user satisfaction.",
+        ". Here are the key insights:\n\n",
+        { text: "User Growth: ", style: "keyMetric" },
+        userGrowthConclusion,
+        "\n",
+        { text: "Team Engagement: ", style: "keyMetric" },
+        teamEngagementConclusion,
+        "\n",
+        { text: "Cloud Usage: ", style: "keyMetric" },
+        cloudUsageConclusion,
+        "\n\n",
+        { text: "Key Recommendations: ", style: "keyMetric" },
+        "Enhance user retention strategies, optimize storage management, and continue supporting team-based workflows to sustain growth and user satisfaction.",
       ],
       style: "paragraph",
     });
-  
+
     // 📄 PDF Document Definition
     const docDefinition = {
       content: content,
@@ -301,7 +365,7 @@ const Dashboard = () => {
       pageSize: "A4",
       pageMargins: [40, 60, 40, 60],
     };
-  
+
     addWatermark(docDefinition);
     pdfMake
       .createPdf(docDefinition)

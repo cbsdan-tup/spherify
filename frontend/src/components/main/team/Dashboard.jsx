@@ -123,23 +123,18 @@ const Dashboard = () => {
 
   return (
     <div className="team-content container">
-      <h1 className="fw-bold">Data Analytics & Dashboard</h1>
-      <hr />
       <FileShare />
       {/* Main Grid Layout */}
       <div className="kanban-team-members cards">
         {/* Kanban Board */}
         <div className="card">
           <div className="card shadow chart-bg kanban-board">
-            <div className="card-header fw-semibold">
-              Kanban Board
-            </div>
+            <div className="card-header fw-semibold">Kanban Board</div>
             <div className="card-body">
               <Pie data={kanbanData} />
             </div>
           </div>
         </div>
-
 
         {/* Team Members */}
         <div className="team-members card">
@@ -190,7 +185,7 @@ const Dashboard = () => {
               <button
                 className="btn btn-primary rounded-circle p-2 invite-member-btn"
                 onClick={handleOpenInvitePopUp}
-                style={{width: "40px", height: "40px"}}
+                style={{ width: "40px", height: "40px" }}
               >
                 <FaPlus size={16} />
               </button>
@@ -199,63 +194,80 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="card shadow mt-4 chart-bg">
-        <div className="card-header fw-semibold">
-          Project Calendar
-        </div>
-        <div className="card-body">
-          {teamCalendarEvents.length > 0 ? (
-            teamCalendarEvents.map((event, index) => {
-              return (
-                <div key={index} className="accordion-item">
+      <div className="calendar-main">
+        <Calendar setRefresh={setRefresh} />
+        <div className="card shadow upcoming-events">
+          <div className="card-header fw-semibold">
+            <i className="fa-solid fa-bell"></i>
+            <span>Upcoming Events</span>
+          </div>
+          <div className="card-body">
+            {teamCalendarEvents.length > 0 ? (
+              teamCalendarEvents.map((event, index) => {
+                return (
+                  <div key={index} className="accordion-item">
                   <div
                     className="accordion-header bg-light p-2 mb-2 rounded"
                     onClick={() => {
-                      setIsExpanded(!isExpanded);
-                      setEventId(event._id);
+                    setIsExpanded(!isExpanded);
+                    setEventId(event._id);
                     }}
                     style={{ cursor: "pointer" }}
                   >
                     <p className="mb-0 fw-medium">
-                      {new Date(event.startDate).toLocaleString()} -{" "}
-                      {event.name}
+                    <i className="fa-solid fa-calendar-days mx-2"></i>
+                    {new Date(event.startDate).toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "numeric",
+                      hour12: true,
+                    })}{" "}
+                    - {event.name}
                     </p>
                     {isExpanded && eventId === event._id && (
-                      <div
-                        className="accordion-body p-2 bg-white rounded border mt-2"
-                        
-                      >
-                        {event.description && (
-                          <p className="text-muted small mb-1">
-                            <strong>Description:</strong> {event.description}
-                          </p>
-                        )}
-                        {event.location && (
-                          <p className="text-muted small mb-1">
-                            📍 {event.location}
-                          </p>
-                        )}
-                        <p className="text-muted small mb-1">
-                          <strong>Start:</strong>{" "}
-                          {new Date(event.startDate).toLocaleString()}
-                        </p>
-                        <p className="text-muted small mb-0">
-                          <strong>End:</strong>{" "}
-                          {new Date(event.endDate).toLocaleString()}
-                        </p>
-                      </div>
+                    <div className="accordion-body p-2 bg-white rounded border mt-2">
+                      {event.description && (
+                      <p className="text-muted small mb-1">
+                        <strong>Description:</strong> {event.description}
+                      </p>
+                      )}
+                      {event.location && (
+                      <p className="text-muted small mb-1">
+                        📍 {event.location}
+                      </p>
+                      )}
+                      <p className="text-muted small mb-1">
+                      <strong>Start:</strong>{" "}
+                      {new Date(event.startDate).toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "numeric",
+                        hour12: true,
+                      })}
+                      </p>
+                      <p className="text-muted small mb-0">
+                      <strong>End:</strong>{" "}
+                      {new Date(event.endDate).toLocaleString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "numeric",
+                        hour12: true,
+                      })}
+                      </p>
+                    </div>
                     )}
                   </div>
-                </div>
-              );
-            })
-          ) : (
-            <p className="text-muted text-center">No upcoming events.</p>
-          )}
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-muted text-center">No upcoming events.</p>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="calendar-main">
-        <Calendar setRefresh={setRefresh}/>
       </div>
 
       <InviteMemberPopUp

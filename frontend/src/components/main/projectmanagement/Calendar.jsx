@@ -274,7 +274,7 @@ function Calendar({setRefresh}) {
   );
 
   return (
-    <div className="calendar-container" style={{padding: '1rem', paddingTop: '80px',  }}>
+    <div className="calendar-container">
       <div className="d-flex justify-content-between mb-3">
         <h2>Team Calendar</h2>
       </div>

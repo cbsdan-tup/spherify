@@ -236,12 +236,66 @@
 .fs-content {
   background-color: var(--tertiary-color);
   padding: 1.5rem 0.7rem 0.7rem;
-  max-height: 50vh;
+  max-height: 60vh;
   overflow-y: auto;
   border-bottom-right-radius: 8px;
   border-bottom-left-radius: 8px;
 }
 
+.fs-content::-webkit-scrollbar-track {
+  background: transparent; /* Make the track invisible */
+}
+
+/* Style the scrollbar thumb (the draggable part) */
+.fs-content::-webkit-scrollbar {
+  width: 5px;
+}
+
+.fs-content::-webkit-scrollbar-thumb {
+  background: #888; /* Color of the scroll thumb */
+  border-radius: 10px;
+}
+
+.fs-content::-webkit-scrollbar-thumb:hover {
+  background: #555; /* Darken on hover */
+}
+
+.fs-content .menu {
+  position: relative;
+}
+
+.fs-content .menu .menu-icon {
+  padding: 0 0.3rem;
+}
+
+.fs-content .menu .menu-options {
+  position: absolute;
+  top: 0;
+  right: 20px;
+  background-color: #f3f3e0;
+  border-radius: 0.5rem;
+  box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.1);
+  padding: 0.7rem 1rem;
+  z-index: 1;
+  width: 15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  background-color: var(--chart-header-bg);
+  color: var(--text-white);
+  user-select: none;
+}
+
+.fs-content .menu .menu-options .option {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  cursor: pointer;
+}
+
+.fs-content .menu .menu-options .option.save {
+  color: var(--active-color)
+}
 .fs-content.half-border {
   border-bottom-right-radius: 0 !important;
 }
