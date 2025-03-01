@@ -103,14 +103,14 @@
   object-fit: cover;
   border: 1px solid var(--white-grey);
 }
-.right-tool-panel .message-group-container .message .message-content p {
+.right-tool-panel .message-group-container .message .message-content div.p {
   max-width: 80%;
   margin-bottom: 0;
 }
-.right-tool-panel .message-group-container .message.other p {
+.right-tool-panel .message-group-container .message.other div.p {
   margin-right: auto;
 }
-.right-tool-panel .message-group-container .message.you p {
+.right-tool-panel .message-group-container .message.you div.p {
   margin-left: auto;
 }
 .right-tool-panel .message-group-container .message.you .message-content .sender {
@@ -131,18 +131,18 @@
   user-select: none;
   margin-bottom: 3px;
 }
-.right-tool-panel .message-group-container .message.you p .chat-content {
+.right-tool-panel .message-group-container .message.you div.p .chat-content {
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
   border-bottom-left-radius: 10px;
 }
-.right-tool-panel .message-group-container .message.other p .chat-content {
+.right-tool-panel .message-group-container .message.other div.p .chat-content {
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
   border-bottom-right-radius: 5px;
 }
 
-.right-tool-panel .message-group-container .message.you p .chat-time {
+.right-tool-panel .message-group-container .message.you div.p .chat-time {
   text-align: right;
 }
 .right-tool-panel .message-group-container .message .chat-content {

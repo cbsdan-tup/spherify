@@ -17,7 +17,7 @@ const Message = ({ msg, user, index }) => {
         ) : (
           <></>
         )}
-        <p key={index}>
+        <div className="p" key={index}>
           <strong className="sender">
             {msg.sender._id == user._id || msg.sender == user._id
               ? "You"
@@ -53,7 +53,7 @@ const Message = ({ msg, user, index }) => {
               minute: "2-digit",
             })}{" "}
           </div>
-        </p>
+        </div>
       </div>
     </div>
   );

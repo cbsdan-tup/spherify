@@ -21,8 +21,8 @@ const FileUpload = () => {
   const [currentFolderId, setCurrentFolderId] = useState("");
   const [isFileFetching, setIsFileFetching] = useState(true);
   const [folderConsume, setFolderConsume] = useState(0);
-
   const [showStorage, setShowStorage] = useState(false);
+  const [availableUploadSize, setAvailableUploadSize] = useState(0);
 
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const user = useSelector((state) => state.auth.user);
@@ -247,6 +247,18 @@ const FileUpload = () => {
     [files]
   );
 
+  useEffect(() => {
+    if (folderConsume !== null && nextcloudConfig) {
+      console.log(
+        "Available upload size:",
+        nextcloudConfig.maxSizePerTeam * 1024 * 1024 * 1024 - folderConsume
+      );
+      setAvailableUploadSize(
+        nextcloudConfig.maxSizePerTeam * 1024 * 1024 * 1024 - folderConsume
+      );
+    }
+  }, [folderConsume, nextcloudConfig]);
+
   return (
     <div className="file-sharing">
       <div className={`fs-container ${showStorage ? "half-border" : ""}`}>
@@ -284,6 +296,7 @@ const FileUpload = () => {
                       setRefresh={setRefresh}
                       parentFolder={currentFolderId}
                       setProgress={setProgress}
+                      availableUploadSize={availableUploadSize}
                     />
                   </div>
                 )}
@@ -314,7 +327,10 @@ const FileUpload = () => {
                     <i className="fa-solid fa-plus"></i>
                     <span>New</span>
                   </button>
-                  <i className="fa-solid fa-bars show-storage"></i>
+                  <i
+                    className="fa-solid fa-bars show-storage"
+                    onClick={toggleShowStorage}
+                  ></i>
                   {showFileButtons && (
                     <div className="hidden-buttons">
                       <CreateNewFolder
@@ -328,12 +344,14 @@ const FileUpload = () => {
                         setRefresh={setRefresh}
                         parentFolder={currentFolderId}
                         setProgress={setProgress}
+                        availableUploadSize={availableUploadSize}
                       />
                       <UploadFolder
                         currentPath={currentPath}
                         setRefresh={setRefresh}
                         parentFolder={currentFolderId}
                         setProgress={setProgress}
+                        availableUploadSize={availableUploadSize}
                       />
                     </div>
                   )}
@@ -443,7 +461,7 @@ const FileUpload = () => {
         <div className="card">
           <div className="card-header">File Storage</div>
           <div className="card-body">
-              <div className="storage-title">Storage</div>
+            <div className="storage-title">Storage</div>
             {folderConsume !== null && nextcloudConfig && (
               <div className="progress-container">
                 <div

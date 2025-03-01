@@ -246,6 +246,26 @@
   border-bottom-right-radius: 0 !important;
 }
 
+.swal-storage-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.swal-storage-alert .message {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+.active-color {
+  color: var(--active-color);
+}
+
+.danger-color {
+  color: var(--danger-color);
+}
+
 .fs-content .empty {
   text-align: center;
   font-size: 1.2rem;
@@ -254,6 +274,7 @@
 .fs-header .header-title .right .button-container {
   display: flex;
   gap: 0.5rem;
+  align-items: center;
 }
 .fs-content .folder,
 .fs-content .file {
@@ -297,6 +318,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  background-color: transparent !important;
 } 
 
 .fs-footer .progress span {
