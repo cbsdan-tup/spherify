@@ -4,7 +4,7 @@ import './AddMessageGroupForm.css';
 import { useSelector } from 'react-redux';
 import { getUser } from '../../../utils/helper';
 
-const AddMessageGroupForm = ({ isOpen, onClose, onSubmit }) => {
+const AddMessageGroupForm = ({ isOpen, onClose, onSubmit, setRefresh }) => {
     const [groupName, setGroupName] = useState('');
     const [members, setMembers] = useState([]);
     const [selectedMembers, setSelectedMembers] = useState([]);
@@ -57,6 +57,7 @@ const AddMessageGroupForm = ({ isOpen, onClose, onSubmit }) => {
         };
         if (validateForm()) {
             onSubmit(formData);
+            setRefresh(true);
             onClose();
         }
     };
@@ -69,7 +70,7 @@ const AddMessageGroupForm = ({ isOpen, onClose, onSubmit }) => {
             <div className="modal-content">
                 <span className="close" onClick={onClose}>&times;</span>
                 <h2>Add Message Group</h2>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} className='add-message-group-form'>
                     <div className="form-group">
                         <label htmlFor="groupName">Group Name</label>
                         <input
@@ -80,7 +81,7 @@ const AddMessageGroupForm = ({ isOpen, onClose, onSubmit }) => {
                         />
                         {errors.groupName && <span className="error">{errors.groupName}</span>}
                     </div>
-                    <div className="form-group">
+                    {/* <div className="form-group">
                         <label>Members</label>
                         {members.map((member) => (
                             <div key={member._id} className="checkbox">
@@ -95,8 +96,8 @@ const AddMessageGroupForm = ({ isOpen, onClose, onSubmit }) => {
                                 </label>
                             </div>
                         ))}
-                    </div>
-                    <button type="submit">Add Group</button>
+                    </div> */}
+                    <button type="submit" className='me-auto'>Add Group</button>
                 </form>
             </div>
         </div>

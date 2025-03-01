@@ -7,7 +7,7 @@ let NEXTCLOUD_USER = "";
 let NEXTCLOUD_PASSWORD = "";
 let NEXTCLOUD_API = "";
 
-const BASE_URL = `${NEXTCLOUD_URL}/${NEXTCLOUD_USER}/Spherify_Data`;
+let BASE_URL = "";
 
 const https = require("https");
 const keepAliveAgent = new https.Agent({ keepAlive: true });
@@ -23,6 +23,7 @@ async function getNextcloudConfig() {
     NEXTCLOUD_USER = config.nextcloud.adminUser || "";
     NEXTCLOUD_PASSWORD = config.nextcloud.adminPassword || "";
     NEXTCLOUD_API = `${config.nextcloud.url || "https://spherify-cloud.mooo.com"}/ocs/v2.php/apps/files_sharing/api/v1/shares`;
+    BASE_URL = `${NEXTCLOUD_URL}/${NEXTCLOUD_USER}/Spherify_Data`
 
   } catch (error) {
     console.error("Error fetching Nextcloud configuration:", error);

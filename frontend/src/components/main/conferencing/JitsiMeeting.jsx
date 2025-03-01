@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import LoadingSpinner from "../../layout/LoadingSpinner";
 import { Rnd } from "react-rnd";
 import { useDispatch, useSelector } from "react-redux";
 import { clearCurrentMeetingRoomName } from "../../../redux/teamSlice";
@@ -24,7 +23,9 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
     const loadJitsi = () => {
       if (!window.JitsiMeetExternalAPI) {
         const script = document.createElement("script");
-        script.src = `https://${conferencingUrl ? conferencingUrl : "meet.jit.si"}/external_api.js`;
+        script.src = `https://${
+          conferencingUrl ? conferencingUrl : "meet.jit.si"
+        }/external_api.js`;
         script.async = true;
         script.onload = () => {
           if (jitsiContainer.current) initializeJitsi();
@@ -77,6 +78,8 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
         height: "100%",
       };
 
+      window.JitsiMeetExternalAPI ? setLoading(false) : setLoading(true);
+
       jitsiApi.current = new window.JitsiMeetExternalAPI(domain, options);
 
       jitsiApi.current.addEventListener("videoConferenceJoined", () => {
@@ -84,7 +87,7 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
       });
 
       jitsiApi.current.addEventListener("videoConferenceLeft", () => {
-        setLoading(true);
+        setLoading(false);
         setRedirected(true);
       });
     };
@@ -98,14 +101,11 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
     };
   }, [roomName, displayName]);
 
-  // 🔥 Toggle full-screen mode
   const toggleFullScreen = () => {
     if (!isFullScreen) {
-      // Save previous position & size before going full-screen
       setWindowSize({ width: 400, height: 400 });
       setPosition({ x: 0, y: 0 });
     } else {
-      // Restore previous size and position
       setWindowSize({ width: 400, height: 400 });
       setPosition({ x: 10, y: 10 });
     }
@@ -122,13 +122,12 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
   }
   return (
     <>
-      {loading && <LoadingSpinner message="Loading..." />}
       <Rnd
         size={
           isFullScreen
             ? { width: window.innerWidth, height: window.innerHeight }
             : undefined
-        } // Apply size only in full screen
+        } 
         position={isFullScreen ? { x: 0, y: 0 } : position}
         default={{ x: 10, y: 10, width: 400, height: 400 }}
         minWidth={350}
@@ -167,7 +166,6 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
           </div>
         </div>
 
-        {/* Jitsi Container */}
         <div
           ref={jitsiContainer}
           className="jitsi-container"
@@ -177,6 +175,15 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
             border: "1px solid white",
           }}
         />
+        {loading && (
+          <div
+            className="d-flex align-items-center justify-content-center py-3 bg-warning"
+            style={{ gap: 4 }}
+          >
+            <div className="loader text-center"></div>
+            <span>Loading Meet</span>
+          </div>
+        )}
       </Rnd>
     </>
   );

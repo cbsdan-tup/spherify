@@ -30,7 +30,7 @@ router.post("/admin-configuration", isAdmin, async (req, res) => {
 
 router.get("/admin-configuration/site-conferencing-info", async (req, res) => {
   try {
-    const config = await AdminConfig.findOne({}, "site conferencing");
+    const config = await AdminConfig.findOne({}, "site conferencing nextcloud.url nextcloud.user nextcloud.storageTypePerTeam nextcloud.maxSizePerTeam");
 
     if (!config) {
       return res.status(404).json({ message: "Configuration not found" });

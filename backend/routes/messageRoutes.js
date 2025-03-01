@@ -8,6 +8,7 @@ const {
   editMessageGroup,
   deleteMessageGroup,
   getMessages,
+  getMessageGroupById
 } = require("../controllers/MessageController");
 
 router.get(
@@ -28,6 +29,7 @@ router.delete(
 );
 
 router.get("/messages/:groupId", getMessages);
+router.get("/message-group/:messageGroupId", getMessageGroupById);
 
 
 module.exports = router;

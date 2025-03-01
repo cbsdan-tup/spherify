@@ -50,27 +50,23 @@ async function getCloudinaryConfig() {
     if (!config) {
       throw new Error("Cloudinary configuration not found in database.");
     }
-    cloud_name = `${config.cloudinary.name || ""}`;
-    api_key = `${config.cloudinary.api_key || ""}`;
-    api_secret = `${config.cloudinary.api_secret || ""}`;
-   
+
+    const cloudinaryConfig = {
+      cloud_name: config.cloudinary.name || "",
+      api_key: config.cloudinary.api_key || "",
+      api_secret: config.cloudinary.api_secret || "",
+    };
+
+    // Configure Cloudinary after fetching credentials
+    cloudinary.config(cloudinaryConfig);
 
   } catch (error) {
-    console.error("Error fetching Nextcloud configuration:", error);
-    throw error;
+    console.error("Error fetching Cloudinary configuration:", error);
   }
 }
 
-let cloud_name = ""
-let api_key = ""
-let api_secret = ""
-
-getCloudinaryConfig();
-
-cloudinary.config({
-  cloud_name: cloud_name,
-  api_key: api_key,
-  api_secret: api_secret,
+getCloudinaryConfig().then(() => {
+  console.log("Cloudinary configured successfully");
 });
 
 //middleware

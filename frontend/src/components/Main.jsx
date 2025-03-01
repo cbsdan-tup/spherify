@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import LeftPanel from "./layout/LeftPanel";
+import { useSelector, useDispatch } from "react-redux";
+import axios from "axios";
+import { refreshFirebaseToken } from "../config/firebase-config";
+import { errMsg } from "../utils/helper";
+import { updateToken } from "../redux/authSlice";
+import Header from "./Header";
 import RightMainPanel from "./layout/RightMainPanel";
 import RightToolPanel from "./layout/RightToolPanel";
 import Home from "./main/Home";
@@ -9,35 +14,32 @@ import Team from "./main/Team";
 import Calendar from "./main/projectmanagement/Calendar";
 import Kanban from "./main/projectmanagement/Kanban";
 import Gantt from "./main/projectmanagement/Gantt";
-import { useSelector, useDispatch } from "react-redux";
-import { refreshFirebaseToken } from "../config/firebase-config";
-import { errMsg } from "../utils/helper";
-import { updateToken } from "../redux/authSlice";
-import Dashboard from "./main/team/Dashboard";
-import Header from "./Header";
-
-import "../styles/MainHeader.css";
 import JitsiMeeting from "./main/conferencing/JitsiMeeting";
 import TextEditor from "./main/live-editing/TextEditor";
 import MessageGroup from "./main/textchats/MessageGroup";
 import FileSharingPage from "./main/file-sharing/FileSharingPage";
+import "../styles/MainHeader.css";
 
 function Main() {
   const [refresh, setRefresh] = useState(false);
   const location = useLocation();
   const [showRightPanel, setShowRightPanel] = useState(true);
   const [showChats, setShowChats] = useState(true);
-
-  useEffect(() => {}, [location.pathname]);
+  const [currentGroupChat, setCurrentGroupChat] = useState({});
+  const [teamInfo, setTeamInfo] = useState({});
 
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
-  let dispatch = useDispatch();
+  const currentMeetingRoomName = useSelector(
+    (state) => state.team.currentMeetingRoomName
+  );
   const authState = useSelector((state) => state.auth);
   const user = useSelector((state) => state.auth.user);
+  const dispatch = useDispatch();
+
+  // Refresh Firebase token periodically
   useEffect(() => {
     const refreshToken = async () => {
       try {
-        // console.log("Current token:", authState.token);
         const token = await refreshFirebaseToken();
         if (token) {
           dispatch(updateToken(token));
@@ -49,21 +51,60 @@ function Main() {
     };
 
     refreshToken();
-  }, [refresh]);
+  }, [refresh, dispatch]);
 
+  // Fetch group chat info when meeting room changes
+  useEffect(() => {
+    if (currentMeetingRoomName) {
+      console.log("Curent meeting room name", currentMeetingRoomName)
+      fetchGroupChatInfo(currentMeetingRoomName);
+    }
+  }, [currentMeetingRoomName]);
+
+  // Fetch team info when team ID changes
+  useEffect(() => {
+    if (currentTeamId) {
+      console.log("Current team id", currentTeamId);
+      fetchTeamInfo(currentTeamId);
+    }
+  }, [currentTeamId]);
+
+  // Fetch group chat info
+  const fetchGroupChatInfo = async (groupChatId) => {
+    try {
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API}/message-group/${groupChatId}`,
+        { headers: { Authorization: `Bearer ${authState?.token}` } }
+      );
+      console.log("Group chat info:", data);
+      setCurrentGroupChat(data);
+    } catch (error) {
+      console.error("Error fetching group chat info:", error);
+    }
+  };
+
+  // Fetch team info
+  const fetchTeamInfo = async (teamId) => {
+    try {
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API}/getTeamById/${teamId}`,
+        { headers: { Authorization: `Bearer ${authState?.token}` } }
+      );
+      setTeamInfo(data);
+    } catch (error) {
+      console.error("Error fetching team info:", error);
+    }
+  };
+
+  // Toggle right panel visibility
   const handleToggleShow = () => {
-    console.log("Show right panel");
     setShowRightPanel(!showRightPanel);
   };
 
+  // Toggle chats visibility
   const handleToggleChats = () => {
     setShowChats(!showChats);
-    console.log("clicked");
   };
-
-  const currentMeetingRoomName = useSelector(
-    (state) => state.team.currentMeetingRoomName
-  );
 
   return (
     <>
@@ -90,7 +131,10 @@ function Main() {
               }
             >
               <Route path="calendar" element={<Calendar />} />
-              <Route path="kanban" element={<Kanban isFull={!showRightPanel} />} />
+              <Route
+                path="kanban"
+                element={<Kanban isFull={!showRightPanel} />}
+              />
               <Route path="gantt" element={<Gantt />} />
               <Route path="live-editing/:documentId" element={<TextEditor />} />
               <Route path="message-group/:groupId" element={<MessageGroup />} />
@@ -104,6 +148,8 @@ function Main() {
           </Routes>
         </div>
       </div>
+
+      {/* Toggle button for right panel */}
       <div
         className={`toggle-show ${showRightPanel && "leftmargin"}`}
         onClick={handleToggleShow}
@@ -115,9 +161,9 @@ function Main() {
         )}
       </div>
 
+      {/* Render right panel based on route */}
       {showRightPanel &&
-        (location.pathname === "/main" ||
-        location.pathname === "/main/settings" ? (
+        (location.pathname === "/main" || location.pathname === "/main/settings" ? (
           <RightMainPanel
             refresh={refresh}
             setRefresh={setRefresh}
@@ -127,10 +173,12 @@ function Main() {
           <RightToolPanel showChats={showChats} />
         ))}
 
+      {/* Render JitsiMeeting if a meeting room is active */}
       {currentMeetingRoomName && (
         <JitsiMeeting
           roomName={currentMeetingRoomName}
-          displayName={user.firstName + " " + user.lastName}
+          displayName={`${user.firstName} ${user.lastName}`}
+          chatName={`${teamInfo?.name || ""} - ${currentGroupChat?.name || "General"}`}
         />
       )}
     </>

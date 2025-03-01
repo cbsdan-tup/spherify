@@ -1,15 +1,23 @@
 .team-content.container .file-sharing {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
   width: 100%;
+  align-items: unset!important;
+  margin-bottom: 1rem;
 }
+
 
 .fs-container {
-  width: 100%;
+  flex: 2;
   color: var(--header-text-color);
+  background-color: var(--tertiary-color);
+  border-radius: 0.8rem;
 }
 
+
+.fs-container.half-border {
+  border-top-right-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+}
 .fs-header {
   display: flex;
   align-self: center;
@@ -20,6 +28,11 @@
   border-top-left-radius: 0.8rem;
   border-top-right-radius: 0.8rem;
 }
+
+.fs-header.half-border {
+  border-top-right-radius: 0;
+}
+
 .fs-header .header-title {
   display: flex;
   align-items: center;
@@ -110,8 +123,72 @@
 }
 
 .file-sharing .file-cards {
-  max-width: 400px;
+  display: none;
+  flex: 1;
+  background-color: #7e9cb9;
+  color: var(--text-white);
 } 
+
+.file-sharing .fs-header .show-storage {
+  cursor: pointer;
+  padding: 0.3rem;
+}
+
+.file-sharing .file-cards.show {
+  display: block;
+  border-bottom-right-radius: 10px;
+  border-top-right-radius: 10px;
+  animation: slideIn 0.5s ease-in-out;
+}
+
+.file-sharing .file-cards.hide {
+  display: none;
+  margin-bottom: 15px;
+  border-bottom-right-radius: 10px;
+  border-top-right-radius: 10px;
+  animation: slideOut 0.5s ease-in-out;
+}
+
+@keyframes slideIn {
+  0% { transform: translateX(100%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOut {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(-100%); opacity: 0; }
+}
+
+@keyframes slideOut {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(-100%); opacity: 0; }
+}
+
+.file-sharing .file-cards .card-header {
+  display: flex;
+  justify-content: center;
+  flex: 1;
+  border: none;
+  font-size: 1.3rem;
+  padding: 1.2rem 1rem;
+  height: 5rem !important;
+  background-color: transparent !important;
+  color: var(--text-white) !important;
+  border-bottom: 1px solid var(--chart-bg-color);
+}
+
+.file-sharing .file-cards .card-body {
+  padding: 0.7rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.file-sharing .file-cards .card {
+  border: none;
+  background-color: transparent !important;
+  color: var(--text-white) !important
+}
 
 .file-sharing .file-cards .card {
   background-color: var(--chart-bg-color);
@@ -158,12 +235,17 @@
 }
 .fs-content {
   background-color: var(--tertiary-color);
-  padding: 0.7rem;
+  padding: 1.5rem 0.7rem 0.7rem;
   max-height: 50vh;
   overflow-y: auto;
   border-bottom-right-radius: 8px;
   border-bottom-left-radius: 8px;
 }
+
+.fs-content.half-border {
+  border-bottom-right-radius: 0 !important;
+}
+
 .fs-content .empty {
   text-align: center;
   font-size: 1.2rem;

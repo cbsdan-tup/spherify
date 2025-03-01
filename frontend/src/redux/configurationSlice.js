@@ -4,6 +4,7 @@ import axios from "axios";
 const initialState = {
   site: {},
   conferencing: {},
+  nextcloud: {},
   isLoading: false,
   error: null
 };
@@ -33,6 +34,7 @@ const configurationSlice = createSlice({
       .addCase(fetchConfigurations.fulfilled, (state, action) => {
         state.site = action.payload.site || {};
         state.conferencing = action.payload.conferencing || {};
+        state.nextcloud = action.payload.nextcloud || {};
         state.isLoading = false;
       })
       .addCase(fetchConfigurations.rejected, (state, action) => {

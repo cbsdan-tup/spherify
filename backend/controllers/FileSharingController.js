@@ -213,9 +213,8 @@ exports.uploadFolders = async (req, res) => {
     };
 
     // 🔹 Sort folder paths to create parents before children
-    const sortedPaths = [...new Set(relativePaths)]
-      .filter((p) => !path.extname(p)) // ✅ Exclude file paths
-      .sort((a, b) => a.length - b.length);
+    const folderPaths = new Set(relativePaths.filter((p) => p.endsWith("/")));
+    const sortedPaths = [...folderPaths].sort((a, b) => a.split("/").length - b.split("/").length);    
 
     // 🔹 Ensure all folders exist in Nextcloud
     for (const folderPath of sortedPaths) {

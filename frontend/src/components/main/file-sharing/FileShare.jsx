@@ -1,14 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { errMsg } from "../../../utils/helper";
+import { errMsg, succesMsg } from "../../../utils/helper";
 import moment from "moment";
 import CreateNewFolder from "./CreateNewFolder";
 import UploadFiles from "./UploadFiles";
-import LoadingSpinner from "../../layout/LoadingSpinner";
 import UploadFolder from "./UploadFolder";
 import Swal from "sweetalert2";
-import { succesMsg } from "../../../utils/helper";
 
 const FileUpload = () => {
   const [files, setFiles] = useState([]);
@@ -21,73 +19,72 @@ const FileUpload = () => {
   const [refresh, setRefresh] = useState(false);
   const [showFileButtons, setShowFileButtons] = useState(false);
   const [currentFolderId, setCurrentFolderId] = useState("");
+  const [isFileFetching, setIsFileFetching] = useState(true);
+  const [folderConsume, setFolderConsume] = useState(0);
+
+  const [showStorage, setShowStorage] = useState(false);
 
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
+  const nextcloudConfig = useSelector(
+    (state) => state.configurations.nextcloud
+  );
 
-  const [isFileFetching, setIsFileFetching] = useState(true);
-
-  const [folderConsume, setFolderConsume] = useState(0);
-
-  useEffect(() => {
-    // Reset path when team changes
-    setCurrentPath("");
-  }, [currentTeamId]);
-
-  useEffect(() => {
-    setRefresh((prev) => !prev);
-  }, [currentPath]);
+  // useEffect(() => {
+  //   setCurrentPath("");
+  // }, [currentTeamId]);
 
   useEffect(() => {
     setProgress(0);
   }, [refresh]);
 
   useEffect(() => {
-    // Set current path to team id if path is empty
     if (currentTeamId && currentPath === "") {
       setCurrentPath(currentTeamId);
+      fetchFilesAndFolders(currentTeamId);
     }
-    if (currentTeamId) {
+    if (currentPath) {
       fetchFilesAndFolders(currentPath);
     }
-  }, [currentTeamId, currentPath, refresh, progress]);
+  }, [currentTeamId, currentPath, refresh]);
 
-  useEffect(() => {
-    const getFolderSize = async () => {
-      if (currentTeamId) {
-        const size = await fetchFolderConsume(currentTeamId);
-        setFolderConsume(size);
-      }
-    };
-
-    getFolderSize();
+  const getFolderSize = useCallback(async () => {
+    if (currentTeamId) {
+      const size = await fetchFolderConsume(currentTeamId);
+      setFolderConsume(size);
+    }
   }, [currentTeamId]);
 
-  const fetchFolderConsume = async (path) => {
-    try {
-      setIsFileFetching(true);
-      const response = await axios.get(
-        `${import.meta.env.VITE_API}/getFolderSize/?path=${encodeURIComponent(
-          path
-        )}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("Folder size:", response.data);
-      return response.data?.size;
-    } catch (error) {
-      console.error("Error fetching folder size:", error);
-      errMsg("Error fetching folder size", error);
-    } finally {
-      setIsFileFetching(false);
-    }
-  };
+  useEffect(() => {
+    getFolderSize();
+  }, [getFolderSize]);
 
-  const fetchFilesAndFolders = async (path = "") => {
+  const fetchFolderConsume = useCallback(
+    async (path) => {
+      try {
+        setIsFileFetching(true);
+        const response = await axios.get(
+          `${import.meta.env.VITE_API}/getFolderSize/?path=${encodeURIComponent(
+            path
+          )}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        return response.data?.size;
+      } catch (error) {
+        errMsg("Error fetching folder size", error);
+      } finally {
+        setIsFileFetching(false);
+      }
+    },
+    [token]
+  );
+
+  const fetchFilesAndFolders = useCallback(async (path = "") => {
     try {
       setIsFileFetching(true);
       const response = await axios.get(
@@ -112,13 +109,17 @@ const FileUpload = () => {
     } finally {
       setIsFileFetching(false);
     }
+  }, []);
+
+  const toggleShowStorage = () => {
+    setShowStorage((prev) => !prev);
   };
 
-  const handleFileChange = (event) => {
+  const handleFileChange = useCallback((event) => {
     setUploadingFiles(Array.from(event.target.files));
-  };
+  }, []);
 
-  const handleUpload = async () => {
+  const handleUpload = useCallback(async () => {
     if (!uploadingFiles.length) {
       alert("Please select at least one file.");
       return;
@@ -161,51 +162,57 @@ const FileUpload = () => {
       alert("Upload successful!");
       fetchFilesAndFolders(currentPath);
     } catch (error) {
-      console.error("Upload error:", error);
-      alert("Upload failed");
+      errMsg("Upload failed", error);
     }
-  };
+  }, [
+    uploadingFiles,
+    folderName,
+    currentTeamId,
+    user._id,
+    currentPath,
+    fetchFilesAndFolders,
+  ]);
 
-  const navigateToFolder = (folderName, folderId) => {
-    setCurrentFolderId(folderId);
-    setPathHistory((prev) => [...prev, currentPath]); // Save current path before navigating
-    setCurrentPath(currentPath ? `${currentPath}/${folderName}` : folderName);
-  };
+  const navigateToFolder = useCallback(
+    (folderName, folderId) => {
+      setCurrentFolderId(folderId);
+      setPathHistory((prev) => [...prev, currentPath]);
+      setCurrentPath(currentPath ? `${currentPath}/${folderName}` : folderName);
+    },
+    [currentPath]
+  );
 
-  const navigateBack = () => {
+  const navigateBack = useCallback(() => {
     if (pathHistory.length === 0) return;
-    const previousPath = pathHistory[pathHistory.length - 1];
-    setPathHistory((prev) => prev.slice(0, -1)); // Remove last path from history
+    const previousPath = pathHistory.pop();
     setCurrentPath(previousPath || currentTeamId);
-  };
+  }, [pathHistory, currentTeamId]);
 
-  const handleFileClick = async (url) => {
-    try {
-      console.log("Passed Url: ", url);
-      const response = await axios.get(
-        `${import.meta.env.VITE_API}/getPublicLink?filePath=${url}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("Public link:", response.data.publicUrl);
-      const fileUrl = response.data.publicUrl;
-      window.open(fileUrl, "_blank");
-    } catch (error) {
-      console.error("Error fetching files:", error);
-      errMsg("Error fetching files", error);
-    }
-  };
+  const handleFileClick = useCallback(
+    async (url) => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_API}/getPublicLink?filePath=${url}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        window.open(response.data.publicUrl, "_blank");
+      } catch (error) {
+        errMsg("Error fetching files", error);
+      }
+    },
+    [token]
+  );
 
-  const getTimeFeedback = (createdAt) => {
-    return moment(createdAt).fromNow();
-  };
+  const getTimeFeedback = useCallback(
+    (createdAt) => moment(createdAt).fromNow(),
+    []
+  );
 
-  const handleDelete = async (fileId, fileName, type) => {
-    console.log("Deleting file:", fileId, fileName, type);
-
+  const handleDelete = useCallback(async (fileId, fileName, type) => {
     Swal.fire({
       title: `Delete ${type === "folder" ? "Folder" : "File"}?`,
       text: `Are you sure you want to delete "${fileName}"? This action cannot be undone!`,
@@ -229,35 +236,21 @@ const FileUpload = () => {
         }
       }
     });
-  };
+  }, []);
+
+  const sortedFolders = useMemo(
+    () => [...folders].sort((a, b) => a.name.localeCompare(b.name)),
+    [folders]
+  );
+  const sortedFiles = useMemo(
+    () => [...files].sort((a, b) => a.name.localeCompare(b.name)),
+    [files]
+  );
 
   return (
     <div className="file-sharing">
-      <div className="file-cards">
-        <div className="card">
-          <div className="card-header">File Storage</div>
-          <div className="card-body">
-            {folderConsume !== null && (
-              <div className="progress-container">
-                <div
-                  className="progress-bar"
-                  style={{
-                    width: `${
-                      (folderConsume / (10 * 1024 * 1024 * 1024)) * 1000
-                    }%`, // Max storage = 10GB
-                  }}
-                ></div>
-                <div className="progress-text">
-                  {(folderConsume / (1024 * 1024 )).toFixed(2)} MB / 1 GB
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="fs-container">
-        <div className="fs-header">
+      <div className={`fs-container ${showStorage ? "half-border" : ""}`}>
+        <div className={`fs-header ${showStorage ? "half-border" : ""}`}>
           {currentPath === currentTeamId ? (
             <div className="header-title">
               <div className="left">
@@ -274,6 +267,10 @@ const FileUpload = () => {
                   <i className="fa-solid fa-plus"></i>
                   <span>New</span>
                 </button>
+                <i
+                  className="fa-solid fa-bars show-storage"
+                  onClick={toggleShowStorage}
+                ></i>
                 {showFileButtons && (
                   <div className="hidden-buttons">
                     <CreateNewFolder
@@ -317,6 +314,7 @@ const FileUpload = () => {
                     <i className="fa-solid fa-plus"></i>
                     <span>New</span>
                   </button>
+                  <i className="fa-solid fa-bars show-storage"></i>
                   {showFileButtons && (
                     <div className="hidden-buttons">
                       <CreateNewFolder
@@ -344,12 +342,12 @@ const FileUpload = () => {
             </div>
           )}
         </div>
-        <div className="fs-content">
+        <div className={`fs-content ${showStorage ? "half-border" : ""}`}>
           {isFileFetching ? (
             <div className="loader text-center mx-2"></div>
           ) : (
             <>
-              {folders.map((folder) => (
+              {sortedFolders.map((folder) => (
                 <div key={folder._id} className="folder">
                   <div
                     onClick={() => navigateToFolder(folder.name, folder._id)}
@@ -385,7 +383,7 @@ const FileUpload = () => {
                   </div>
                 </div>
               ))}
-              {files.map((file) => (
+              {sortedFiles.map((file) => (
                 <div key={file._id} className="file">
                   <div
                     onClick={() => handleFileClick(file.url)}
@@ -439,6 +437,39 @@ const FileUpload = () => {
               </div>
             </>
           )}
+        </div>
+      </div>
+      <div className={`file-cards ${showStorage ? "show" : "hide"}`}>
+        <div className="card">
+          <div className="card-header">File Storage</div>
+          <div className="card-body">
+              <div className="storage-title">Storage</div>
+            {folderConsume !== null && nextcloudConfig && (
+              <div className="progress-container">
+                <div
+                  className="progress-bar"
+                  style={{
+                    width: `${
+                      nextcloudConfig.storageTypePerTeam === "infinity"
+                        ? 100
+                        : (folderConsume /
+                            (nextcloudConfig.maxSizePerTeam *
+                              1024 *
+                              1024 *
+                              1024)) *
+                          100
+                    }%`,
+                  }}
+                ></div>
+                <div className="progress-text">
+                  {(folderConsume / (1024 * 1024)).toFixed(2)} MB /{" "}
+                  {nextcloudConfig.storageTypePerTeam === "infinity"
+                    ? "∞ (Unlimited)"
+                    : `${nextcloudConfig.maxSizePerTeam} GB`}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

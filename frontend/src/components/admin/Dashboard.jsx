@@ -6,9 +6,12 @@ import LoadingSpinner from "../layout/LoadingSpinner";
 import PastUsersChart from "./Charts/PastUsersChart";
 import PastTeamsChart from "./Charts/PastTeamsChart";
 import StorageChart from "./Charts/StorageChart";
-import html2canvas from "html2canvas";
-import { jsPDF } from "jspdf";
+
+import { toPng } from "html-to-image";
+import pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
 import RecentUsersAndTeams from "./Charts/RecentUsersAndTeams";
+import html2canvas from "html2canvas";
 
 const Dashboard = () => {
   const [recentUsers, setRecentUsers] = useState([]);
@@ -22,47 +25,288 @@ const Dashboard = () => {
 
   const dashboardRef = useRef(null);
 
+  pdfMake.vfs = pdfFonts?.pdfMake?.vfs || pdfFonts.vfs; // ✅ Ensure vfs is properly assigned
+
   const generatePDF = async () => {
-    const dashboardElement = dashboardRef.current;
+    const today = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+    let content = [];
   
-    if (!dashboardElement) return;
+    // 🎨 Styling Configuration
+    const styles = {
+      header: {
+        fontSize: 24,
+        bold: true,
+        alignment: "center",
+        color: "#2c3e50",
+      },
+      subheader: {
+        fontSize: 14,
+        alignment: "center",
+        color: "#7f8c8d",
+        margin: [0, 5, 0, 20],
+      },
+      sectionHeader: {
+        fontSize: 18,
+        bold: true,
+        color: "#2980b9",
+        margin: [0, 15, 0, 10],
+      },
+      paragraph: { fontSize: 12, margin: [0, 10, 0, 10], lineHeight: 1.6 },
+      warning: { fontSize: 12, color: "#e67e22", bold: true },
+      error: { fontSize: 12, color: "#e74c3c", bold: true },
+      keyMetric: { fontSize: 14, bold: true, color: "#27ae60" },
+      positiveTrend: { fontSize: 12, color: "#27ae60", bold: true }, // Green for positive trends
+      negativeTrend: { fontSize: 12, color: "#e74c3c", bold: true }, // Red for negative trends
+    };
   
-    const canvas = await html2canvas(dashboardElement);
-    const imgData = canvas.toDataURL("image/png");
+    const addWatermark = (docDefinition) => {
+      docDefinition.watermark = {
+        text: "spherify",
+        opacity: 0.15,
+        bold: true,
+        italics: false,
+        angle: -45,
+        color: "#bdc3c7",
+      };
+    };
   
-    const pdf = new jsPDF("p", "mm", "a4"); // A4 size PDF
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const margin = 25.4; // 1-inch margin
-  
-    const contentWidth = pageWidth - 2 * margin;
-    const contentHeight = (canvas.height * contentWidth) / canvas.width;
-  
-    pdf.addImage(imgData, "PNG", margin, margin, contentWidth, contentHeight);
-  
-    // ✅ Add Watermark with TRUE Opacity Workaround
-    pdf.setFont("helvetica"); // Bold font
-    pdf.setFontSize(12); // Small font size
-    pdf.setTextColor(215, 215, 215); // Light gray (not full black)
-    
-    const watermarkText = "spherify"; // Watermark text
-    const angle = 45; // Diagonal angle
-    const trueOpacity = 3; // The higher the number, the more faded it looks
-  
-    let alternateOffset = 0;
-    for (let y = 10; y < pageHeight; y += 30) {
-      for (let x = -10 + alternateOffset; x < pageWidth; x += 50) {
-        for (let i = 0; i < trueOpacity; i++) { // ✅ Workaround: Draw text multiple times for soft opacity
-          pdf.text(watermarkText, x, y, { angle: angle });
-        }
+    const captureChart = async (chartId) => {
+      const chartElement = document.getElementById(chartId);
+      if (!chartElement) return null;
+      try {
+        const canvas = await html2canvas(chartElement, {
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          scale: 2,
+        });
+        return canvas.toDataURL("image/png");
+      } catch (error) {
+        console.error(`Error capturing chart ${chartId}:`, error);
+        return null;
       }
-      alternateOffset = alternateOffset === 0 ? 20 : 0; // Shift every other row
+    };
+  
+    const addChartWithAnalysis = async (chartId, analysisText) => {
+      const chartImage = await captureChart(chartId);
+      return [
+        { text: analysisText, style: "paragraph" },
+        chartImage
+          ? {
+              image: chartImage,
+              width: 500,
+              alignment: "center",
+              margin: [0, 10, 0, 20],
+            }
+          : {
+              text: "Chart unavailable - data visualization missing",
+              style: "warning",
+            },
+        { text: "\n" },
+      ];
+    };
+  
+    // 📄 PDF Header Section
+    content.push(
+      { text: "Spherify Analytics Report", style: "header" },
+      { text: `Report Generated: ${today}`, style: "subheader" },
+      {
+        canvas: [{ type: "line", x1: 0, y1: 5, x2: 515, y2: 5, lineWidth: 1 }],
+      },
+      { text: "\n\n" }
+    );
+  
+    // 📊 User Growth Analysis
+    content.push({ text: "User Growth Analysis", style: "sectionHeader" });
+  
+    if (userStats && pastUsersChartData) {
+      const last7DaysUsers = pastUsersChartData.dailyUsers
+        ?.slice(-7)
+        .reduce((a, b) => a + b.count, 0);
+      const previous7DaysUsers = pastUsersChartData.dailyUsers
+        ?.slice(-14, -7)
+        .reduce((a, b) => a + b.count, 0);
+  
+      const userGrowthTrend =
+        last7DaysUsers && previous7DaysUsers
+          ? ((last7DaysUsers - previous7DaysUsers) / previous7DaysUsers) * 100
+          : null;
+  
+      content.push({
+        text: [
+          "The platform currently has ",
+          { text: `${userStats.totalUsers}`, style: "keyMetric" },
+          " registered users, of which ",
+          { text: `${userStats.totalActiveUsers}`, style: "keyMetric" },
+          ` (${(
+            (userStats.totalActiveUsers / userStats.totalUsers) *
+            100
+          ).toFixed(2)}%) are actively engaging with the system. `,
+          "Over the past 7 days, ",
+          { text: `${last7DaysUsers || 0}`, style: "keyMetric" },
+          " new users have registered. ",
+          userGrowthTrend !== null
+            ? [
+                "This represents a ",
+                {
+                  text: `${userGrowthTrend.toFixed(2)}%`,
+                  style: userGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
+                },
+                " change compared to the previous 7 days, indicating a ",
+                {
+                  text: userGrowthTrend >= 0 ? "positive growth trend" : "decline in growth",
+                  style: userGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
+                },
+                ".",
+              ]
+            : "There is an insufficient data to determine growth trend.",
+        ],
+        style: "paragraph",
+      });
+      content.push(...(await addChartWithAnalysis("pastUsersChart", "\n")));
+    } else {
+      content.push({
+        text: "Analyzing User Growth Data...",
+        style: "paragraph",
+      });
     }
   
-    pdf.save("Dashboard_Report.pdf");
+    // 📊 Team Engagement Analysis
+    content.push({ text: "Team Engagement Analysis", style: "sectionHeader" });
+  
+    if (teamStats && pastTeamsChartData) {
+      const last7DaysTeams = pastTeamsChartData.dailyTeams
+        ?.slice(-7)
+        .reduce((a, b) => a + b.count, 0);
+      const previous7DaysTeams = pastTeamsChartData.dailyTeams
+        ?.slice(-14, -7)
+        .reduce((a, b) => a + b.count, 0);
+  
+      const teamGrowthTrend =
+        last7DaysTeams && previous7DaysTeams
+          ? ((last7DaysTeams - previous7DaysTeams) / previous7DaysTeams) * 100
+          : null;
+  
+      content.push({
+        text: [
+          "The platform hosts ",
+          { text: `${teamStats.totalTeams}`, style: "keyMetric" },
+          " teams, with ",
+          { text: `${teamStats.totalActiveTeams}`, style: "keyMetric" },
+          ` (${(
+            (teamStats.totalActiveTeams / teamStats.totalTeams) *
+            100
+          ).toFixed(2)}%) actively collaborating. `,
+          "In the last week, ",
+          { text: `${last7DaysTeams || 0}`, style: "keyMetric" },
+          " new teams were created. ",
+          teamGrowthTrend !== null
+            ? [
+                "This represents a ",
+                {
+                  text: `${teamGrowthTrend.toFixed(2)}%`,
+                  style: teamGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
+                },
+                " change compared to the previous 7 days, indicating a ",
+                {
+                  text: teamGrowthTrend >= 0 ? "positive growth trend" : "decline in growth",
+                  style: teamGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
+                },
+                ".",
+              ]
+            : "There is an insufficient data to determine growth trend.",
+        ],
+        style: "paragraph",
+      });
+      content.push(...(await addChartWithAnalysis("pastTeamsChart", "\n")));
+    } else {
+      content.push({
+        text: "Analyzing Team Engagement Data...",
+        style: "paragraph",
+      });
+    }
+  
+    // 📊 Storage Utilization Analysis
+    content.push({ text: "Storage Utilization Analysis", style: "sectionHeader" });
+  
+    if (fileSharingStorage) {
+      const storageUtilizationTrend =
+        fileSharingStorage.usedStorage / fileSharingStorage.totalStorage;
+  
+      content.push({
+        text: [
+          "The total storage capacity is ",
+          {
+            text: `${(fileSharingStorage.totalStorage / 1024).toFixed(1)} GB`,
+            style: "keyMetric",
+          },
+          ", with ",
+          {
+            text: `${(fileSharingStorage.usedStorage / 1024).toFixed(1)} GB`,
+            style: "keyMetric",
+          },
+          ` (${(
+            (fileSharingStorage.usedStorage / fileSharingStorage.totalStorage) *
+            100
+          ).toFixed(1)}%) currently in use. `,
+          "The available storage is ",
+          {
+            text: `${(fileSharingStorage.freeStorage / 1024).toFixed(1)} GB`,
+            style: "keyMetric",
+          },
+          ". ",
+          {
+            text:
+              storageUtilizationTrend > 0.8
+                ? "Storage utilization is high, indicating a potential need for expansion."
+                : "Storage utilization is within acceptable limits.",
+            style: storageUtilizationTrend > 0.8 ? "negativeTrend" : "positiveTrend",
+          },
+        ],
+        style: "paragraph",
+      });
+      content.push(...(await addChartWithAnalysis("storageChart", "\n")));
+    } else {
+      content.push({
+        text: "Analyzing Storage Utilization Data...",
+        style: "paragraph",
+      });
+    }
+  
+    // 📌 Conclusion
+    content.push({ text: "Conclusion", style: "sectionHeader" });
+    content.push({
+      text: [
+        "The platform demonstrates ",
+        { text: "consistent growth", style: "keyMetric" },
+        " in user engagement and team formation, with ",
+        { text: "stable storage utilization", style: "keyMetric" },
+        ". The data highlights the platform's effectiveness in fostering collaboration and data sharing. ",
+        { text: "Key recommendations", style: "keyMetric" },
+        " include enhancing user retention strategies, optimizing storage management, and continuing to support team-based workflows to sustain growth and user satisfaction.",
+      ],
+      style: "paragraph",
+    });
+  
+    // 📄 PDF Document Definition
+    const docDefinition = {
+      content: content,
+      styles: styles,
+      defaultStyle: {
+        font: "Roboto",
+      },
+      pageSize: "A4",
+      pageMargins: [40, 60, 40, 60],
+    };
+  
+    addWatermark(docDefinition);
+    pdfMake
+      .createPdf(docDefinition)
+      .download(`Spherify_Report_${Date.now()}.pdf`);
   };
-  
-  
 
   const token = useSelector((state) => state.auth.token);
 
@@ -193,14 +437,33 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="row-content user-storage-charts">
-              <PastUsersChart chartData={pastUsersChartData} />
-              <StorageChart chartData={fileSharingStorage} />
+              <div id="pastUsersChart">
+                {" "}
+                {/* Add id here */}
+                <PastUsersChart chartData={pastUsersChartData} />
+              </div>
+              <div id="storageChart">
+                {" "}
+                {/* Add id here */}
+                <StorageChart chartData={fileSharingStorage} />
+              </div>
             </div>
             <div className="row-content">
-              <PastTeamsChart chartData={pastTeamsChartData} />
+              <div id="pastTeamsChart">
+                {" "}
+                {/* Add id here */}
+                <PastTeamsChart chartData={pastTeamsChartData} />
+              </div>
             </div>
             <div className="row-content recent-users-teams">
-              <RecentUsersAndTeams recentUsers={recentUsers} recentTeams={recentTeams} />
+              <div id="recentUsersTeams">
+                {" "}
+                {/* Add id here */}
+                <RecentUsersAndTeams
+                  recentUsers={recentUsers}
+                  recentTeams={recentTeams}
+                />
+              </div>
             </div>
           </>
         )}

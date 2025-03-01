@@ -129,3 +129,26 @@ exports.getMessages = async (req, res) => {
     res.status(500).json({ error: "Error fetching messages" });
   }
 };
+
+exports.getMessageGroupById = async (req, res) => {
+  try {
+    const { messageGroupId } = req.params;
+
+    // Validate the message group ID
+    if (!mongoose.Types.ObjectId.isValid(messageGroupId)) {
+      return res.status(400).json({ message: "Invalid message group ID." });
+    }
+
+    // Find the message group and populate related fields
+    const messageGroup = await MessageGroup.findById(messageGroupId);
+
+    if (!messageGroup) {
+      return res.status(404).json({ message: "Message group not found." });
+    }
+
+    res.status(200).json(messageGroup);
+  } catch (error) {
+    console.error("Error fetching message group:", error);
+    res.status(500).json({ message: "Internal Server Error", error: error.message });
+  }
+};

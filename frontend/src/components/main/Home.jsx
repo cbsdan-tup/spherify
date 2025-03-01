@@ -266,7 +266,7 @@ function Home({ refresh, setRefresh }) {
                     </div>
                     {team?.isDisabled ? (
                       <div className="team-detail">
-                        <i class="fa-solid fa-triangle-exclamation inactive"></i>
+                        <i className="fa-solid fa-triangle-exclamation inactive"></i>
                         <span className="disabled">This team has been Disabled</span>
                       </div>
                     ) : (

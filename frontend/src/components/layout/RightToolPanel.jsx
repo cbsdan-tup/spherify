@@ -18,13 +18,21 @@ import MessageGroup from "../main/textchats/MessageGroup";
 function RightToolPanel({ showChats }) {
   const [isChatFormVisible, setIsChatFormVisible] = useState(false);
   const [groupChats, setGroupChats] = useState([]);
-  const [currentChatId, setCurrentChatId] = useState(null); // Store the "General" chat separately
+  const [currentGroupChat, setCurrentGroupChat] = useState(null); // Store the "General" chat separately
+
+  const [isToolExpanded, setIsToolExpanded] = useState(false);
+
+  const [refresh, setRefresh] = useState(false);
 
   const dispatch = useDispatch();
 
   const handleAddNewChatClick = () => {
     setIsChatFormVisible(true);
     console.log("Add new chat clicked");
+  };
+
+  const handleCloseForm = () => {
+    setIsChatFormVisible(false);
   };
 
   const handleNewMsgGroupId = (id) => {
@@ -55,19 +63,20 @@ function RightToolPanel({ showChats }) {
   const authState = useSelector((state) => state.auth);
 
   const handleConferenceClick = () => {
-    dispatch(setCurrentMeetingRoomName(currentChatId?._id));
+    dispatch(setCurrentMeetingRoomName(currentGroupChat?._id));
   };
 
   useEffect(() => {
     fetchGroupChats();
-  }, []);
+  }, [refresh]);
 
   useEffect(() => {
-    if (!currentChatId) {
+    if (!currentGroupChat) {
+      console.log("Group Chat: ", currentGroupChat);
       const generalChatId = groupChats.find(
         (chat) => chat.isGeneral && chat.name === "General"
       );
-      setCurrentChatId(generalChatId || null);
+      setCurrentGroupChat(generalChatId || null);
     }
   }, [groupChats]);
 
@@ -78,8 +87,15 @@ function RightToolPanel({ showChats }) {
           <div className="header">
             <h3>Tools</h3>
           </div>
-          <Link to={`/main/${currentTeamId}`} className="header" >
-            <div style={{display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8rem"}}>
+          <Link to={`/main/${currentTeamId}`} className="header">
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.5rem",
+                fontSize: "0.8rem",
+              }}
+            >
               <i className="fa-solid arrow fa-arrow-right"></i>
               <span className="tool-title">Dashboard</span>
             </div>
@@ -90,16 +106,42 @@ function RightToolPanel({ showChats }) {
       ) : (
         <>
           <div className="header chat">
-            <div className="chat-info">
+            <div className="chat-info" onClick={()=>setIsToolExpanded(!isToolExpanded)}>
               <i className="fa-solid fa-comments"></i>
-              <span className="name"> {currentChatId?.name || "General"}</span>
+              <span className="name"> {currentGroupChat?.name || "General"}</span>
               <i className="fa-solid fa-caret-down"></i>
             </div>
             <div className="conferencing" onClick={handleConferenceClick}>
               <i className="fa-solid fa-video"></i>
             </div>
+            {isToolExpanded && (
+              <div className="chat-list">
+                <div className="add-chat chat" onClick={handleAddNewChatClick}>
+                  <i className="fa-solid fa-plus"></i>
+                  <span>Add Chat Group</span>
+                </div>
+                {groupChats.length > 0 && groupChats.map((chat) => (
+                  <div
+                    className="group-chat chat"
+                    onClick={() => setCurrentGroupChat(chat)}
+                    key={chat._id}
+                  >
+                    <i className="fa-solid fa-comments"></i>
+                    <span className="name">{chat.name}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-          <MessageGroup groupId={currentChatId?._id} />
+          <MessageGroup groupId={currentGroupChat?._id} />
+          {isChatFormVisible && (
+            <AddMessageGroupForm
+              isOpen={isChatFormVisible}
+              onClose={handleCloseForm}
+              onSubmit={addMessageGroup}
+              setRefresh={setRefresh}
+            />
+          )}
         </>
       )}
     </div>

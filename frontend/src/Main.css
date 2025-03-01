@@ -375,6 +375,7 @@ body {
   color: var(--header-text-color);
   font-weight: 600;
   margin-bottom: 0;
+
 }
 
 .team-members .card-body {
@@ -410,6 +411,7 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 0.3rem;
+  position: relative;
 }
 .right-tool-panel .header .conferencing {
   cursor: pointer;
@@ -423,6 +425,34 @@ body {
   align-items: center;
   gap: 0.5rem;
   font-size: 1.2rem;
+  cursor: pointer;
+}
+.right-tool-panel .header .chat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  position: absolute;
+  top: 52px;
+  z-index: 100;
+  background-color: var(--light-yellow-bg);
+  padding: 0.3rem 0.7rem;
+  border-radius: 5px;
+  cursor: pointer;
+  max-width: 250px;
+  overflow-x: hidden;
+}
+.right-tool-panel .header .chat-list .add-chat, .right-tool-panel .header .chat-list .group-chat{
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.right-tool-panel .header .chat-list .chat i {
+  width: 20px;
+  text-align: center;
+}
+.right-tool-panel .header .chat-list .chat i, .right-tool-panel .header .chat-list .chat span {
+  color: var(--header-text-color) !important;
+
 }
 .right-tool-panel .header .chat-info * {
   color: var(--header-text-color);
@@ -657,6 +687,7 @@ body {
   display: block;
   margin: 0 auto;
 }
+
 .create-modal .modal-header {
   background-color: var(--primary-color);
   color: var(--text-white);
@@ -754,8 +785,14 @@ body {
   padding: 0.3rem 0;
 }
 .jitsi-wrapper .drag-handle div.left {
+  display: flex;
+  align-items: center;
+  max-width: 200px;
   font-weight: 600;
   font-size: 1.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .jitsi-wrapper .drag-handle div.left i {
   font-size: 0.9rem;

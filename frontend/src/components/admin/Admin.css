@@ -342,6 +342,17 @@
   display: flex;
   gap: 1rem;
 }
+.admin-page-content .dashboard .content .user-storage-charts div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+}
+.admin-page-content .dashboard .content .user-storage-charts div .past-users-chart, .admin-page-content .dashboard .content .user-storage-charts div .storage-chart {
+  flex: 1;
+  max-width: 100%;
+
+}
 .admin-page-content .dashboard .content .past-users-chart {
   flex: 1;
   background-color: var(--chart-bg-color);
