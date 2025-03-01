@@ -11,7 +11,7 @@ const CardModal = ({ onClose, listId, teamId, mode = "create", initialData = {} 
     cardTitle: initialData.cardTitle || "",
     checklist: initialData.checklist || [],
     priority: initialData.priority || "low",
-    assignedTo: initialData.assignedTo || [],
+    assignedTo: initialData.assignedTo?.map(member => member._id || member) || [],
     listId,
     teamId
   });
@@ -291,30 +291,35 @@ const CardModal = ({ onClose, listId, teamId, mode = "create", initialData = {} 
             <div className="form-group">
               <label>Assign Members</label>
               <div className="members-list">
-                {members.map((member) => (
-                  <div key={member.user._id} className="member-item">
-                    <label className="member-label">
-                      <input
-                        type="checkbox"
-                        checked={cardData.assignedTo.includes(member.user._id)}
-                        onChange={(e) => {
-                          setCardData(prev => ({
-                            ...prev,
-                            assignedTo: e.target.checked
-                              ? [...prev.assignedTo, member.user._id]
-                              : prev.assignedTo.filter(id => id !== member.user._id)
-                          }));
-                        }}
-                      />
-                      <img 
-                        src={member.user.avatar?.url || "/images/account.png"}
-                        alt={member.user.firstName}
-                        className="member-avatar"
-                      />
-                      <span>{member.user.firstName} {member.user.lastName}</span>
-                    </label>
-                  </div>
-                ))}
+                {members.map((member) => {
+                  const memberId = member.user._id;
+                  const isAssigned = cardData.assignedTo.includes(memberId);
+                  
+                  return (
+                    <div key={memberId} className="member-item">
+                      <label className="member-label">
+                        <input
+                          type="checkbox"
+                          checked={isAssigned}
+                          onChange={(e) => {
+                            setCardData(prev => ({
+                              ...prev,
+                              assignedTo: e.target.checked
+                                ? [...prev.assignedTo, memberId]
+                                : prev.assignedTo.filter(id => id !== memberId)
+                            }));
+                          }}
+                        />
+                        <img 
+                          src={member.user.avatar?.url || "/images/account.png"}
+                          alt={member.user.firstName}
+                          className="member-avatar"
+                        />
+                        <span>{member.user.firstName} {member.user.lastName}</span>
+                      </label>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
