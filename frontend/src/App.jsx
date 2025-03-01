@@ -24,7 +24,6 @@ import { refreshFirebaseToken } from "./config/firebase-config";
 import { updateToken } from "./redux/authSlice";
 import AdminPage from "./components/AdminPage";
 import { fetchConfigurations } from "./redux/configurationSlice";
-import UseFavIcon from "./configurations/UseFavIcon"
 
 function App() {
   const authState = useSelector((state) => state.auth);
@@ -32,7 +31,18 @@ function App() {
   let dispatch = useDispatch();
 
   const favIcon = useSelector((state) => state.configurations.site?.favicon);
-  UseFavIcon(favIcon);
+
+  useEffect(() => {
+    if (favIcon) {
+      const link = document.querySelector("link[rel~='icon']");
+      if (!link) {
+        const newLink = document.createElement("link");
+        newLink.rel = "icon";
+        document.head.appendChild(newLink);
+      }
+      link.href = favIcon;
+    }
+  }, [favIcon]);
 
   const refreshToken = useCallback(async () => {
     try {
