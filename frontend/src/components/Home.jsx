@@ -2,6 +2,9 @@ import React, { useEffect } from 'react';
 import "../index.css";
 import { Link } from 'react-router-dom';
 import { createInfiniteScroll } from '../functions/Homefunctions';
+import Contact from './layout/Contact';
+import Footer from './layout/Footer';
+
 // import { Canvas } from '@react-three/fiber';
 // import { OrbitControls} from '@react-three/drei';
 // import { GLTFlooader} from 'three/examples/jsm/loaders/GLTFLoader';
@@ -174,6 +177,7 @@ const Home = () => {
         <div className="step">
           <div className="face face1">
             <div className="content">
+            <img src="/images/step 1.png" alt="Icon" className="iconss" /> {/* This is your PNG icon */}
               <h3>Step 1: Sign Up</h3>
             </div>
           </div>
@@ -185,6 +189,7 @@ const Home = () => {
         <div className="step">
           <div className="face face1">
             <div className="content">
+            <img src="/images/step 2.png" alt="Icon" className="iconss" /> {/* This is your PNG icon */}
               <h3>Step 2: Set Up Your Team</h3>
             </div>
           </div>
@@ -196,6 +201,7 @@ const Home = () => {
         <div className="step">
           <div className="face face1">
             <div className="content">
+            <img src="/images/step 3.png" alt="Icon" className="iconss" /> {/* This is your PNG icon */}
               <h3>Step 3: Start Collaborating</h3>
             </div>
           </div>
@@ -207,6 +213,7 @@ const Home = () => {
         <div className="step">
           <div className="face face1">
             <div className="content">
+            <img src="/images/step 4.png" alt="Icon" className="iconss" /> {/* This is your PNG icon */}
               <h3>Step 4: Analyze Data</h3>
             </div>
           </div>
@@ -218,31 +225,28 @@ const Home = () => {
     </section>
 
     {/* Mission & Vision Section */}
-    {/* <section className="mission-vision" id="mission-vision">
-  <h2 className="heading">Mission & Vision</h2>
-  <div className="box-container">
-  
-    <div className="box">
-      <img src="images/mission.png" alt="Mission" />
-      <h3>Our Mission and V</h3>
-      <h4 className="price">Empower Teams</h4>
-      <p>
-        Our mission is to empower teams worldwide by providing a seamless
-        platform that enhances collaboration, productivity, and communication.
-      </p>
-    </div>
+    <section className="mission-banner">
+      <div className="mission-row">
+        <div className="mission-content">
+          <h3>Our Mission </h3> {/* Focused on Mission */}
+          <p>
+          Our mission is to simplify the way students collaborate and work together, providing powerful tools for task management, 
+          real-time communication, and seamless file sharing to ensure success and productivity for teams in universities.
+          </p>
 
-    <div className="box">
-      <img src="images/vision.png" alt="Vision" />
-      <h3>Our Vision</h3>
-      <h4 className="price">Create Connections</h4>
-      <p>
-        Our vision is to become the leading platform for team collaboration,
-        helping businesses and individuals thrive by creating meaningful connections.
-      </p>
-    </div>
-  </div>
-</section> */}
+          <h3>Our Vision</h3> {/* Focused on Mission */}
+          <p>
+          To be the top platform for team collaboration,
+          making teamwork easier for businesses around the world by 
+          constantly improving our tools for communication and productivity.
+          </p>
+        </div>
+        <div className="image">
+          <img src="images/banner_1.png" alt="Mission Banner" />
+        </div>
+      </div>
+    </section>
+
 
     {/* Developers Section */}
     <section className="developers-section">
@@ -286,6 +290,12 @@ const Home = () => {
             </div>
         </div>
     </section>
+
+    {/* Contact Section */}
+    <Contact />
+
+    {/* Footer Section */}
+    <Footer />
 
     </div>
   );
