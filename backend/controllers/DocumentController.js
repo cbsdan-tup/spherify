@@ -80,6 +80,33 @@ const handleUserEditingStatus = (socket, io) => {
     });
 };
 
+// Soft delete a document
+const softDeleteDocument = async (req, res) => {
+    try {
+      const { documentId } = req.params;
+      const document = await Document.findById(documentId);
+  
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+  
+      // Check if the document is already marked as deleted
+      if (document.deleted) {
+        return res.status(400).json({ message: "Document is already deleted" });
+      }
+  
+      // Mark as deleted
+      document.deleted = true;
+      document.deletedAt = new Date(); // Set the deleted timestamp
+      await document.save();
+  
+      res.status(200).json({ message: "Document soft deleted successfully", document });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Server error" });
+    }
+  };
+
 // 🔹 Integrating socket.io with Express
 const socketHandler = (server) => {
     const io = socketIo(server); // Initialize socket.io
@@ -94,4 +121,4 @@ const socketHandler = (server) => {
     });
 };
 
-module.exports = { createDocument, getDocumentsByTeamId, socketHandler };
+module.exports = { createDocument, getDocumentsByTeamId, socketHandler, softDeleteDocument };

@@ -44,6 +44,7 @@
     "socket.io-client": "^4.8.1",
     "socket.io-frontend": "^0.0.2",
     "styled-components": "^6.1.15",
+    "sweetalert2": "^11.17.2",
     "swiper": "^11.2.4",
     "three": "^0.173.0",
     "uuid": "^11.0.5",

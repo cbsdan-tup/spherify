@@ -7,6 +7,7 @@ import { getToken, succesMsg, errMsg } from "../../../utils/helper";
 import { setCurrentFileId } from "../../../redux/teamSlice";
 import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
+import Swal from 'sweetalert2'; // Import Swal
 
 const LiveEditingTool = () => {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -18,6 +19,7 @@ const LiveEditingTool = () => {
   const handleToolClick = () => {
     setIsExpanded(!isExpanded);
   };
+
   const handleAddNewFileClick = () => {
     setIsFormVisible(true);
   };
@@ -54,6 +56,7 @@ const LiveEditingTool = () => {
       setIsFormVisible(false);
     }
   };
+
   const fetchFiles = async () => {
     try {
       const config = {
@@ -67,20 +70,56 @@ const LiveEditingTool = () => {
         config
       );
       console.log("files", res.data);
-      setFiles(res.data);
+      // Filter out deleted files
+      setFiles(res.data.filter(file => !file.deleted));
     } catch (error) {
       console.error("Error fetching files:", error);
       errMsg("Error fetching files", error);
     }
   };
+
   const handleFileClick = (fileId) => {
     dispatch(setCurrentFileId(fileId));
   };
+
+  const handleSoftDelete = async (documentId) => {
+    // Show confirmation dialog with SweetAlert
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to undo this action!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Yes, delete it!',
+    });
+  
+    if (result.isConfirmed) {
+      try {
+        // Proceed with the delete operation if confirmed
+        await axios.delete(`${import.meta.env.VITE_API}/softDeleteDocument/${documentId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+  
+        // Optionally, remove the deleted document from the UI or refetch documents
+        setFiles(files.filter((file) => file._id !== documentId));
+  
+        Swal.fire('Deleted!', 'Your document has been soft deleted.', 'success');
+      } catch (error) {
+        console.error("Error deleting document:", error);
+        Swal.fire('Error!', 'There was an issue deleting the document.', 'error');
+      }
+    } else {
+      Swal.fire('Cancelled', 'The document was not deleted.', 'info');
+    }
+  };
+
   const currentFileId = useSelector((state) => state.team.currentFileId);
 
   useEffect(() => {
     fetchFiles();
   }, [isFormVisible, currentTeamId]);
+
   return (
     <div className="tool-container custom-text-white">
       <div className="header" onClick={handleToolClick}>
@@ -108,25 +147,30 @@ const LiveEditingTool = () => {
           )}
           {files &&
             files.map((file) => (
-              <>
+              <div key={file._id} className="file">
                 <Link
                   className={
-                    currentFileId === file._id ? "file btn btn-primary" : "file"
+                    currentFileId === file._id ? "btn btn-primary" : ""
                   }
-                  key={file._id}
                   to={`/main/${currentTeamId}/live-editing/${file._id}`}
                   onClick={() => handleFileClick(file._id)}
                 >
-                  <div key={file._id} className="file">
-                    <i className="fa-solid fa-file icon"></i>
-                    <span className="label">{file.fileName}</span>
-                  </div>
+                  <i className="fa-solid fa-file icon"></i>
+                  <span className="label">{file.fileName}</span>
                 </Link>
-              </>
+                {/* Soft Delete Button */}
+                <button
+                  className="btn btn-danger"
+                  onClick={() => handleSoftDelete(file._id)}
+                >
+                  <i className="fa-solid fa-trash"></i>
+                </button>
+              </div>
             ))}
         </div>
       )}
     </div>
   );
 };
+
 export default LiveEditingTool;
