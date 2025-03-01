@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const UseFavIcon = (url) => {
+export default function UseFavIcon (url) {
   useEffect(() => {
     const link = document.querySelector("link[rel~='icon']");
     if (!link) {
@@ -12,4 +12,3 @@ const UseFavIcon = (url) => {
   }, [url]);
 };
 
-export default UseFavIcon;
