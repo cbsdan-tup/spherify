@@ -29,7 +29,8 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
     setNodeRef,
     transform,
     transition,
-    isDragging
+    isDragging,
+    over
   } = useSortable({
     id,
     data: {
@@ -41,8 +42,11 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    opacity: isDragging ? 0.3 : 1,
+    position: 'relative',
     width: 320,
-    opacity: isDragging ? 0.4 : 1,
+    marginRight: isDragging ? 0 : '16px',
+    height: 'fit-content',
     flexShrink: 0
   };
 
@@ -75,7 +79,11 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="list-item-container">
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className={`list-item-container ${isDragging ? 'is-dragging' : ''}`}
+    >
       <div className="list-card">
         {/* List Header */}
         <div className="list-header" {...attributes} {...listeners}>

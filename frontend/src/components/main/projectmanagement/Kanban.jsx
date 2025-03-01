@@ -6,7 +6,7 @@ import ListItem from "./ListItem";
 import "./Kanban.css";
 
 // Import dnd-kit
-import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors, DragOverlay } from "@dnd-kit/core";
+import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors, DragOverlay, pointerWithin } from "@dnd-kit/core";
 import { SortableContext, arrayMove, horizontalListSortingStrategy } from "@dnd-kit/sortable";
 
 function Kanban({isFull}) {
@@ -131,23 +131,21 @@ function Kanban({isFull}) {
     const oldIndex = lists.findIndex((list) => list._id === active.id);
     const newIndex = lists.findIndex((list) => list._id === over.id);
     
-    // Create a new array with updated positions
     const newLists = arrayMove(lists, oldIndex, newIndex).map((list, index) => ({
       ...list,
       position: index * 1000
     }));
     
-    // Update UI optimistically
-    newLists.forEach(list => {
-      dispatch(updateOptimistic(list));
-    });
-    
-    // Then dispatch actual API request
-    dispatch(updateListPositions({ teamId, lists: newLists }))
-      .unwrap()
-      .catch(() => {
-        dispatch(fetchLists(teamId));
-      });
+    // Dispatch updates
+    dispatch(updateListPositions({ teamId, lists: newLists }));
+  };
+
+  const collisionDetectionStrategy = (args) => {
+    const pointerIntersections = pointerWithin(args);
+    if (pointerIntersections.length > 0) {
+      return pointerIntersections;
+    }
+    return closestCenter(args);
   };
 
   return (
@@ -161,7 +159,7 @@ function Kanban({isFull}) {
 
       <DndContext 
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={collisionDetectionStrategy}
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
@@ -171,23 +169,23 @@ function Kanban({isFull}) {
             strategy={horizontalListSortingStrategy}
           >
             {lists.map((list) => (
-              <ListItem
-                key={list._id}
-                id={list._id}
-                list={list}
-                teamId={teamId} // Pass the teamId to ListItem
-                onEdit={(newTitle) => handleEditList(list._id, newTitle)}
-                onDelete={() => handleDeleteList(list._id)}
-              />
+              <React.Fragment key={list._id}>
+                <ListItem
+                  id={list._id}
+                  list={list}
+                  teamId={teamId}
+                  onEdit={(newTitle) => handleEditList(list._id, newTitle)}
+                  onDelete={() => handleDeleteList(list._id)}
+                />
+              </React.Fragment>
             ))}
           </SortableContext>
         </div>
         
-        <DragOverlay>
+        <DragOverlay adjustScale={true}>
           {activeId && activeList ? (
-            <div className="drag-overlay">
-              <div className="drag-overlay-header">{activeList.title}</div>
-              <div className="drag-overlay-content"></div>
+            <div className="list-drag-preview">
+              <div className="list-drag-header">{activeList.title}</div>
             </div>
           ) : null}
         </DragOverlay>
