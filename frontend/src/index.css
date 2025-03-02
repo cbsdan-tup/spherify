@@ -747,7 +747,7 @@ h2 {
 }
 
 /* Form Styles */
-form {
+.contact-page form {
   display: flex;
   flex-direction: column;
   gap: 10px;

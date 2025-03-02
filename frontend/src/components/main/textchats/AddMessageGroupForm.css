@@ -34,6 +34,9 @@
   color: var(--text-white) !important;
   
 }
+.modal-custom .modal-content .form-group input {
+  color: var(--primary-color) !important;
+}
 .modal-custom .modal-content h2 {
   font-weight: bold;
 }
