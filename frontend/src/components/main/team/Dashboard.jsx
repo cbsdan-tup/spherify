@@ -239,7 +239,15 @@ const Dashboard = () => {
         <div className="kanban-gantt-live-editing">
           <div className="kanban-gantt">
             <div className="card kanban-board">
-              <div className="card-header fw-semibold">Kanban Board</div>
+              <div className="card-header fw-semibold">
+                <span>Kanban Board</span>
+              <Link
+                  to={`/main/${currentTeamId}/kanban`}
+                  className="gantt-link"
+                >
+                  <i className="fa-solid fa-right-from-bracket"></i>
+                </Link>
+              </div>
               <div className="card-body">
                 <Pie data={kanbanData} />
               </div>

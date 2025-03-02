@@ -363,14 +363,15 @@ body {
 .live-editing-container .live-editing .card-body .item.add {
   justify-content: center;
   margin-bottom: 0.5rem;
-  background-color: #d1d1d1;
+  background-color: var(--secondary-color);
+  font-weight: 600;
+  color: var(--text-white)
 }
 .live-editing-container .live-editing .card-body .item {
-  background-color: #d1d1d1;
+  background-color: #dbdbdb;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background-color: white;
   color: var(--header-text-color);
   padding: 0.5rem 1rem;
   border-radius: 5px;
@@ -948,7 +949,7 @@ body {
 
 
 .gantt-chart.card .card-body .task-content .task {
-  background-color: #d1d1d1;
+  background-color: #dbdbdb;
   color: var(--header-text-color);
   padding: 0.5rem 1rem;
   display: flex;
