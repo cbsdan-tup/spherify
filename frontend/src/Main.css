@@ -352,11 +352,35 @@ body {
   padding: 1rem;
 }
 
+.live-editing-container .live-editing .card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background-color: var(--tertiary-color);
+  border-bottom-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+.live-editing-container .live-editing .card-body .item.add {
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  background-color: #d1d1d1;
+}
+.live-editing-container .live-editing .card-body .item {
+  background-color: #d1d1d1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: white;
+  color: var(--header-text-color);
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
 .main-container .team-container .team-content .kanban-team-members .card-header {
   margin-bottom: 0;
 }
 .main-container .team-container .team-content .team-members .card-body {
-  max-height: 500px !important;
+  height: 100%;
   overflow-y: auto;
   background-color: var(--tertiary-color);
 } 
@@ -366,13 +390,60 @@ body {
 .main-container .team-container .team-content .kanban-team-members {
   display: flex;
   gap: 1rem;
+  align-items: stretch;
+}
+.main-container .team-container .team-content .team-members {
+  width: 100%;
+  flex: 1;
+}
+.kanban-gantt-live-editing {
+  display: flex;
+  gap: 1rem;
+  flex-direction: column;
+  flex: 2;
+}
+.main-container .team-container .team-content .kanban-team-members .kanban-gantt {
+  flex: 2;
+  display: flex;
+  gap: 1rem;
+}
+.gantt-link {
+  color: var(--text-white)
+}
+.gantt-link:hover {
+  text-decoration: none;
+  color: var(--text-white);
 }
 
-.main-container .team-container .team-content .kanban-team-members .card {
+.main-container .team-container .team-content .kanban-team-members .live-editing-container {
   flex: 1;
+}
+
+.main-container .team-container .team-content .kanban-team-members .kanban-gantt .kanban-board  {
+  flex: 1;
+}
+.kanban-board.card .card-body {
+  border-bottom-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+}
+.main-container .team-container .team-content .kanban-team-members .kanban-gantt .gantt-chart {
+  flex: 1;
+}
+.main-container .team-container .team-content .kanban-team-members .card {
   border: none !important;
   border-radius: 10px;
   box-shadow: none !important;
+  position: relative;
+}
+.main-container .team-container .team-content .team-members .card{
+  flex: 1;
+  height: 100% !important;
+  display: flex;
+  flex-direction: column;
+}
+.main-container .team-container .team-content .team-members .card .card-body{
+  flex: 1;
+  height: 900px;
 }
 .main-container .team-container .team-content .kanban-team-members .card .card-footer {
   border: 1px solid var(--secondary-color);
@@ -384,7 +455,6 @@ body {
 .main-container .team-container .team-content .kanban-team-members .card .card-body {
   box-shadow: none !important;
   border: 1px solid var(--secondary-color);
-  
 }
 
 .main-container .team-container .team-content .kanban-team-members .card-body .role {
@@ -404,6 +474,53 @@ body {
 .main-container .team-container .team-content .team-members .invite-member-btn {
   background-color: var(--header-text-color) !important;
   border: none;
+}
+.invite-member-modal .modal-dialog {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-dialog {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-dialog .modal-header {
+  background-color: var(--header-text-color);
+  color: var(--text-white);
+}
+.modal-dialog .modal-header .btn-close {
+  color: var(--text-white);
+  font-size: 1.5rem;
+  background: transparent;
+  border: none;
+}
+.modal-dialog .modal-footer button {
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.modal-dialog .modal-footer .cancel {
+  background-color: var(--dark-grey);
+  color: var(--text-white);
+}
+.modal-dialog .modal-footer .save {
+  background-color: var(--header-text-color) !important;
+  color: var(--text-white);
+}
+.invite-member-modal .modal-header {
+  background-color: var(--header-text-color);
+  color: var(--text-white);
+}
+.invite-member-modal button {
+  border: none;
+}
+.invite-member-modal button.invite {
+  background-color: var(--header-text-color) !important;
+  color: var(--text-white);
 }
 
 .main-container .team-container .team-content .kanban-team-members .card.kanban-board .card-body{
@@ -426,7 +543,6 @@ body {
 }
 
 .team-members .card-body {
-  max-height: 500px !important;
   overflow-y: auto;
 }
 .right-tool-panel {
@@ -736,7 +852,6 @@ body {
 }
 
 .create-modal .modal-header {
-  background-color: var(--primary-color);
   color: var(--text-white);
   border: none;
 }
@@ -813,6 +928,65 @@ body {
 
 }
 
+.gantt-chart.card .card-body {
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  background-color: var(--tertiary-color);
+}
+.gantt-chart.card .card-body .title{
+  font-size: 1.1rem;
+  color: var(--header-text-color);
+  font-weight: 600;
+}
+
+.gantt-chart.card .card-body .task-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+
+.gantt-chart.card .card-body .task-content .task {
+  background-color: #d1d1d1;
+  color: var(--header-text-color);
+  padding: 0.5rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  border-radius: 5px;
+}
+
+.gantt-chart.card .card-body .task-content .task .label {
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.gantt-chart.card .card-body .task-content .task .date {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.9rem;
+}
+.gantt-chart.card .card-body .task-content .task .date .start {
+  color: var(--active-color);
+}
+.gantt-chart.card .card-body .task-content .task .date .end {
+  color: var(--inactive-color);
+}
+.gantt-chart-modal .modal-dialog {
+  max-width: 400px;
+}
+.gantt-chart-modal .modal-content form {
+  width: 100%;
+  flex: 1;
+}
+.gantt-chart-modal .modal-content form .button {
+  display: flex;
+  gap: 0.5rem;
+}
 .task-bar:hover .task-info {
   display: block;
   z-index: 1000;

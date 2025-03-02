@@ -101,7 +101,7 @@ exports.getTeamByUser = async (req, res) => {
       $or: [
         { members: { $elemMatch: { user: userId, leaveAt: null } } }, // Ensures leaveAt is null
       ],
-    }).populate("members.user", "fname lname email");
+    }).populate("members.user", "fname lname email").populate("createdBy", "firstName lastName email avatar");
 
     res.status(200).json(teams);
   } catch (error) {
@@ -135,7 +135,7 @@ exports.getTeamById = async (req, res) => {
     const team = await Team.findById(teamId).populate(
       "members.user",
       "fname lname email"
-    );
+    ).populate("createdBy", "firstName lastName email avatar");
 
     if (!team) {
       return res.status(404).json({ message: "Team not found" });
@@ -400,7 +400,7 @@ exports.fetchTeamsByName = async (req, res) => {
     const teams = await Team.find({
       name: { $regex: name, $options: "i" },
       members: { $elemMatch: { user: userId, leaveAt: null } },
-    }).populate("members.user", "firstName lastName email avatar");
+    }).populate("members.user", "firstName lastName email avatar").populate("createdBy", "firstName lastName email avatar");
 
     return res.status(200).json({ success: true, teams });
   } catch (error) {

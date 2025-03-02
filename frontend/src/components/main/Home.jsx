@@ -186,10 +186,16 @@ function Home({
       {teams && teams.length === 0 && (
         <div className="no-teams">
           <div className="title">No Teams Found</div>
-          <div className="description">You can create new team and invite your members</div>
+          <div className="description">
+            You can create new team and invite your members
+          </div>
         </div>
       )}
-      <div className={`team-container ${teams && (teams.length === 0) && "zero-teams"}`} >
+      <div
+        className={`team-container ${
+          teams && teams.length === 0 && "zero-teams"
+        }`}
+      >
         <div className="createNewTeam" onClick={handleShow}>
           <div className="left">
             <i className="fa-solid fa-plus"></i>
@@ -286,16 +292,24 @@ function Home({
                         </span>
                       </div>
                     ) : (
-                      <div className="team-detail">
-                        <i
-                          className={`fa-solid fa-circle-dot ${
-                            team?.isActive ? "active" : "inactive"
-                          }`}
-                        ></i>
-                        <span className="active-status">
-                          {team?.isActive ? "Active" : "Inactive"}
-                        </span>
-                      </div>
+                      <>
+                        <div className="team-detail">
+                          <i
+                            className={`fa-solid fa-circle-dot ${
+                              team?.isActive ? "active" : "inactive"
+                            }`}
+                          ></i>
+                          <span className="active-status">
+                            {team?.isActive ? "Active" : "Inactive"}
+                          </span>
+                        </div>
+                        <div className="team-detail">
+                          <i className="fa-solid fa-user-tie"></i>{" "}
+                          {team?.createdBy?.firstName +
+                            " " +
+                            team?.createdBy?.lastName}
+                        </div>
+                      </>
                     )}
                   </div>
                 </div>

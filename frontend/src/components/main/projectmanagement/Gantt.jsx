@@ -446,7 +446,7 @@ function Gantt() {
         </div>
       </div>
 
-      <Modal show={showTaskModal} onHide={handleCloseModal}>
+      <Modal show={showTaskModal} onHide={handleCloseModal} className="gantt-chart-modal">
         <Modal.Header closeButton>
           <Modal.Title>{selectedTask ? 'Edit Task' : 'Add New Task'}</Modal.Title>
         </Modal.Header>
@@ -493,7 +493,7 @@ function Gantt() {
               />
             </Form.Group> */}
 
-            <div className="d-flex justify-content-end gap-2">
+            <div className="d-flex justify-content-end gap-2 button">
               <Button variant="secondary" onClick={handleCloseModal}>
                 Cancel
               </Button>

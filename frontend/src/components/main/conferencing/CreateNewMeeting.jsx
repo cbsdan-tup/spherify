@@ -40,7 +40,7 @@ const CreateNewMeeting = ({ show, onHide, onCreateMeeting }) => {
         <div className="modal-content">
           <div className="modal-header">
             <h5 className="modal-title">Create New Meeting</h5>
-            <button type="button" className="btn-close" onClick={onHide}></button>
+            <button type="button" className="btn-close" onClick={onHide}><i className="fa-solid fa-xmark"></i></button>
           </div>
           <div className="modal-body">
             <form onSubmit={handleSubmit}>

@@ -56,7 +56,9 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState, isLoading }) =>
               className="btn-close"
               onClick={handleClose}
               aria-label="Close"
-            ></button>
+            >
+              <i className="fa-solid fa-xmark"></i>
+            </button>
           </div>
           <Formik
             initialValues={{
@@ -283,17 +285,17 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState, isLoading }) =>
                       </div>
                     </div>
                   </div>
-                  <div className="modal-footer custom-primary-bg custom-text-white">
+                  <div className="modal-footer custom-text-white">
                     <button
                       type="button"
-                      className="btn btn-secondary"
+                      className="btn cancel"
                       onClick={handleClose}
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="btn btn-primary custom-secondary-bg "
+                      className="btn btn-primary save"
                       disabled={isLoading}
                     >
                       {

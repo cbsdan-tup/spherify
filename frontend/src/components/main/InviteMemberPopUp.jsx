@@ -65,17 +65,17 @@ const InviteMemberPopUp = ({ show, handleClose, authState, currentTeamId }) => {
   const currentUser = getUser(authState);
 
   return (
-    <div className="modal d-block" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+    <div className="modal d-block invite-member-modal" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
       <div className="modal-dialog maxWidth500px">
         <div className="modal-content">
-          <div className="modal-header custom-primary-bg custom-text-white">
+          <div className="modal-header custom-text-white">
             <h5 className="modal-title fw-bold">Invite Members</h5>
             <button
               type="button"
               className="btn-close"
               onClick={handleClose}
               aria-label="Close"
-            ></button>
+            ><i className="fa-solid fa-xmark"></i></button>
           </div>
           <Formik
             initialValues={{ emailInput: "", membersEmail: [] }}
@@ -166,9 +166,9 @@ const InviteMemberPopUp = ({ show, handleClose, authState, currentTeamId }) => {
                       </ul>
                     </div>
                   </div>
-                  <div className="modal-footer custom-primary-bg custom-text-white">
-                    <button type="button" className="btn btn-secondary" onClick={handleClose}>Cancel</button>
-                    <button type="submit" className="btn btn-primary custom-secondary-bg">Invite</button>
+                  <div className="modal-footer">
+                    <button type="button" className="cancel btn btn-secondary" onClick={handleClose}>Cancel</button>
+                    <button type="submit" className="invite btn btn-primary custom-secondary-bg">Invite</button>
                   </div>
                 </Form>
               );

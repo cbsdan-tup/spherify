@@ -12,11 +12,13 @@ import {
 import { FaPlus, FaPencilAlt } from "react-icons/fa";
 import axios from "axios";
 import { useSelector } from "react-redux";
-import { errMsg, getToken } from "../../../utils/helper";
+import { errMsg, succesMsg, getToken } from "../../../utils/helper";
 import FileShare from "../file-sharing/FileShare";
 import InviteMemberPopUp from "../InviteMemberPopUp";
 import Calendar from "../projectmanagement/Calendar";
 import moment from "moment";
+import { Link } from "react-router";
+import CreateNewFile from "../live-editing/CreateNewFile";
 
 // Register chart elements
 ChartJS.register(
@@ -64,6 +66,19 @@ const Dashboard = () => {
   const [refresh, setRefresh] = useState(false);
   const [isCalendarFull, setIsCalendarFull] = useState(false);
 
+  const [files, setFiles] = useState([]);
+  const [showCreateFileModal, setShowCreateFileModal] = useState(false);
+  const [ganttTasks, setGanttTasks] = useState([]);
+
+  const token = useSelector((state) => state.auth.token);
+
+  const handleShowCreateFileClose = () => {
+    setShowCreateFileModal(false);
+  };
+  const handleShowCreateFileOpen = () => {
+    setShowCreateFileModal(true);
+  };
+
   const handleOpenInvitePopUp = () => {
     setShowInvitePopup(true);
   };
@@ -72,6 +87,8 @@ const Dashboard = () => {
   };
   const fetchTeamMembers = async () => {
     try {
+      if (currentTeamId === null) return;
+
       const token = getToken(authState);
       // Fetch team members
       const config = {
@@ -95,6 +112,8 @@ const Dashboard = () => {
 
   const fetchTeamCalendarEvents = async () => {
     try {
+      if (currentTeamId === null) return;
+
       const token = getToken(authState);
       // Fetch team members
       const config = {
@@ -127,23 +146,169 @@ const Dashboard = () => {
     setIsCalendarFull((prev) => !prev);
   };
 
+  const addNewFile = async (fileName, user, currentTeamId) => {
+    try {
+      if (currentTeamId === null) return;
+
+      const newFile = { fileName, createdBy: user._id, teamId: currentTeamId };
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      const res = await axios.post(
+        `${import.meta.env.VITE_API}/createDocument/${currentTeamId}`,
+        newFile,
+        config
+      );
+
+      setFiles((prevFiles) =>
+        [...prevFiles, res.data]
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(0, 4)
+      );
+      succesMsg("File created successfully");
+    } catch (error) {
+      console.error("Error creating file:", error);
+      errMsg("Error creating file", error);
+    } finally {
+      setShowCreateFileModal(false);
+    }
+  };
+
+  const fetchFiles = async () => {
+    try {
+      if (currentTeamId === null) return;
+
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      const res = await axios.get(
+        `${import.meta.env.VITE_API}/getDocuments/${currentTeamId}`,
+        config
+      );
+      console.log("files", res.data);
+      setFiles(
+        res.data
+          .filter((file) => !file.deleted)
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+          .slice(0, 4)
+      );
+    } catch (error) {
+      console.error("Error fetching files:", error);
+      errMsg("Error fetching files", error);
+    }
+  };
+
+  const fetchGanttTasks = async () => {
+    try {
+      if (currentTeamId === null) return;
+
+      const config = {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      const res = await axios.get(
+        `${import.meta.env.VITE_API}/getTasks/${currentTeamId}`,
+        config
+      );
+      console.log("tasks", res.data);
+      setGanttTasks(res.data.slice(0, 5));
+    } catch (error) {
+      console.error("Error fetching files:", error);
+      errMsg("Error fetching files", error);
+    }
+  };
+  useEffect(() => {
+    fetchFiles();
+    fetchGanttTasks();
+  }, [currentTeamId]);
+
   return (
     <div className="team-content container">
       <FileShare />
       {/* Main Grid Layout */}
       <div className="kanban-team-members cards">
         {/* Kanban Board */}
-        <div className="card">
-          <div className="card chart-bg kanban-board">
-            <div className="card-header fw-semibold">Kanban Board</div>
-            <div className="card-body">
-              <Pie data={kanbanData} />
+        <div className="kanban-gantt-live-editing">
+          <div className="kanban-gantt">
+            <div className="card kanban-board">
+              <div className="card-header fw-semibold">Kanban Board</div>
+              <div className="card-body">
+                <Pie data={kanbanData} />
+              </div>
+            </div>
+            <div className="card chart-bg gantt-chart">
+              <div className="card-header fw-semibold">
+                <span>Gantt Chart</span>
+                <Link
+                  to={`/main/${currentTeamId}/gantt`}
+                  className="gantt-link"
+                >
+                  <i className="fa-solid fa-right-from-bracket"></i>
+                </Link>
+              </div>
+              <div className="card-body">
+                <div className="title">Tasks</div>
+                <div className="task-content">
+                  {ganttTasks.length === 0 && (
+                    <p className="text-center text-muted">No tasks</p>
+                  )}
+                  {ganttTasks.length > 0 &&
+                    ganttTasks.map((task, index) => (
+                      <div className="task" key={index}>
+                        <div className="label">{task?.title}</div>
+                        <div className="date">
+                          <div className="start">
+                            {moment(task?.startDate).format("MM/DD")}
+                          </div>
+                          <div>-</div>
+                          <div className="end">
+                            {moment(task?.endDate).format("MM/DD")}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="live-editing-container">
+            <div className="card live-editing">
+              <div className="card-header fw-semibold">Live Editing</div>
+              <div className="card-body">
+                <div className="item add" onClick={handleShowCreateFileOpen}>
+                  <i className="fa-solid fa-plus"></i>
+                  <span>Add New File</span>
+                </div>
+                {
+                  files.length === 0 && (
+                    <p className="text-center text-muted">No files</p>
+                  )
+                }
+                {files.length > 0 && files.map((file, index) => (
+                  <Link
+                    key={index}
+                    className="item file"
+                    to={`/main/${currentTeamId}/live-editing/${file._id}`}
+                  >
+                    <i className="fa-solid fa-file"></i>
+                    <span>{file.fileName}</span>
+                  </Link>
+                ))}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Team Members */}
-        <div className="team-members card">
+        <div className="team-members">
           <div className="card chart-bg">
             <div className="card-header d-flex justify-content-between align-items-center">
               <span className="fw-semibold">Team Members</span>
@@ -172,7 +337,7 @@ const Dashboard = () => {
                       />
                       <div className="px-2">
                         <p className="mb-0 fw-semibold name">
-                          {member.user.firstName} {member.user.lastName} 
+                          {member.user.firstName} {member.user.lastName}
                         </p>
                         <p className="mb-0 fw-semibold role">
                           {member.role.charAt(0).toUpperCase() +
@@ -304,6 +469,11 @@ const Dashboard = () => {
         handleClose={handleCloseInvitePopUp}
         authState={authState}
         currentTeamId={currentTeamId}
+      />
+      <CreateNewFile
+        show={showCreateFileModal}
+        onHide={handleShowCreateFileClose}
+        onCreateFile={addNewFile}
       />
     </div>
   );
