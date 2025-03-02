@@ -22,6 +22,7 @@ const mongoose = require("mongoose");
 const PORT = process.env.PORT || 8000;
 
 const cloudinary = require("cloudinary");
+const {initializeNextcloudAPI} = require("./utils/nextcloud");
 
 const root = require("./routes/root");
 const account = require("./routes/account");
@@ -67,6 +68,10 @@ async function getCloudinaryConfig() {
 
 getCloudinaryConfig().then(() => {
   console.log("Cloudinary configured successfully");
+});
+
+initializeNextcloudAPI().then(() => {
+  console.log("Nextcloud API initialized successfully");
 });
 
 //middleware

@@ -15,7 +15,9 @@ import { loginUser, logoutUser } from "../redux/authSlice";
 
 export const authenticate = (data, dispatch, next) => {
   dispatch(loginUser(data));
-  next();
+  setTimeout(() => {
+    next();
+  }, 1000); 
 };
 
 export const isAuthenticated = (state) => {
@@ -55,7 +57,9 @@ export const getUser = (state) => {
 // ✅ Logout function using Redux (No `sessionStorage`)
 export const logout = (dispatch, next) => {
   dispatch(logoutUser());
-  next(); // Call callback function after logout if provided
+  setTimeout(() => {
+    next(); // Call callback function after logout if provided
+  }, 1000); // 1 second delay
 };
 
 // export const getUser = () => {

@@ -7,6 +7,7 @@ import CreateNewFolder from "./CreateNewFolder";
 import UploadFiles from "./UploadFiles";
 import UploadFolder from "./UploadFolder";
 import Swal from "sweetalert2";
+import ArchiveModal from "./ArchiveModal";
 
 const FileUpload = () => {
   const [files, setFiles] = useState([]);
@@ -26,6 +27,9 @@ const FileUpload = () => {
   const [showMenu, setShowMenu] = useState(false);
   const [fileSelected, setFileSelected] = useState(null);
 
+  //Archive modal
+  const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const user = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
@@ -36,6 +40,15 @@ const FileUpload = () => {
   const toggleShowMenu = () => {
     setShowMenu((prev) => !prev);
   };
+
+  const handleArchiveModalClose = () => {
+    console.log("Archive modal close");
+    setIsArchiveModalOpen(false);
+  }
+  const handleArchiveModalOpen = () => {
+    console.log("Archive modal open");
+    setIsArchiveModalOpen(true);
+  }
 
   // useEffect(() => {
   //   setCurrentPath("");
@@ -60,7 +73,7 @@ const FileUpload = () => {
       const size = await fetchFolderConsume(currentTeamId);
       setFolderConsume(size);
     }
-  }, [currentTeamId]);
+  }, [currentTeamId, refresh]);
 
   useEffect(() => {
     getFolderSize();
@@ -220,25 +233,25 @@ const FileUpload = () => {
 
   const handleDelete = useCallback(async (fileId, fileName, type) => {
     Swal.fire({
-      title: `Delete ${type === "folder" ? "Folder" : "File"}?`,
-      text: `Are you sure you want to delete "${fileName}"? This action cannot be undone!`,
+      title: `Move this ${type === "folder" ? "Folder" : "File"} to Trash?`,
+      text: `Are you sure you want to move "${fileName} to trash"?`,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Yes, delete it!",
+      confirmButtonText: "Yes, move it!",
       cancelButtonText: "Cancel",
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axios.delete(`${import.meta.env.VITE_API}/delete/${fileId}`);
+          await axios.delete(`${import.meta.env.VITE_API}/soft-delete/${fileId}`);
           succesMsg(
-            `${type === "folder" ? "Folder" : "File"} deleted successfully!`
+            `${type === "folder" ? "Folder" : "File"} move to trash successfully!`
           );
           setRefresh((prev) => !prev);
         } catch (error) {
           console.error("Delete error:", error);
-          errMsg(`Failed to delete ${type === "folder" ? "folder" : "file"}`);
+          errMsg(`Failed to move ${type === "folder" ? "folder" : "file"} to trash!`);
         }
       }
     });
@@ -307,6 +320,7 @@ const FileUpload = () => {
                   <i className="fa-solid fa-plus"></i>
                   <span>New</span>
                 </button>
+                <i className="fa-solid fa-box-archive archive-button" onClick={handleArchiveModalOpen}></i>
                 <i
                   className="fa-solid fa-bars show-storage"
                   onClick={toggleShowStorage}
@@ -355,6 +369,7 @@ const FileUpload = () => {
                     <i className="fa-solid fa-plus"></i>
                     <span>New</span>
                   </button>
+                  <i className="fa-solid fa-box-archive archive-button" onClick={handleArchiveModalOpen}></i>
                   <i
                     className="fa-solid fa-bars show-storage"
                     onClick={toggleShowStorage}
@@ -562,6 +577,7 @@ const FileUpload = () => {
           </div>
         </div>
       </div>
+      <ArchiveModal isOpen={isArchiveModalOpen} onClose={handleArchiveModalClose} teamId={currentTeamId} setRefresh={setRefresh} />
     </div>
   );
 };

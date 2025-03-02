@@ -13,9 +13,12 @@ const {
     createNewFolder,
     generatePublicLink,
     deleteFileOrFolder,
+    softDeleteFileOrFolder,
+    restoreFileOrFolder,
     getStorageInfo,
     getFolderSize,
-    downloadFileOrFolder
+    downloadFileOrFolder,
+    getDeletedFilesAndFolders
 } = require("../controllers/FileSharingController");
 
 const upload = multer({ dest: "uploads/" });
@@ -31,6 +34,9 @@ router.get("/getFilesAndFoldersByPath/:teamId", getFilesAndFoldersByPath);
 router.post("/createNewFolder", createNewFolder)
 router.get("/getPublicLink", generatePublicLink);
 router.delete("/delete/:fileId", deleteFileOrFolder);
+router.delete("/soft-delete/:fileId", softDeleteFileOrFolder);
+router.get("/get-deleted-files/:teamId", getDeletedFilesAndFolders);
+router.put("/restore/:fileId", restoreFileOrFolder);
 
 router.get("/getStorageInfo", isAdmin, getStorageInfo);
 router.get("/getFolderSize", isAuthenticatedUser, getFolderSize);

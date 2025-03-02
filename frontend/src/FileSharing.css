@@ -132,8 +132,13 @@
 .file-sharing .fs-header .show-storage {
   cursor: pointer;
   padding: 0.3rem;
+  color: var(--active-color)
 }
-
+.file-sharing .fs-header .archive-button {
+  cursor: pointer;
+  padding: 0.3rem;
+  color: var(--danger-color)
+}
 .file-sharing .file-cards.show {
   display: block;
   border-bottom-right-radius: 10px;
@@ -178,7 +183,7 @@
 }
 
 .file-sharing .file-cards .card-body {
-  padding: 0.7rem 1rem;
+  padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
@@ -236,6 +241,7 @@
 .fs-content {
   background-color: var(--tertiary-color);
   padding: 1.5rem 0.7rem 0.7rem;
+  min-height: 20vh;
   max-height: 60vh;
   overflow-y: auto;
   border-bottom-right-radius: 8px;

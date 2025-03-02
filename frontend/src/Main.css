@@ -339,7 +339,11 @@ body {
 .main-container .team-container .team-content .team-members .card-body {
   max-height: 500px !important;
   overflow-y: auto;
+  background-color: var(--tertiary-color);
 } 
+.main-container .team-container .team-content .team-members .card-footer {
+  background-color: var(--tertiary-color);
+}
 .main-container .team-container .team-content .kanban-team-members {
   display: flex;
   gap: 1rem;
@@ -351,7 +355,7 @@ body {
 }
 
 .main-container .team-container .team-content .team-members .badge {
-  background-color: var(--header-text-color) !important;
+  background-color: var(--primary-color) !important;
   height: 25px;
   width: 25px;
   font-size: 1rem;
@@ -365,6 +369,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: var(--tertiary-color) !important;
 }
 .main-container .team-container .team-content h1 {
   color: var(--header-text-color);
@@ -375,7 +380,8 @@ body {
   color: var(--header-text-color);
   font-weight: 600;
   margin-bottom: 0;
-
+  background-color: var(--header-text-color);
+  color: var(--text-white)
 }
 
 .team-members .card-body {
@@ -711,7 +717,8 @@ body {
 }
 
 .main-container .team-container .calendar-container {
-  margin-top: 70px;
+  margin-top: 150px;
+  background-color: var(--tertiary-color);
 }
 .calendar-main .calendar-container {
   margin-top: 0 !important;

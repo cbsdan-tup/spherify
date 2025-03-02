@@ -426,7 +426,7 @@ exports.uploadFiles = async (req, res) => {
 
 exports.getAllFilesAndFolders = async (req, res) => {
   try {
-    const files = await File.find().populate(
+    const files = await File.findActive().populate(
       "createdBy owner parentFolder branchParent"
     );
     res.status(200).json({ success: true, files });
@@ -441,7 +441,7 @@ exports.getAllFilesAndFolders = async (req, res) => {
 exports.getFilesAndFoldersByTeam = async (req, res) => {
   try {
     const { teamId } = req.params;
-    const files = await File.find({ teamId }).populate(
+    const files = await File.findActive({ teamId }).populate(
       "createdBy owner parentFolder branchParent"
     );
     res.status(200).json({ success: true, files });
@@ -460,7 +460,7 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
     const relativePath = req.query.path || "";
 
     console.log(
-      "Fetching files for team folder:",
+      "Fetching active files for team folder:",
       teamId,
       "Path:",
       relativePath || "(root)"
@@ -477,8 +477,10 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
       ? `^${basePath}/${escapedPath}(/[^/]+)?$`
       : `^${basePath}/[^/]+$`;
 
+    // Fetch only active files
     let files = await File.find({
       teamId,
+      isDeleted: false, // ✅ Only fetch non-deleted files
       url: { $regex: new RegExp(pathRegex, "i") },
     }).populate("createdBy owner parentFolder branchParent");
 
@@ -486,9 +488,35 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
 
     // 🔥 Exclude the queried folder itself
     const currentFolderUrl = `${basePath}/${relativePath}`;
-    files = files.filter((file) => file.url != currentFolderUrl);
+    files = files.filter((file) => file.url !== currentFolderUrl);
 
-    let totalFolderSize = 0; // Initialize total folder size
+    // 🔥 Exclude files if **ANY** ancestor folder is deleted
+    const isParentDeleted = new Set();
+
+    async function checkParentDeletion(file) {
+      let parent = file.parentFolder;
+      while (parent) {
+        if (parent.isDeleted) {
+          isParentDeleted.add(file._id.toString());
+          return true;
+        }
+        parent = await File.findById(parent.parentFolder); // Move up the hierarchy
+      }
+      return false;
+    }
+
+    // Check all files for deleted ancestors
+    files = await Promise.all(
+      files.map(async (file) => {
+        const hasDeletedParent = await checkParentDeletion(file);
+        return hasDeletedParent ? null : file;
+      })
+    );
+
+    // Remove `null` entries (files with deleted parents)
+    files = files.filter((file) => file !== null);
+
+    let totalFolderSize = 0;
 
     // Fetch file sizes from Nextcloud
     const updatedFiles = await Promise.all(
@@ -499,7 +527,7 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
             method: "PROPFIND",
             url: file.url,
             auth: {
-              username: NEXTCLOUD_USER, // Replace with Nextcloud credentials
+              username: NEXTCLOUD_USER,
               password: NEXTCLOUD_PASSWORD,
             },
             headers: {
@@ -518,7 +546,6 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
             }, 0);
           }
 
-          // Add to total folder size
           totalFolderSize += fileSize || 0;
         } catch (err) {
           console.error("Error fetching file size for", file.url, err);
@@ -760,6 +787,22 @@ const deleteFolderRecursively = async (folderId, webdavClient) => {
   }
 };
 
+exports.softDeleteFile = async (req, res) => {
+  try {
+      const {fileId} = req.params;
+      const file = await File.findById(fileId);
+      if (!file) {
+        throw new Error("File not found");
+      }
+      await file.softDelete();
+      console.log("File soft deleted successfully");
+
+  } catch (error) {
+    console.error("File deletion error:", error);
+    res.status(500).json({ success: false, error: "Deletion failed" });
+  }
+}
+
 /**
  * Delete a file or folder from Nextcloud and MongoDB
  */
@@ -958,3 +1001,125 @@ exports.downloadFileOrFolder = async (req, res) => {
   }
 };
 
+// Recursive function to soft delete a folder and all nested files/folders
+async function recursiveSoftDelete(folderId) {
+  const children = await File.find({ parentFolder: folderId });
+
+  for (const child of children) {
+    child.isDeleted = true;
+    child.deletedAt = new Date();
+    await child.save();
+
+    // If the child is a folder, recursively delete its children
+    if (child.type === "folder") {
+      await recursiveSoftDelete(child._id);
+    }
+  }
+}
+
+exports.softDeleteFileOrFolder = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+
+    const file = await File.findById(fileId);
+    if (!file) {
+      return res.status(404).json({ success: false, message: "File or folder not found." });
+    }
+
+    file.isDeleted = true;
+    file.deletedAt = new Date();
+    await file.save();
+
+    if (file.type === "folder") {
+      await recursiveSoftDelete(file._id);
+    }
+
+    res.status(200).json({ success: true, message: "File/folder soft deleted successfully." });
+  } catch (error) {
+    console.error("Error soft deleting file/folder:", error);
+    res.status(500).json({ success: false, message: "Failed to soft delete file/folder." });
+  }
+};
+
+exports.getDeletedFilesAndFolders = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+
+    let query = { isDeleted: true };
+    if (teamId) {
+      query.teamId = teamId;
+    }
+
+    // ✅ Fetch deleted files and fully populate parentFolder to get hierarchy
+    let deletedFiles = await File.findDeleted(query).populate("createdBy owner parentFolder");
+
+    if (deletedFiles.length === 0) {
+      return res.status(200).json({ success: true, message: "No deleted files or folders found." });
+    }
+
+    // 🔥 Step 1: Collect IDs of all deleted folders
+    const deletedFolderIds = new Set(
+      deletedFiles.filter(file => file.type === "folder").map(folder => folder._id.toString())
+    );
+
+    // 🔥 Step 2: Recursively check if any file's parent (or ancestor) is deleted
+    const hasDeletedParent = (file) => {
+      let parent = file.parentFolder;
+
+      while (parent && parent._id) {
+        if (deletedFolderIds.has(parent._id.toString())) {
+          return true; // File is inside a deleted folder
+        }
+        parent = parent.parentFolder; // Move up the hierarchy
+      }
+
+      return false;
+    };
+
+    // ✅ Remove files/folders that have a deleted parent
+    deletedFiles = deletedFiles.filter(file => !hasDeletedParent(file));
+
+    res.status(200).json({ success: true, deletedFiles });
+  } catch (error) {
+    console.error("Error retrieving soft-deleted files/folders:", error);
+    res.status(500).json({ success: false, message: "Failed to retrieve deleted files/folders." });
+  }
+};
+
+async function restoreNestedFiles(folderId) {
+  const children = await File.find({ parentFolder: folderId, isDeleted: true });
+
+  for (const child of children) {
+    child.isDeleted = false;
+    child.deletedAt = null;
+    await child.save();
+
+    if (child.type === "folder") {
+      await restoreNestedFiles(child._id);
+    }
+  }
+}
+
+exports.restoreFileOrFolder = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+
+    const file = await File.findById(fileId);
+    if (!file) {
+      return res.status(404).json({ success: false, message: "File or folder not found." });
+    }
+
+    file.isDeleted = false;
+    file.deletedAt = null;
+    await file.save();
+
+    if (file.type === "folder") {
+      await restoreNestedFiles(file._id);
+    }
+
+    res.status(200).json({ success: true, message: "File/folder restored successfully." });
+  } catch (error) {
+    console.error("Error restoring file/folder:", error);
+    res.status(500).json({ success: false, message: "Failed to restore file/folder." });
+  }
+};

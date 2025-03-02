@@ -1,0 +1,211 @@
+/* Modal Overlay */
+.swal2-container {
+  z-index: 9999 !important; /* Ensure it's the highest */
+}
+
+.modal-overlay.archive-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+}
+
+/* Modal Container */
+.archive-modal .modal-container {
+  background: #ffffff;
+  width: 600px;
+  max-width: 90%;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+/* Modal Header */
+.archive-modal .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--header-text-color);
+  color: white;
+  padding: 15px;
+  font-size: 18px;
+}
+
+.archive-modal .modal-header h2 {
+  margin: 0;
+}
+
+.archive-modal .close-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+/* Modal Content */
+.archive-modal .modal-content {
+  padding: 15px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Bulk Actions */
+.archive-modal .bulk-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  gap: 1rem;
+}
+.archive-modal .bulk-actions .select-all {
+  background: var(--header-text-color);
+  color: white;
+}
+.archive-modal .bulk-actions .select-all input {
+  width: 1rem;
+  height: 1rem;
+  
+
+}
+.archive-modal .bulk-actions .select-all label {
+  margin: 0;
+}
+.archive-modal .bulk-actions .action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  gap: 0.5rem;
+}
+.archive-modal .bulk-actions button, .archive-modal .bulk-actions .select-all {
+  padding: 8px 15px;
+  font-size: 14px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.archive-modal .bulk-restore-btn {
+  background: #28a745;
+  color: white;
+}
+
+.archive-modal .bulk-delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.archive-modal .bulk-restore-btn:disabled,
+.archive-modal .bulk-delete-btn:disabled {
+  background: #cccccc;
+  cursor: not-allowed;
+}
+
+/* Archive List */
+.archive-modal .archive-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.archive-modal .archive-item {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #ddd;
+  background: #f9f9f9;
+  transition: background 0.2s;
+}
+
+.archive-modal .archive-item:hover {
+  background: #f0f0f0;
+}
+
+/* File Info */
+.archive-modal .file-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.archive-modal .file-type {
+  font-size: 20px;
+}
+
+.archive-modal .file-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.archive-modal .file-name-action {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.archive-modal .file-name {
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+}
+
+.archive-modal .deleted-at {
+  font-size: 12px;
+  color: #777;
+}
+
+/* Buttons */
+.archive-modal .button {
+  display: flex;
+  gap: 5px;
+}
+
+.archive-modal .restore-btn,
+.archive-modal .delete-btn {
+  border: none;
+  padding: 6px 10px;
+  font-size: 14px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.archive-modal .restore-btn {
+  background: #28a745;
+  color: white;
+}
+
+.archive-modal .delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.archive-modal .restore-btn:hover {
+  background: #218838;
+}
+
+.archive-modal .delete-btn:hover {
+  background: #c82333;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

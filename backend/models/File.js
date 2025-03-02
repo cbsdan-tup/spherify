@@ -67,7 +67,31 @@ const fileSchema = new mongoose.Schema({
   shareLink: {
     type: String,
     default: null,
-  }
+  },
+  isDeleted: {
+    type: Boolean,
+    default: false, 
+  },
+  deletedAt: {
+    type: Date,
+    default: null
+  },
 });
+
+// Soft delete method
+fileSchema.methods.softDelete = async function () {
+  this.isDeleted = true;
+  this.deletedAt = new Date();
+  await this.save();
+};
+
+// Static method to find non-deleted files
+fileSchema.statics.findActive = function (query = {}) {
+  return this.find({ ...query, isDeleted: false });
+};
+
+fileSchema.statics.findDeleted = function (query = {}) {
+  return this.find({ ...query, isDeleted: true });
+};
 
 module.exports = mongoose.model("File", fileSchema);
