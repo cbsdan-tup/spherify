@@ -831,7 +831,26 @@ body {
   margin-top: 2rem;
   max-height: 630px;
   overflow: hidden;
+  position: relative;
 }
+
+.calendar-main .toggleFullCalendar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 1.1rem 1rem;
+  font-size: 1.2rem;
+  color: var(--text-white);
+  background-color: var(--header-text-color);
+  opacity: 0.5;
+  cursor: pointer;
+  z-index: 100;
+  border-bottom-left-radius: 10px;
+}
+.calendar-main .toggleFullCalendar:hover{
+  opacity: 1;
+}
+
 .calendar-main .calendar-container {
   background-color: white;
   color: var(--primary-color);

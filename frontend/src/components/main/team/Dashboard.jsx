@@ -61,6 +61,7 @@ const Dashboard = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [eventId, setEventId] = useState(null);
   const [refresh, setRefresh] = useState(false);
+  const [isCalendarFull, setIsCalendarFull] = useState(false);
 
   const handleOpenInvitePopUp = () => {
     setShowInvitePopup(true);
@@ -120,6 +121,10 @@ const Dashboard = () => {
       fetchTeamCalendarEvents();
     }
   }, [currentTeamId, refresh]);
+
+  const toggleFullCalendar = () => {
+    setIsCalendarFull(prev => !prev);
+  };
 
   return (
     <div className="team-content container">
@@ -194,14 +199,17 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="calendar-main">
+      <div className={`calendar-main ${isCalendarFull ? "full" : ""}`}>
+        <div className="toggleFullCalendar" onClick={toggleFullCalendar}>
+          <i className={`fa-solid ${isCalendarFull ? "fa-compress" : "fa-expand"}`}></i>
+        </div>
         <Calendar setRefresh={setRefresh} />
-        <div className="card shadow upcoming-events">
+        <div className={`card shadow upcoming-events ${isCalendarFull ? "d-none" : ""}`}>
           <div className="card-header fw-semibold">
             <i className="fa-solid fa-bell"></i>
             <span>Upcoming Events</span>
           </div>
-          <div className="card-body">
+          <div className="card-body" >
             {teamCalendarEvents.length > 0 ? (
               teamCalendarEvents.map((event, index) => {
                 return (
