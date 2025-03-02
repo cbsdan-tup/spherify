@@ -26,6 +26,7 @@ const FileUpload = () => {
   const [availableUploadSize, setAvailableUploadSize] = useState(0);
   const [showMenu, setShowMenu] = useState(false);
   const [fileSelected, setFileSelected] = useState(null);
+  const [selectedItems, setSelectedItems] = useState([]);
 
   //Archive modal
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
@@ -44,15 +45,11 @@ const FileUpload = () => {
   const handleArchiveModalClose = () => {
     console.log("Archive modal close");
     setIsArchiveModalOpen(false);
-  }
+  };
   const handleArchiveModalOpen = () => {
     console.log("Archive modal open");
     setIsArchiveModalOpen(true);
-  }
-
-  // useEffect(() => {
-  //   setCurrentPath("");
-  // }, [currentTeamId]);
+  };
 
   useEffect(() => {
     setProgress(0);
@@ -105,6 +102,7 @@ const FileUpload = () => {
 
   const fetchFilesAndFolders = useCallback(async (path = "") => {
     try {
+      setSelectedItems([]);
       setIsFileFetching(true);
       const response = await axios.get(
         `${
@@ -244,18 +242,67 @@ const FileUpload = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axios.delete(`${import.meta.env.VITE_API}/soft-delete/${fileId}`);
+          await axios.delete(
+            `${import.meta.env.VITE_API}/soft-delete/${fileId}`
+          );
           succesMsg(
-            `${type === "folder" ? "Folder" : "File"} move to trash successfully!`
+            `${
+              type === "folder" ? "Folder" : "File"
+            } move to trash successfully!`
           );
           setRefresh((prev) => !prev);
         } catch (error) {
           console.error("Delete error:", error);
-          errMsg(`Failed to move ${type === "folder" ? "folder" : "file"} to trash!`);
+          errMsg(
+            `Failed to move ${type === "folder" ? "folder" : "file"} to trash!`
+          );
         }
       }
     });
   }, []);
+
+  const toggleSelection = useCallback((id) => {
+    setSelectedItems((prevSelectedItems) =>
+      prevSelectedItems.includes(id)
+        ? prevSelectedItems.filter((itemId) => itemId !== id)
+        : [...prevSelectedItems, id]
+    );
+  }, []);
+
+  const handleDeleteSelected = useCallback(async () => {
+    if (selectedItems.length === 0) {
+      errMsg("Please select at least one item to delete.");
+      return;
+    }
+
+    Swal.fire({
+      title: `Move selected items to Trash?`,
+      text: `Are you sure you want to move the selected items to trash?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, move them!",
+      cancelButtonText: "Cancel",
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          // Use forEach to delete each selected item
+          selectedItems.forEach(async (itemId) => {
+            await axios.delete(
+              `${import.meta.env.VITE_API}/soft-delete/${itemId}`
+            );
+          });
+          succesMsg("Selected items moved to trash successfully!");
+          setRefresh((prev) => !prev); // Refresh the list
+          setSelectedItems([]); // Clear selected items
+        } catch (error) {
+          console.error("Delete error:", error);
+          errMsg("Failed to move selected items to trash!");
+        }
+      }
+    });
+  }, [selectedItems]);
 
   const sortedFolders = useMemo(
     () => [...folders].sort((a, b) => a.name.localeCompare(b.name)),
@@ -287,7 +334,7 @@ const FileUpload = () => {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-  
+
       if (response.data.success) {
         window.open(response.data.downloadUrl, "_blank"); // Open download link in new tab
         succesMsg("Download link opened successfully.");
@@ -320,11 +367,15 @@ const FileUpload = () => {
                   <i className="fa-solid fa-plus"></i>
                   <span>New</span>
                 </button>
-                <i className="fa-solid fa-box-archive archive-button" onClick={handleArchiveModalOpen}></i>
+                <i
+                  className="fa-solid fa-box-archive archive-button"
+                  onClick={handleArchiveModalOpen}
+                ></i>
                 <i
                   className="fa-solid fa-bars show-storage"
                   onClick={toggleShowStorage}
                 ></i>
+
                 {showFileButtons && (
                   <div className="hidden-buttons">
                     <CreateNewFolder
@@ -350,10 +401,10 @@ const FileUpload = () => {
                 <div className="branch"></div>
                 <div className="path">
                   <div className="current-path">
-                    {currentPath.replace(currentTeamId, "")}/
+                    {currentPath.replace(currentTeamId, "")} {" "}/
                   </div>
                   <div className="back" onClick={navigateBack}>
-                    ⬅ Back
+                    <i className="fa-solid fa-arrow-left"></i> Back
                   </div>
                 </div>
               </div>
@@ -369,7 +420,10 @@ const FileUpload = () => {
                     <i className="fa-solid fa-plus"></i>
                     <span>New</span>
                   </button>
-                  <i className="fa-solid fa-box-archive archive-button" onClick={handleArchiveModalOpen}></i>
+                  <i
+                    className="fa-solid fa-box-archive archive-button"
+                    onClick={handleArchiveModalOpen}
+                  ></i>
                   <i
                     className="fa-solid fa-bars show-storage"
                     onClick={toggleShowStorage}
@@ -404,29 +458,50 @@ const FileUpload = () => {
           )}
         </div>
         <div className={`fs-content ${showStorage ? "half-border" : ""}`}>
+          <div className="fs-content-header">
+            <div className="name">Name</div>
+            <div className="filesize">Size</div>
+            <div className="modification-delete">Date</div>
+            <div className="action">
+              <button
+                className="bulk-delete-button"
+                onClick={handleDeleteSelected}
+                disabled={!(selectedItems.length > 0)}
+              >
+                <i className="fa-solid fa-trash"></i>
+                <span>Delete</span>
+              </button>
+            </div>
+          </div>
+
           {isFileFetching ? (
-            <div className="loader text-center mx-2"></div>
+            <div className="loader text-center p-2"></div>
           ) : (
             <>
               {sortedFolders.map((folder) => (
                 <div key={folder._id} className="folder">
-                  <div
-                    onClick={() => navigateToFolder(folder.name, folder._id)}
-                    className="name"
-                  >
-                    📁 {folder.name}
+                  <div className="name">
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.includes(folder._id)}
+                      onChange={() => toggleSelection(folder._id)}
+                    />
+                    <span
+                      onClick={() => navigateToFolder(folder.name, folder._id)}
+                    >
+                      📁 {folder.name}
+                    </span>
                   </div>
-                  <div className="modification-delete">
-                    <div className="filesize">
-                      {folder.size >= 1024 * 1024 * 1024
-                        ? (folder.size / (1024 * 1024 * 1024)).toFixed(2) +
-                          " GB"
-                        : folder.size >= 1024 * 1024
-                        ? (folder.size / (1024 * 1024)).toFixed(2) + " MB"
-                        : folder.size > 0
-                        ? (folder.size / 1024).toFixed(2) + " KB"
-                        : "0 KB"}
-                    </div>
+                  <div className="filesize">
+                    {folder.size >= 1024 * 1024 * 1024
+                      ? (folder.size / (1024 * 1024 * 1024)).toFixed(2) + " GB"
+                      : folder.size >= 1024 * 1024
+                      ? (folder.size / (1024 * 1024)).toFixed(2) + " MB"
+                      : folder.size > 0
+                      ? (folder.size / 1024).toFixed(2) + " KB"
+                      : "0 KB"}
+                  </div>
+                  <div className="modification-menu">
                     <div className="modification">
                       {getTimeFeedback(folder.createdAt)} by{" "}
                       {folder.owner?.firstName} {folder.owner?.lastName}{" "}
@@ -443,7 +518,16 @@ const FileUpload = () => {
                         <div className="menu-options">
                           {folder.name !== currentTeamId && (
                             <>
-                              <div className="save option" onClick={() => {handleDownload(folder.url, true)}}>
+                              <div className="rename option" onClick={() => {}}>
+                                <i className="fa-solid fa-pencil"></i>{" "}
+                                <span>Rename</span>
+                              </div>
+                              <div
+                                className="save option"
+                                onClick={() => {
+                                  handleDownload(folder.url, true);
+                                }}
+                              >
                                 <i className="fa-solid fa-download"></i>
                                 <span>Download</span>
                               </div>
@@ -470,22 +554,26 @@ const FileUpload = () => {
               ))}
               {sortedFiles.map((file) => (
                 <div key={file._id} className="file">
-                  <div
-                    onClick={() => handleFileClick(file.url)}
-                    className="name"
-                  >
-                    📄 {file.name}
+                  <div className="name">
+                    <input
+                      type="checkbox"
+                      checked={selectedItems.includes(file._id)}
+                      onChange={() => toggleSelection(file._id)}
+                    />
+                    <span onClick={() => handleFileClick(file.url)}>
+                      📄 {file.name}
+                    </span>
                   </div>
-                  <div className="modification-delete">
-                    <div className="filesize">
-                      {file.size >= 1024 * 1024 * 1024
-                        ? (file.size / (1024 * 1024 * 1024)).toFixed(2) + " GB"
-                        : file.size >= 1024 * 1024
-                        ? (file.size / (1024 * 1024)).toFixed(2) + " MB"
-                        : file.size > 0
-                        ? (file.size / 1024).toFixed(2) + " KB"
-                        : "0 KB"}
-                    </div>
+                  <div className="filesize">
+                    {file.size >= 1024 * 1024 * 1024
+                      ? (file.size / (1024 * 1024 * 1024)).toFixed(2) + " GB"
+                      : file.size >= 1024 * 1024
+                      ? (file.size / (1024 * 1024)).toFixed(2) + " MB"
+                      : file.size > 0
+                      ? (file.size / 1024).toFixed(2) + " KB"
+                      : "0 KB"}
+                  </div>
+                  <div className="modification-menu">
                     <div className="modification">
                       {getTimeFeedback(file.createdAt)} by{" "}
                       {file.owner?.firstName} {file.owner?.lastName}{" "}
@@ -500,7 +588,24 @@ const FileUpload = () => {
                       ></i>
                       {showMenu && fileSelected === file._id && (
                         <div className="menu-options">
-                          <div className="save option" onClick={() => {handleDownload(file.url, false)}}>
+                          <div className="view option" onClick={() => {}}>
+                            <i className="fa-solid fa-eye"></i>
+                            <span>View</span>
+                          </div>
+                          <div className="rename option" onClick={() => {}}>
+                            <i className="fa-solid fa-pencil"></i>
+                            <span>Rename</span>
+                          </div>
+                          <div className="edit option" onClick={() => {}}>
+                            <i className="fa-solid fa-pen-to-square"></i>{" "}
+                            <span>Edit</span>
+                          </div>
+                          <div
+                            className="save option"
+                            onClick={() => {
+                              handleDownload(file.url, false);
+                            }}
+                          >
                             <i className="fa-solid fa-download"></i>
                             <span>Download</span>
                           </div>
@@ -577,7 +682,12 @@ const FileUpload = () => {
           </div>
         </div>
       </div>
-      <ArchiveModal isOpen={isArchiveModalOpen} onClose={handleArchiveModalClose} teamId={currentTeamId} setRefresh={setRefresh} />
+      <ArchiveModal
+        isOpen={isArchiveModalOpen}
+        onClose={handleArchiveModalClose}
+        teamId={currentTeamId}
+        setRefresh={setRefresh}
+      />
     </div>
   );
 };

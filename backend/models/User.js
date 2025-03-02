@@ -37,12 +37,25 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    status: {
+      type: String,
+      enum: ["active", "offline", "inactive", "banned"],
+      default: "active",
+    },
+    statusUpdatedAt: { type: Date, default: Date.now },
     permissionToken: {
       type: String,
     },
   },
   { timestamps: true }
 );
+
+userSchema.pre("save", function (next) {
+  if (this.isModified("status")) {
+    this.statusUpdatedAt = new Date();
+  }
+  next();
+});
 
 userSchema.methods.getJwtToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {

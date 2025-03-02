@@ -11,6 +11,9 @@ import { toast } from "react-toastify";
 import "../../index.css";
 import { useDispatch } from "react-redux";
 import Swal from "sweetalert2";
+import { io } from "socket.io-client";
+
+const socket = io(`${import.meta.env.VITE_SOCKET_API}`);
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -53,6 +56,8 @@ const Login = () => {
           token: idToken,
           user: response.user,
         };
+        socket.emit("login", response.user._id)
+        
         succesMsg("Login Successfully!");
         authenticate(userInfo, dispatch, () => (window.location = "/main"));
       } else {

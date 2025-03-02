@@ -19,6 +19,8 @@ import TextEditor from "./main/live-editing/TextEditor";
 import MessageGroup from "./main/textchats/MessageGroup";
 import FileSharingPage from "./main/file-sharing/FileSharingPage";
 import "../styles/MainHeader.css";
+import { io } from "socket.io-client";
+const socket = io(`${import.meta.env.VITE_SOCKET_API}`);
 
 function Main() {
   const [refresh, setRefresh] = useState(false);
@@ -36,6 +38,12 @@ function Main() {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    if (user) {
+      socket.emit("login", user?._id)
+    }
+  }, [user]);
+
   // Refresh Firebase token periodically
   useEffect(() => {
     const refreshToken = async () => {
@@ -51,7 +59,7 @@ function Main() {
     };
 
     refreshToken();
-  }, [refresh, dispatch]);
+  }, []);
 
   // Fetch group chat info when meeting room changes
   useEffect(() => {

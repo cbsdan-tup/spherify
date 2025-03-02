@@ -3,6 +3,8 @@
   width: 100%;
   align-items: unset!important;
   margin-bottom: 1rem;
+  border-radius: 0.8rem;
+  border: 1px solid var(--secondary-color)
 }
 
 
@@ -129,6 +131,29 @@
   color: var(--text-white);
 } 
 
+.fs-content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--chart-bg-color);
+  border-top-right-radius: 8px;
+  border-top-left-radius: 8px;
+  font-weight: 600;
+}
+
+.fs-content-header .name {
+  flex: 2;
+}
+.fs-content-header .filesize {
+  flex: 1;
+}
+.fs-content-header .modification-delete {
+  flex: 1;
+}
+.fs-content-header .action {
+  flex: 1;
+}
 .file-sharing .fs-header .show-storage {
   cursor: pointer;
   padding: 0.3rem;
@@ -240,12 +265,28 @@
 }
 .fs-content {
   background-color: var(--tertiary-color);
-  padding: 1.5rem 0.7rem 0.7rem;
+  padding: 0.7rem 0.7rem;
   min-height: 20vh;
   max-height: 60vh;
   overflow-y: auto;
   border-bottom-right-radius: 8px;
   border-bottom-left-radius: 8px;
+}
+.fs-content .bulk-delete-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  background-color: var(--danger-color);
+  color: var(--text-white);
+  border:none;
+  border-radius: 10px;
+  padding: 0.4rem 0.7rem;
+  justify-self: end;
+}
+.fs-content .bulk-delete-button:focus {
+  border: none;
+  outline: none;
 }
 
 .fs-content::-webkit-scrollbar-track {
@@ -268,6 +309,8 @@
 
 .fs-content .menu {
   position: relative;
+  display: flex;
+  justify-content: end;
 }
 
 .fs-content .menu .menu-icon {
@@ -297,6 +340,10 @@
   gap: 0.5rem;
   align-items: center;
   cursor: pointer;
+}
+
+.fs-content .menu .menu-options .option.view, .fs-content .menu .menu-options .option.edit, .fs-content .menu .menu-options .option.rename{
+  color: var(--header-text-color);
 }
 
 .fs-content .menu .menu-options .option.save {
@@ -336,6 +383,12 @@
   gap: 0.5rem;
   align-items: center;
 }
+.fs-content .loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem !important;
+}
 .fs-content .folder,
 .fs-content .file {
   display: flex;
@@ -346,7 +399,33 @@
   cursor: pointer;
   border-bottom: 1px solid var(--secondary-color-opacity);
 }
-
+.fs-content .folder .name,.fs-content .file .name  {
+  flex: 2;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.fs-content .folder input,.fs-content .file input {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+.fs-content .folder .filesize,
+.fs-content .file .filesize {
+  flex: 1;
+  color: #4d97c2;
+}
+.fs-content .folder .modification-menu,
+.fs-content .file .modification-menu
+{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex: 2;
+}
+.fs-content .folder .filesize, .fs-content .file .filesize{
+  font-size: 0.9rem;
+}
 .fs-content .folder .name:hover ,
 .fs-content .file .name:hover {
   text-decoration: underline;
@@ -363,7 +442,7 @@
 .fs-content .modification {
   font-style: italic;
   color: #4d97c2;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .fs-footer {

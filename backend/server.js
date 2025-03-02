@@ -6,6 +6,7 @@ const { Server } = require("socket.io");
 
 const { MessageGroup } = require("./models/Team");
 const User = require("./models/User");
+
 const Document = require("./models/Document");
 const AdminConfigurations = require("./models/AdminConfiguration");
 
@@ -22,7 +23,7 @@ const mongoose = require("mongoose");
 const PORT = process.env.PORT || 8000;
 
 const cloudinary = require("cloudinary");
-const {initializeNextcloudAPI} = require("./utils/nextcloud");
+const { initializeNextcloudAPI } = require("./utils/nextcloud");
 
 const root = require("./routes/root");
 const account = require("./routes/account");
@@ -32,16 +33,16 @@ const meetingRoutes = require("./routes/meetingRoutes");
 const eventRoutes = require("./routes/calendar/events");
 const documentRoutes = require("./routes/documentRoutes");
 const listRoutes = require("./routes/kanban/listRoutes");
-const cardRoutes = require("./routes/kanban/cardRoutes"); 
+const cardRoutes = require("./routes/kanban/cardRoutes");
 const nextCloudRoutes = require("./routes/nextCloudUpload");
-const fileSharingRoutes = require("./routes/fileSharingRoutes");;
+const fileSharingRoutes = require("./routes/fileSharingRoutes");
 const teamRequest = require("./routes/teamRequests");
-const ganttRoutes = require("./routes/gantt/ganttRoutes"); 
-const adminRoutes = require("./routes/adminRoutes")
+const ganttRoutes = require("./routes/gantt/ganttRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 console.log(process.env.NODE_ENV);
 
-let usersEditing = {}; 
+let usersEditing = {};
 
 connectDatabase();
 
@@ -60,7 +61,6 @@ async function getCloudinaryConfig() {
 
     // Configure Cloudinary after fetching credentials
     cloudinary.config(cloudinaryConfig);
-
   } catch (error) {
     console.error("Error fetching Cloudinary configuration:", error);
   }
@@ -79,11 +79,13 @@ app.use(express.json({ limit: "500mb" }));
 app.use(express.urlencoded({ limit: "500mb", extended: true }));
 app.use(logger);
 
-app.use(cors({
-  origin: "*", 
-  methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
-  exposedHeaders: ["Content-Disposition"], 
-}));
+app.use(
+  cors({
+    origin: "*",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
+    exposedHeaders: ["Content-Disposition"],
+  })
+);
 
 app.use("/", express.static(path.join(__dirname, "public")));
 app.use(errorHandler);
@@ -97,13 +99,13 @@ app.use("/api/v1", meetingRoutes);
 app.use("/api/v1", eventRoutes);
 app.use("/api/v1", documentRoutes);
 app.use("/api/v1", listRoutes);
-app.use("/api/v1", cardRoutes); 
+app.use("/api/v1", cardRoutes);
 app.use("/api/v1", nextCloudRoutes);
 app.use("/api/v1", fileSharingRoutes);
 app.use("/api/v1", teamRequest);
 app.use("/api/v1", teamRequest);
-app.use("/api/v1", ganttRoutes);  
-app.use("/api/v1", adminRoutes)
+app.use("/api/v1", ganttRoutes);
+app.use("/api/v1", adminRoutes);
 //404 not found routes
 app.all("*", (req, res) => {
   res.status(404);
@@ -123,11 +125,81 @@ const io = new Server(server, {
   },
 });
 
-// Socket.io for Real-time Messaging
+async function updateUserStatusOnLogin(userId) {
+  try {
+    const user = await User.findById(userId);
+    if (user) {
+      user.status = "active";
+      await user.save();
+      console.log(`User ${userId} logged in and status updated to active.`);
+    }
+  } catch (error) {
+    console.error("Error updating user status on login:", error);
+  }
+}
+
+async function updateUserStatusOnLogout(userId) {
+  try {
+    const user = await User.findById(userId);
+    if (user) {
+      user.status = "offline";
+      await user.save();
+      console.log(`User ${userId} logged out and status updated to offline.`);
+    }
+  } catch (error) {
+    console.error("Error updating user status on logout:", error);
+  }
+}
+
+const activeConnections = {}; // Track active connections for each user
+
 io.on("connection", (socket) => {
   console.log("User Connected:", socket.id);
 
   socket.setMaxListeners(20);
+
+  socket.on("login", async (userId) => {
+    try {
+      // Store the userId in the socket object
+      socket.userId = userId;
+
+      // Track the connection
+      if (!activeConnections[userId]) {
+        activeConnections[userId] = new Set(); // Use a Set to store unique socket IDs
+      }
+      activeConnections[userId].add(socket.id);
+
+      // Update the user's status to "active" if this is their first connection
+      if (activeConnections[userId].size === 1) {
+        await updateUserStatusOnLogin(userId);
+      }
+
+      console.log(`User ${userId} logged in and status updated to active.`);
+    } catch (error) {
+      console.error("Error updating user status on login:", error);
+    }
+  });
+
+  socket.on("logout", async (userId) => {
+    await updateUserStatusOnLogout(userId);
+  });
+
+  socket.on("disconnect", async () => {
+    console.log("User Disconnected:", socket.id);
+
+    const userId = socket.userId;
+
+    if (userId) {
+      if (activeConnections[userId]) {
+        activeConnections[userId].delete(socket.id);
+
+        if (activeConnections[userId].size === 0) {
+          await updateUserStatusOnLogout(userId);
+          delete activeConnections[userId]; 
+        }
+      }
+    }
+  });
 
   socket.on("joinGroup", (groupId) => {
     const validGroupId = mongoose.Types.ObjectId.isValid(groupId)
@@ -139,24 +211,24 @@ io.on("connection", (socket) => {
     console.log(`User joined group: ${groupId}`);
   });
 
-// Handle user editing updates (add this part for update-user-status and user-editing)
+  // Handle user editing updates (add this part for update-user-status and user-editing)
   socket.on("update-user-status", (data) => {
-  const { documentId, user } = data;
+    const { documentId, user } = data;
 
-  // Track users editing the document
-  usersEditing[documentId] = usersEditing[documentId] || [];
-  if (!usersEditing[documentId].includes(user)) {
-    usersEditing[documentId].push(user);
-  }
+    // Track users editing the document
+    usersEditing[documentId] = usersEditing[documentId] || [];
+    if (!usersEditing[documentId].includes(user)) {
+      usersEditing[documentId].push(user);
+    }
 
-  // Emit the updated list of users editing the document to all clients in the room
-  io.to(documentId).emit("user-editing", {
-    documentId,
-    users: usersEditing[documentId],
+    // Emit the updated list of users editing the document to all clients in the room
+    io.to(documentId).emit("user-editing", {
+      documentId,
+      users: usersEditing[documentId],
+    });
+
+    console.log(`User ${user} is editing document: ${documentId}`);
   });
-
-  console.log(`User ${user} is editing document: ${documentId}`);
-});
 
   socket.on("sendMessage", async ({ groupId, sender, content, images }) => {
     try {
@@ -217,19 +289,23 @@ io.on("connection", (socket) => {
     if (!mongoose.Types.ObjectId.isValid(documentId)) {
       console.error("❌ Invalid document ID:", documentId);
       return;
-      }
-  
+    }
+
     console.log(`✅ User joined document: ${documentId}`);
-  
+
     const document = await findOrCreateDocument(documentId);
     socket.join(documentId);
-  
-    if (!document.data || typeof document.data !== "object" || !document.data.ops) {
+
+    if (
+      !document.data ||
+      typeof document.data !== "object" ||
+      !document.data.ops
+    ) {
       document.data = { ops: [] };
     }
-  
+
     socket.emit("load-document", document.data);
-  
+
     // Ensure no duplicate listeners
     socket.removeAllListeners("send-changes");
     socket.on("send-changes", (delta) => {
@@ -239,35 +315,36 @@ io.on("connection", (socket) => {
       }
       socket.broadcast.to(documentId).emit("receive-changes", delta);
     });
-  
+
     socket.removeAllListeners("send-format");
     socket.on("send-format", ({ format, range }) => {
       if (!format || !range) return;
       socket.broadcast.to(documentId).emit("receive-format", { format, range });
     });
-  
+
     socket.removeAllListeners("save-document");
     socket.on("save-document", async (data) => {
       if (data && typeof data === "object" && data.ops) {
         await Document.findByIdAndUpdate(documentId, { data });
       }
     });
-  
-     socket.on("disconnect", () => {
+
+    socket.on("disconnect", () => {
       console.log(`❌ User disconnected from document: ${documentId}`);
       // Remove the user from the editing list when they disconnect
       for (let docId in usersEditing) {
         usersEditing[docId] = usersEditing[docId].filter(
           (user) => user !== socket.id
         );
-        io.to(docId).emit("user-editing", { documentId: docId, users: usersEditing[docId] });
+        io.to(docId).emit("user-editing", {
+          documentId: docId,
+          users: usersEditing[docId],
+        });
       }
     });
   });
 
-  
-
-  socket.on("disconnect", () => {
+  socket.on("disconnect", async () => {
     console.log("User Disconnected:", socket.id);
   });
 });
@@ -277,10 +354,10 @@ async function findOrCreateDocument(id) {
 
   let document = await Document.findById(id);
   if (document) {
-    return document 
+    return document;
   } else {
     return false;
-  } 
+  }
 }
 
 mongoose.connection.once("open", () => {

@@ -115,7 +115,7 @@ const Home = () => {
 
           <div className="feature-item">
             <img
-              src="/images/Data Analytics.png"
+              src="/images/data analytics.png"
               alt="Data Analytics"
               className="feature-video"
             />
@@ -229,7 +229,7 @@ const Home = () => {
         <div className="mission-content">
           <h3>Our Mission </h3> {/* Focused on Mission */}
           <p>
-          Our mission is to simplify the way developers collaborate and work together, providing powerful tools for task management, 
+          Our mission is to simplify the way software developers collaborate and work together, providing powerful tools for task management, 
           real-time communication, and seamless file sharing to ensure success and productivity for teams in universities.
           </p>
 

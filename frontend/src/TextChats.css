@@ -95,6 +95,7 @@
   border-radius: 50%;
   object-fit: cover;
   margin-bottom: 0.9rem;
+  position: relative;
 }
 .right-tool-panel .message-group-container .message .message-content .avatar img {
   height: 100%;
@@ -103,6 +104,22 @@
   object-fit: cover;
   border: 1px solid var(--white-grey);
 }
+
+.right-tool-panel .message-group-container .message .message-content .avatar .status {
+  position:absolute;
+  bottom: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  z-index: 100;
+  background-color: var(--inactive-color);
+}
+
+.right-tool-panel .message-group-container .message .message-content .avatar .status.active {
+  background-color: var(--active-color);
+}
+
 .right-tool-panel .message-group-container .message .message-content div.p {
   max-width: 80%;
   margin-bottom: 0;

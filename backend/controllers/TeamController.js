@@ -113,7 +113,7 @@ exports.getTeamMembers = async (req, res) => {
   try {
     const { teamId } = req.params;
     
-    const team = await Team.findById(teamId).populate("members.user", "firstName lastName email avatar");
+    const team = await Team.findById(teamId).populate("members.user", "firstName lastName email avatar status statusUpdatedAt");
 
     if (!team) {
       return res.status(404).json({ error: "Team not found" });

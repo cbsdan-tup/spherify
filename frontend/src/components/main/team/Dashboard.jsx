@@ -16,6 +16,7 @@ import { errMsg, getToken } from "../../../utils/helper";
 import FileShare from "../file-sharing/FileShare";
 import InviteMemberPopUp from "../InviteMemberPopUp";
 import Calendar from "../projectmanagement/Calendar";
+import moment from "moment";
 
 // Register chart elements
 ChartJS.register(
@@ -123,7 +124,7 @@ const Dashboard = () => {
   }, [currentTeamId, refresh]);
 
   const toggleFullCalendar = () => {
-    setIsCalendarFull(prev => !prev);
+    setIsCalendarFull((prev) => !prev);
   };
 
   return (
@@ -133,7 +134,7 @@ const Dashboard = () => {
       <div className="kanban-team-members cards">
         {/* Kanban Board */}
         <div className="card">
-          <div className="card shadow chart-bg kanban-board">
+          <div className="card chart-bg kanban-board">
             <div className="card-header fw-semibold">Kanban Board</div>
             <div className="card-body">
               <Pie data={kanbanData} />
@@ -143,7 +144,7 @@ const Dashboard = () => {
 
         {/* Team Members */}
         <div className="team-members card">
-          <div className="card shadow chart-bg">
+          <div className="card chart-bg">
             <div className="card-header d-flex justify-content-between align-items-center">
               <span className="fw-semibold">Team Members</span>
               <span className="badge bg-primary text-white">
@@ -170,15 +171,27 @@ const Dashboard = () => {
                         width="35"
                       />
                       <div className="px-2">
-                        <p className="mb-0 fw-semibold">
-                          {member.user.firstName} {member.user.lastName}
+                        <p className="mb-0 fw-semibold name">
+                          {member.user.firstName} {member.user.lastName} 
+                        </p>
+                        <p className="mb-0 fw-semibold role">
+                          {member.role.charAt(0).toUpperCase() +
+                            member.role.slice(1)}
                         </p>
                         <p
-                          className={`mb-0 text-sm ${
-                            member.active ? "text-success" : "text-muted"
+                          className={`status mb-0 text-sm ${
+                            member.user?.status &&
+                            member.user.status === "active"
+                              ? "text-success"
+                              : "text-muted"
                           }`}
                         >
-                          {member.status ? member.status : "Active"}
+                          {member.user?.status &&
+                          member.user.status === "active"
+                            ? "Active"
+                            : `Last seen ${moment(
+                                member.user.statusUpdatedAt
+                              ).fromNow()}`}
                         </p>
                       </div>
                     </div>
@@ -201,78 +214,86 @@ const Dashboard = () => {
 
       <div className={`calendar-main ${isCalendarFull ? "full" : ""}`}>
         <div className="toggleFullCalendar" onClick={toggleFullCalendar}>
-          <i className={`fa-solid ${isCalendarFull ? "fa-compress" : "fa-expand"}`}></i>
+          <i
+            className={`fa-solid ${
+              isCalendarFull ? "fa-compress" : "fa-expand"
+            }`}
+          ></i>
         </div>
         <Calendar setRefresh={setRefresh} />
-        <div className={`card shadow upcoming-events ${isCalendarFull ? "d-none" : ""}`}>
+        <div
+          className={`card shadow upcoming-events ${
+            isCalendarFull ? "d-none" : ""
+          }`}
+        >
           <div className="card-header fw-semibold">
             <i className="fa-solid fa-bell"></i>
             <span>Upcoming Events</span>
           </div>
-          <div className="card-body" >
+          <div className="card-body">
             {teamCalendarEvents.length > 0 ? (
               teamCalendarEvents.map((event, index) => {
                 return (
                   <div key={index} className="accordion-item">
-                  <div
-                    className="accordion-header bg-light p-2 mb-2 rounded"
-                    onClick={() => {
-                    setIsExpanded(!isExpanded);
-                    setEventId(event._id);
-                    }}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <p className="mb-0 fw-medium">
-                    <i className="fa-solid fa-calendar-days mx-2"></i>
-                    {new Date(event.startDate).toLocaleString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      hour: "numeric",
-                      minute: "numeric",
-                      hour12: true,
-                    })}{" "}
-                    - {event.name}
-                    </p>
-                    {isExpanded && eventId === event._id && (
-                    <div className="accordion-body p-2 bg-white rounded border mt-2">
-                      {event.description && (
-                      <p className="text-muted small mb-1">
-                        <strong>Description:</strong> {event.description}
+                    <div
+                      className="accordion-header bg-light p-2 mb-2 rounded"
+                      onClick={() => {
+                        setIsExpanded(!isExpanded);
+                        setEventId(event._id);
+                      }}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <p className="mb-0 fw-medium">
+                        <i className="fa-solid fa-calendar-days mx-2"></i>
+                        {new Date(event.startDate).toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "numeric",
+                          hour12: true,
+                        })}{" "}
+                        - {event.name}
                       </p>
+                      {isExpanded && eventId === event._id && (
+                        <div className="accordion-body p-2 bg-white rounded border mt-2">
+                          {event.description && (
+                            <p className="text-muted small mb-1">
+                              <strong>Description:</strong> {event.description}
+                            </p>
+                          )}
+                          {event.location && (
+                            <p className="text-muted small mb-1">
+                              📍 {event.location}
+                            </p>
+                          )}
+                          <p className="text-muted small mb-1">
+                            <strong>Start:</strong>{" "}
+                            {new Date(event.startDate).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "numeric",
+                              hour12: true,
+                            })}
+                          </p>
+                          <p className="text-muted small mb-0">
+                            <strong>End:</strong>{" "}
+                            {new Date(event.endDate).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "numeric",
+                              minute: "numeric",
+                              hour12: true,
+                            })}
+                          </p>
+                        </div>
                       )}
-                      {event.location && (
-                      <p className="text-muted small mb-1">
-                        📍 {event.location}
-                      </p>
-                      )}
-                      <p className="text-muted small mb-1">
-                      <strong>Start:</strong>{" "}
-                      {new Date(event.startDate).toLocaleString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "numeric",
-                        hour12: true,
-                      })}
-                      </p>
-                      <p className="text-muted small mb-0">
-                      <strong>End:</strong>{" "}
-                      {new Date(event.endDate).toLocaleString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        hour: "numeric",
-                        minute: "numeric",
-                        hour12: true,
-                      })}
-                      </p>
                     </div>
-                    )}
-                  </div>
                   </div>
                 );
               })
             ) : (
-              <p className="text-muted text-center">No upcoming events.</p>
+              <p className="text-white text-center">No upcoming events.</p>
             )}
           </div>
         </div>

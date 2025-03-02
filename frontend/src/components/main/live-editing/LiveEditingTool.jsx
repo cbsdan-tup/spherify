@@ -7,7 +7,7 @@ import { getToken, succesMsg, errMsg } from "../../../utils/helper";
 import { setCurrentFileId } from "../../../redux/teamSlice";
 import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import Swal from 'sweetalert2'; // Import Swal
+import Swal from 'sweetalert2'; 
 
 const LiveEditingTool = () => {
   const [isExpanded, setIsExpanded] = useState(false);

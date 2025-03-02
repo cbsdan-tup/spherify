@@ -122,7 +122,7 @@ exports.deleteMessageGroup = async (req, res) => {
 exports.getMessages = async (req, res) => {
   try {
     const { groupId } = req.params;
-    const group = await MessageGroup.findById(groupId).populate("messages.sender", "firstName lastName email avatar");
+    const group = await MessageGroup.findById(groupId).populate("messages.sender", "firstName lastName email avatar status statusUpdatedAt");
     if (!group) return res.status(404).json({ error: "Group not found" });
     res.json(group.messages);
   } catch (error) {
