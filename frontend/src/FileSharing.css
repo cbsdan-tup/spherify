@@ -373,10 +373,34 @@
   color: var(--danger-color);
 }
 
+.create-folder-modal .modal-dialog{
+  height: 100vh;
+  max-width: 300px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.create-folder-modal .modal-dialog .modal-content button {
+  border: none;
+}
+.create-folder-modal .modal-dialog .modal-content button:focus {
+  border: none;
+  outline: none;
+}
+.create-folder-modal .modal-dialog .modal-content button.create {
+  background-color: var(--header-text-color);
+}
+.modal-header {
+  background-color: var(--header-text-color);
+  color: var(--text-white);
+}
 .fs-content .empty {
   text-align: center;
   font-size: 1.2rem;
   font-style: italic;
+  padding: 0.8rem 1rem;
 }
 .fs-header .header-title .right .button-container {
   display: flex;

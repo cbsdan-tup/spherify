@@ -29,7 +29,9 @@ function Main() {
   const [showChats, setShowChats] = useState(true);
   const [currentGroupChat, setCurrentGroupChat] = useState({});
   const [teamInfo, setTeamInfo] = useState({});
-
+  const [teams, setTeams] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const currentMeetingRoomName = useSelector(
     (state) => state.team.currentMeetingRoomName
@@ -116,7 +118,7 @@ function Main() {
 
   return (
     <>
-      <Header />
+      <Header teams={teams} setTeams={setTeams} isLoading={isLoading} setIsLoading={setIsLoading} />
       <div className="main-container">
         <div
           className={`pages-container container ${!showRightPanel && "full"}`}
@@ -124,7 +126,7 @@ function Main() {
           <Routes>
             <Route
               index
-              element={<Home refresh={refresh} setRefresh={setRefresh} />}
+              element={<Home refresh={refresh} setRefresh={setRefresh} teams={teams} setTeams={setTeams}  isLoading={isLoading} setIsLoading={setIsLoading} />}
             />
             <Route path="settings" element={<Settings />} />
             <Route

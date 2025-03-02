@@ -10,13 +10,19 @@ import "../../styles/Home.css";
 import moment from "moment";
 import Swal from "sweetalert2";
 import InviteMemberPopUp from "./InviteMemberPopUp";
+import LoadingSpinner from "../layout/LoadingSpinner";
 
-function Home({ refresh, setRefresh }) {
+function Home({
+  refresh,
+  setRefresh,
+  teams,
+  setTeams,
+  isLoading,
+  setIsLoading,
+}) {
   const [showPopup, setShowPopup] = useState(false);
-  const [teams, setTeams] = useState([]);
   const [activeMenu, setActiveMenu] = useState(null);
   const [showInvitePopup, setShowInvitePopup] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
 
   const initialData = {
     nickname: "",
@@ -176,7 +182,14 @@ function Home({ refresh, setRefresh }) {
 
   return (
     <div className="home">
-      <div className="team-container">
+      {isLoading && <LoadingSpinner />}
+      {teams && teams.length === 0 && (
+        <div className="no-teams">
+          <div className="title">No Teams Found</div>
+          <div className="description">You can create new team and invite your members</div>
+        </div>
+      )}
+      <div className={`team-container ${teams && (teams.length === 0) && "zero-teams"}`} >
         <div className="createNewTeam" onClick={handleShow}>
           <div className="left">
             <i className="fa-solid fa-plus"></i>
@@ -186,6 +199,7 @@ function Home({ refresh, setRefresh }) {
             <div className="description">Invite members by their email</div>
           </div>
         </div>
+
         {teams &&
           teams.length > 0 &&
           teams.map((team) => (
@@ -267,7 +281,9 @@ function Home({ refresh, setRefresh }) {
                     {team?.isDisabled ? (
                       <div className="team-detail">
                         <i className="fa-solid fa-triangle-exclamation inactive"></i>
-                        <span className="disabled">This team has been Disabled</span>
+                        <span className="disabled">
+                          This team has been Disabled
+                        </span>
                       </div>
                     ) : (
                       <div className="team-detail">

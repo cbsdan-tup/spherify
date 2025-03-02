@@ -230,6 +230,22 @@ body {
   margin-left: auto;
 }
 
+.main-container .pages-container .home .no-teams {
+  display: flex;
+  flex: 1;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  color: var(--header-text-color);
+  padding: 1rem;
+}
+.main-container .pages-container .home .no-teams .title {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.main-container .pages-container .home .no-teams .description {
+  font-style: italic;
+}
 .toggle-show {
   position: fixed;
   top: 50%;
@@ -328,6 +344,9 @@ body {
   color: var(--header-text-color);
 }
 
+.main-container .team-container.zero-teams {
+  justify-content: center;
+}
 .main-container .team-container .team-content {
   margin-top: calc(60px + 77px);
   padding: 1rem;
@@ -351,15 +370,21 @@ body {
 
 .main-container .team-container .team-content .kanban-team-members .card {
   flex: 1;
-  border: 1px solid var(--secondary-color) !important;
+  border: none !important;
   border-radius: 10px;
   box-shadow: none !important;
+}
+.main-container .team-container .team-content .kanban-team-members .card .card-footer {
+  border: 1px solid var(--secondary-color);
+  border-top: none;
 }
 .main-container .team-container .team-content .kanban-team-members .card .card-header {
   border-radius: 10px 10px 0 0;
 }
 .main-container .team-container .team-content .kanban-team-members .card .card-body {
   box-shadow: none !important;
+  border: 1px solid var(--secondary-color);
+  
 }
 
 .main-container .team-container .team-content .kanban-team-members .card-body .role {
@@ -735,6 +760,46 @@ body {
 .main-container .team-container .calendar-container {
   margin-top: 150px;
   background-color: var(--tertiary-color);
+}
+.calendar-modal .modal-dialog{
+  max-width: 500px;
+}
+.calendar-modal .modal-dialog .modal-content{
+  width: 100%;
+  flex: 1;
+}
+.calendar-modal .modal-dialog .modal-content .modal-header {
+  background-color: var(--header-text-color);
+  color: var(--text-white)
+}
+.calendar-modal .modal-dialog .modal-body form{
+  flex: 1;
+  width: 100%;
+  color: var(--header-text-color)
+}
+.calendar-modal .modal-dialog .modal-body form label {
+  font-weight: 600;
+}
+.calendar-modal .modal-dialog .modal-body form .buttons {
+  gap: 0.5rem;
+}
+.calendar-modal .modal-dialog .modal-body form .buttons button {
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+}
+.calendar-modal .modal-dialog .modal-body form .buttons button.delete {
+  background-color: var(--inactive-color);
+  color: var(--text-white);
+}
+.calendar-modal .modal-dialog .modal-body form .buttons button.cancel {
+  background-color: var(--dark-grey);
+  color: var(--text-white);
+}
+.calendar-modal .modal-dialog .modal-body form .buttons button.create {
+  background-color: var(--header-text-color);
+  color: var(--text-white);
 }
 .calendar-main .calendar-container {
   margin-top: 0 !important;

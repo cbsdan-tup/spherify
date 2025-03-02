@@ -41,7 +41,7 @@ const CreateNewFolder = ({parentFolder, refresh, setRefresh, relativePath}) => {
         <i className="fa-solid fa-folder-plus"></i>
         <span>Create New Folder</span>
       </button>
-      <Modal show={show} onHide={() => setShow(false)}>
+      <Modal show={show} onHide={() => setShow(false)} className="create-folder-modal">
         <Modal.Header closeButton>
           <Modal.Title>Create New Folder</Modal.Title>
         </Modal.Header>
@@ -62,7 +62,7 @@ const CreateNewFolder = ({parentFolder, refresh, setRefresh, relativePath}) => {
           <Button variant="secondary" onClick={() => setShow(false)}>
             Cancel
           </Button>
-          <Button variant="primary" onClick={handleCreateFolder}>
+          <Button className="create" onClick={handleCreateFolder}>
             Create Folder
           </Button>
         </Modal.Footer>

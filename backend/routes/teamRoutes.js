@@ -16,7 +16,8 @@ const {
     getPastTeamsChartData,
     getRecentTeamAndUsers,
     getAllTeams,
-    updateTeamStatus
+    updateTeamStatus,
+    fetchTeamsByName
 } = require('../controllers/TeamController');
 
 router.post('/addTeam', upload.single('logo'), addTeam);
@@ -32,5 +33,6 @@ router.get('/getPastTeamsChartData', isAdmin, getPastTeamsChartData);
 router.get('/getRecentTeamAndUsers', isAdmin, getRecentTeamAndUsers);
 router.get('/getAllTeams', isAdmin, getAllTeams);
 router.put('/updateTeamStatus/:teamId', isAdmin, updateTeamStatus);
+router.get('/fetchTeamsByName', isAuthenticatedUser, fetchTeamsByName)
 
 module.exports = router

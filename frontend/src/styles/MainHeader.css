@@ -20,6 +20,26 @@
 .header-container .header .content {
     flex: 1;
 }
+.header-container .header .go-to-main.content {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+.header-container .header .go-to-main.content .button {
+    flex: 1;
+}
+.header-container .header .go-to-main.content .search-icon {
+    position: absolute;
+    right: 1rem;
+    font-size: 1.5rem;
+    color: var(--header-text-color);
+}
+.header-container .header .go-to-main.content .search-team {
+    padding: 0.5rem 1rem;
+    flex: 1;
+    border-radius: 1rem;
+    color: var(--header-text-color);
+}
 .header .brand {
     font-size: 1.2rem;
     font-weight: 600;
@@ -42,9 +62,12 @@
     gap: 0.5rem;
     color: var(--text-white);
     cursor: pointer;
-    background-color: var(--secondary-color-opacity);
+    background-color: var(--text-white);
+    color: var(--header-text-color);
     padding: 0.5rem 1.3rem;
     border-radius: 0.5rem;
+    font-weight: 600;
+    font-size: 1.4rem;
 }
 .go-to-main .button .icon {
     font-size: 1.3rem;

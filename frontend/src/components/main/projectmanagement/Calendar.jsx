@@ -335,7 +335,7 @@ function Calendar({setRefresh}) {
         <Toast.Body>{toastMessage}</Toast.Body>
       </Toast>
 
-      <Modal show={showEventModal} onHide={handleModalClose}>
+      <Modal show={showEventModal} onHide={handleModalClose} className="calendar-modal">
         <Modal.Header closeButton>
           <Modal.Title>
             {eventAction === "create" ? "Add New Event" : "Edit Event"}
@@ -389,16 +389,16 @@ function Calendar({setRefresh}) {
 
             {renderMemberSelection()}
 
-            <div className="d-flex justify-content-end gap-2">
+            <div className="d-flex justify-content-end gap-2 buttons">
               {eventAction === "edit" && (
-                <Button variant="danger" type="button" onClick={handleDeleteEvent}>
+                <Button className="delete" type="button" onClick={handleDeleteEvent}>
                   Delete
                 </Button>
               )}
-              <Button variant="secondary" type="button" onClick={handleModalClose}>
+              <Button className="cancel"  type="button" onClick={handleModalClose}>
                 Cancel
               </Button>
-              <Button variant="primary" type="submit">
+              <Button className="create" type="submit">
                 {eventAction === "create" ? "Add Event" : "Save Changes"}
               </Button>
             </div>

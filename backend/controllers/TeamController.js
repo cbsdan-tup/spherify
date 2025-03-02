@@ -389,3 +389,23 @@ exports.updateTeamStatus = async (req, res) => {
   }
 }
 
+exports.fetchTeamsByName = async (req, res) => {
+  try {
+    const { name, userId } = req.query; 
+
+    if (!name || !userId) {
+      return res.status(400).json({ message: "Name and userId are required." });
+    }
+
+    const teams = await Team.find({
+      name: { $regex: name, $options: "i" },
+      members: { $elemMatch: { user: userId, leaveAt: null } },
+    }).populate("members.user", "firstName lastName email avatar");
+
+    return res.status(200).json({ success: true, teams });
+  } catch (error) {
+    console.error("Error fetching teams by name:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
