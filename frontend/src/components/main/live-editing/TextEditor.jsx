@@ -26,15 +26,17 @@ const TOOLBAR_OPTIONS = [
 ];
 
 const SAVE_INTERVAL_MS = 2000;
+const PAGE_HEIGHT = 850; // Arbitrary page height in pixels (adjust as needed)
 
 export default function TextEditor() {
-  const { documentId } = useParams();
+  const { documentId } = useParams(); 
   const [socket, setSocket] = useState(null);
   const [quill, setQuill] = useState(null);
   const [lastFormat, setLastFormat] = useState({}); // Store last format used
   const [currentUser, setCurrentUser] = useState(null); // State to store current user
   const [editingUsers, setEditingUsers] = useState([]); // State for users editing the document
   const currentUserRef = useRef(currentUser); // Use a ref to store the currentUser value
+
 
   // Update the ref whenever currentUser changes
   useEffect(() => {
@@ -121,7 +123,7 @@ export default function TextEditor() {
   }, [socket, quill]);
 
   // 🔹 Handle text & format changes and send to server
-  useEffect(() => {
+  useEffect(() => { 
     if (socket == null || quill == null) return;
 
     const textChangeHandler = (delta, oldDelta, source) => {
@@ -186,20 +188,20 @@ if (redoButton) {
 }
 
   // Access the user from the Redux store
-const user = useSelector((state) => state.auth.user);
-console.log("User from Redux:", user); // Log user data to ensure it's being set correctly
+  const user = useSelector((state) => state.auth.user);
+  console.log("User from Redux:", user); // Log user data to ensure it's being set correctly
 
-// Fetch user from Redux and set currentUser
-useEffect(() => {
+  // Fetch user from Redux and set currentUser
+  useEffect(() => {
   if (user) {
     setCurrentUser(user.firstName + ' ' + user.lastName); // Set full name of user
   } else {
     console.log("User is not yet available in Redux");
   }
-}, [user]);
+  }, [user]);
 
-// Listen for user-editing socket events and handle Quill editor changes
-useEffect(() => {
+  // Listen for user-editing socket events and handle Quill editor changes
+  useEffect(() => {
   if (!currentUser) {
     console.error("Current User is not set yet.");
     return; // Exit early if currentUser is undefined
@@ -234,95 +236,102 @@ useEffect(() => {
     socket.off("user-editing", userStatusHandler);
     quill.off('text-change', updateUserStatus);
   };
-}, [socket, quill, currentUser, documentId]); // Re-run whenever currentUser or documentId changes
+  }, [socket, quill, currentUser, documentId]); // Re-run whenever currentUser or documentId changes
 
+  
+  
 
-// Handle PDF generation with jsPDF
-const handleGeneratePDF = () => {
-  if (!quill) return;
+  // Handle the PDF export using html2pdf.js
+  const handleGeneratePDFHtml2Pdf = () => {
+    if (!quill) return;
+  
+    // Get the Quill editor content as HTML
+    let editorContent = quill.root.innerHTML;
+  
+    // Apply a default font size of 12px in the editor content
+    editorContent = editorContent.replace(/font-size:\s*\d+px/g, 'font-size: 12px'); // Ensure all inline font sizes are set to 12px
+  
+    // Add a global style tag to ensure font size applies
+    editorContent = `
+      <style>
+        body { font-size: 12px; }
+      </style>
+      ${editorContent}
+    `;
+  
+    // Define margin options (top, left, right, bottom)
+    const options = {
+      margin: [20, 20, 20, 20], // top, left, bottom, right (in mm)
+      filename: 'document.pdf',  // PDF filename
+      html2canvas: { scale: 2 }, // Optional: for higher quality rendering
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },  // PDF format and orientation
+    };
+  
+    // Generate PDF using html2pdf.js with the defined margin options
+    html2pdf().from(editorContent).set(options).save();
+  };
+  
 
-  // Get the Quill editor content as HTML
-  let editorContent = quill.root.innerHTML;
+  // Function to insert a dynamic table into the Quill editor
+  const insertDynamicTable = () => {
+    if (quill) {
+      const rows = prompt('Enter number of rows:'); // Prompt for number of rows
+      const columns = prompt('Enter number of columns:'); // Prompt for number of columns
+      
+      if (rows && columns) {
+        const rowCount = parseInt(rows, 10);
+        const colCount = parseInt(columns, 10);
 
-  // Apply a default font size of 12px in the editor content
-  editorContent = editorContent.replace(/font-size:\s*\d+px/g, 'font-size: 12px'); // Ensure all inline font sizes are set to 12px
-
-  // Add a global style tag to ensure font size applies
-  editorContent = `
-    <style>
-      body { font-size: 12px; }
-    </style>
-    ${editorContent}
-  `;
-
-  // Generate PDF using jsPDF
-  const doc = new jsPDF();
-
-  doc.html(editorContent, {
-    callback: function (doc) {
-      doc.save('document.pdf'); // Save the PDF with the name "document.pdf"
-    },
-    margin: [10, 10, 10, 10],
-    x: 10,
-    y: 10,
-  });
-};
-
-// Handle the PDF export using html2pdf.js
-const handleGeneratePDFHtml2Pdf = () => {
-if (!quill) return;
-
-// Get the Quill editor content as HTML
-const editorContent = quill.root.innerHTML;
-
-// Create a temporary container to hold the content
-const tempElement = document.createElement('div');
-tempElement.innerHTML = editorContent;
-
-// Use html2pdf.js to generate the PDF
-html2pdf()
-  .from(tempElement)
-  .save('document.pdf'); // Save the PDF with the name "document.pdf"
-};
-
-// Function to insert a dynamic table into the Quill editor
-const insertDynamicTable = () => {
-  if (quill) {
-    const rows = prompt('Enter number of rows:'); // Prompt for number of rows
-    const columns = prompt('Enter number of columns:'); // Prompt for number of columns
-    
-    if (rows && columns) {
-      const rowCount = parseInt(rows, 10);
-      const colCount = parseInt(columns, 10);
-
-      if (isNaN(rowCount) || isNaN(colCount)) {
-        alert('Please enter valid numbers for rows and columns.');
-        return;
-      }
-
-      // Create table HTML dynamically
-      let tableHTML = `<table border="1" cellpadding="5" cellspacing="0">`;
-
-      // Add table rows and columns
-      for (let i = 0; i < rowCount; i++) {
-        tableHTML += `<tr>`;
-        for (let j = 0; j < colCount; j++) {
-          tableHTML += `<td> </td>`; // Empty cell
+        if (isNaN(rowCount) || isNaN(colCount)) {
+          alert('Please enter valid numbers for rows and columns.');
+          return;
         }
-        tableHTML += `</tr>`;
+
+        // Create table HTML dynamically
+        let tableHTML = `<table border="1" cellpadding="5" cellspacing="0">`;
+
+        // Add table rows and columns
+        for (let i = 0; i < rowCount; i++) {
+          tableHTML += `<tr>`;
+          for (let j = 0; j < colCount; j++) {
+            tableHTML += `<td> </td>`; // Empty cell
+          }
+          tableHTML += `</tr>`;
+        }
+
+        tableHTML += `</table>`;
+
+        // Get the current selection in Quill
+        const range = quill.getSelection();
+        if (range) {
+          // Insert the table at the current cursor position
+          quill.clipboard.dangerouslyPasteHTML(range.index, tableHTML);
+        }
       }
+    }
+  };
 
-      tableHTML += `</table>`;
+   // Function to add a page break
+   function insertPageBreak() {
+    const range = quill.getSelection();
+    const pageBreak = '<div class="page-break"></div>';
 
-      // Get the current selection in Quill
-      const range = quill.getSelection();
-      if (range) {
-        // Insert the table at the current cursor position
-        quill.clipboard.dangerouslyPasteHTML(range.index, tableHTML);
+    // Insert page break at the cursor location
+    if (range) {
+      quill.clipboard.dangerouslyPasteHTML(range.index, pageBreak);
+    }
+  }
+  function checkForPageBreak() {
+    if (quill && quill.root) {
+      const editorHeight = quill.root.scrollHeight;
+      const PAGE_HEIGHT = window.innerHeight * 0.8; // Adjust based on the window's height or container
+  
+      if (editorHeight > PAGE_HEIGHT) {
+        insertPageBreak(); // Only insert page break if necessary
       }
     }
   }
-};
+  
   
 
 // 🔹 Initialize Quill editor
@@ -343,9 +352,17 @@ const insertDynamicTable = () => {
   q.setText('Loading...');
   setQuill(q);
 
-      // ✅ Attach Undo & Redo event listeners
+  // ✅ Attach Undo & Redo event listeners
 addUndoRedoButtons(q);
- 
+
+ // Attach event listener for text changes
+ q.on('text-change', () => {
+  checkForPageBreak(); // Call checkForPageBreak on text changes
+});
+
+// Also check initially after loading the editor
+checkForPageBreak();
+
 }, []); // Re-run on fileMenuOpen change
 
 return (
@@ -370,7 +387,7 @@ return (
     </div>
 
       <div className="header-menu">
-        <button onClick={handleGeneratePDF} className="download-btn">
+        <button onClick={handleGeneratePDFHtml2Pdf} className="download-btn">
           <i className="fa fa-download"></i> Download
         </button>
         <button onClick={insertDynamicTable} className="download-btn">

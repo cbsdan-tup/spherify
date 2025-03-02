@@ -3,8 +3,7 @@ import "../index.css";
 import { Link } from 'react-router-dom';
 import { createInfiniteScroll } from '../functions/Homefunctions';
 // import { Canvas } from '@react-three/fiber';
-// import { OrbitControls} from '@react-three/drei';
-// import { GLTFlooader} from 'three/examples/jsm/loaders/GLTFLoader';
+// import { OrbitControls, useGLTF } from '@react-three/drei';
 
 
 const Home = () => {

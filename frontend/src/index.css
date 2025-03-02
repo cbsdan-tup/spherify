@@ -9,6 +9,21 @@ body {
   background-color: #fff;
 }
 
+/* Add styles to break content into separate "pages" */
+.page-break {
+  page-break-before: always; /* Ensures that a page break occurs before this element */
+  clear: both;
+  height: 0;
+}
+
+.editor-wrapper {
+  height: 100vh;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  page-break-before: always;
+}
+
 /* Navbar */
 .navbar {
   position: fixed;
@@ -50,8 +65,6 @@ body {
   background-color: rgba(217, 217, 217, 0.25); /* Background color with 25% transparency */
   color: #EAD8B1; /* Change text color on hover */
 }
-
-
 
 .nav-links a:last-child {
   margin-right: 20px; /* Add extra space for the last link */
