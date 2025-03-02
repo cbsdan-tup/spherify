@@ -94,7 +94,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 50px 20px;
+  padding: 100px 20px 50px;
   max-width: 1200px;
   margin: 0 auto;
   z-index: 1; /* Ensure main content is above the decorative elements */
@@ -668,6 +668,263 @@ body {
     max-width: 90%;
     margin-bottom: 20px;
   }
+}
+
+.iconss {
+  width: 100px;  /* Adjust as needed */
+  height: 100px; /* Adjust as needed */
+  margin-bottom: 10px; /* Adjust space between the icon and the title */
+  vertical-align: middle; /* Align icon vertically with text */
+}
+
+/* mission banner */
+
+.mission-banner{
+  background: url(../images/mission.png) no-repeat;
+  background-size: cover; 
+  background-position: center; 
+  background-repeat: no-repeat;
+  margin-top: 40px;
+}
+
+.mission-banner .mission-row{
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6rem;
+}
+
+.mission-banner .mission-row .mission-content{
+  flex:  1 1 39rem;
+}
+
+.mission-banner .mission-row .mission-content h3 {
+  font-size: 2rem;
+  font-weight: bold; /* This will make the text bold */
+  text-transform: uppercase;
+  margin-left: 50px;
+  margin-top: 10px;
+}
+
+.mission-banner .mission-row .mission-content p{
+  font-size: 1rem;
+  padding: 1rem 0;
+  line-height: 1.8;
+  margin-left: 50px;
+}
+
+.mission-banner .mission-row .image{
+  flex: 1 1 41rem;
+  margin-bottom: -5rem;
+}
+
+.mission-banner .mission-row .image img{
+  width: 100%;
+}
+
+/* end */
+
+/* Contact Page Container */
+.contact-page {
+  display: flex;
+  flex-direction: row; /* Arrange items horizontally */
+  align-items: center; /* Vertically center items */
+  justify-content: space-between; /* Add space between form and image */
+  padding: 40px;
+  background-color: #f4f8fb;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+/* Contact Us Heading */
+h2 {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #2d3a4f;
+  margin-bottom: 20px;
+  text-align: left; /* Align the heading to the left */
+  text-transform: uppercase;
+}
+
+/* Form Styles */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%; /* Adjust width for the form */
+  max-width: 600px; /* Max width for the form */
+  align-items: flex-start; /* Align form fields to the left */
+}
+.form-group {
+  width: 100%;  /* Adjust this value to control the width of the form-group */
+  margin: 0 auto; /* Center the form-group if desired */
+}
+
+.developers-section h2 {
+  text-align: center;
+}
+.features-section h2 {
+  text-align: center;
+}
+.how-to-use-section h2 {
+  text-align: center;
+}
+.contact-page {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.contact-page .form-group label {
+  color: var(--primary-color);
+  font-weight: bold;
+}
+/* Error Styles */
+.error {
+  border-color: #ff4e4e;
+}
+
+.error-message {
+  color: #ff4e4e;
+  font-size: 0.875rem;
+  margin-top: 4px;
+}
+
+/* Contact Icon */
+.contact-icon {
+  display: flex;
+  justify-content: center; /* Center the image */
+  width: 900px; /* Adjust the width of the container */
+}
+
+.contact-icon img {
+  width: 600%; /* Adjust the image size */
+  max-width: 500px; /* Set a max width for the image */
+  height: auto;
+}
+.submit-button {
+  width: 200px;               /* Adjust the width of the button */
+  padding: 10px 20px;         /* Add padding for space inside the button */
+  font-size: 16px;            /* Set the font size of the text */
+  background-color: #4CAF50; /* Set the background color */
+  color: white;               /* Set the text color */
+  border: none;               /* Remove the default border */
+  border-radius: 5px;         /* Round the corners */
+  cursor: pointer;           /* Add a pointer cursor on hover */
+  transition: background-color 0.3s ease; /* Add a smooth transition for hover effect */
+}
+
+.submit-button:hover {
+  background-color: #45a049;  /* Change background color on hover */
+}
+
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .contact-page {
+    flex-direction: column; /* Stack elements vertically on smaller screens */
+    align-items: center;
+  }
+
+  form {
+    width: 80%; /* Adjust form width on smaller screens */
+  }
+
+  .contact-icon {
+    margin-top: 20px;
+    width: 100%; /* Take full width on smaller screens */
+    justify-content: center;
+  }
+
+  .contact-icon img {
+    max-width: 200px; /* Adjust size of the image */
+  }
+}
+
+/* footer */
+.footer {
+  background-color: #001F3F; /* Lighter background color */
+  padding: 3rem 7%;
+  color: #f9f9f9; /* Dark text for readability */
+}
+
+.footer .footer-box-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Adjusted column size */
+  gap: 2rem; /* Increased gap for better spacing */
+}
+
+.footer .footer-box-container .footer-box h3 {
+  font-size: 1.8rem; /* Adjusted font size */
+  color: #f4f8fb; /* Orange color to match your branding */
+  padding-bottom: 1rem;
+}
+
+.footer .footer-box-container .footer-box p {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #f4f8fb; /* Lighter text color for readability */
+  padding-bottom: 1rem;
+}
+
+.footer .footer-box-container .footer-box .links {
+  display: block;
+  font-size: 1rem;
+  color: #FFDC7F; /* Links in orange */
+  padding: 0.5rem 0;
+}
+
+.footer .footer-box-container .footer-box .links i {
+  color: #FFDC7F;
+  padding-right: 0.5rem;
+}
+
+.footer .footer-box-container .footer-box .links:hover i {
+  padding-right: 2rem;
+}
+
+.footer .footer-box-container .footer-box .days {
+  margin-left: 2.2rem;
+  line-height: 1.5; /* Adjusted line-height */
+}
+
+.footer .footer-box-container .footer-box .email {
+  width: 80%;
+  margin: 1rem 0;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background: #fff;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.footer .footer-box-container .footer-box .share a {
+  height: 3rem;
+  width: 3rem;
+  line-height: 3rem;
+  color: #fff;
+  background: #FFDC7F; /* Orange background for the social media links */
+  font-size: 1.2rem;
+  border-radius: 50%;
+  margin-right: 0.8rem;
+  text-align: center;
+  margin-top: 1.4rem;
+}
+
+.footer .footer-box-container .footer-box .share a:hover {
+  background: #133E87; /* Slightly darker shade on hover */
+}
+
+.footer .credit {
+  font-size: 1.2rem;
+  text-align: center;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  color: #f4f8fb;
+  border-top: 0.2rem solid rgba(0, 0, 0, 0.2);
+}
+
+.footer .credit .link {
+  color: #FFDC7F; /* Link in orange */
 }
 
 
