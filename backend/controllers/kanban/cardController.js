@@ -219,7 +219,7 @@ exports.deleteCard = async (req, res) => {
 exports.updateCardPositions = async (req, res) => {
   try {
     const { teamId } = req.params;
-    const { cards } = req.body;
+    const { sourceListId, destinationListId, cards } = req.body;
 
     // Verify team access
     const team = await Team.findOne({
@@ -233,29 +233,30 @@ exports.updateCardPositions = async (req, res) => {
       });
     }
 
-    // Update each card's position
-    const updatePromises = cards.map(card => 
-      Card.findByIdAndUpdate(
-        card._id,
-        { 
-          position: card.position,
-          listId: card.listId 
-        },
-        { new: true }
-      )
-    );
+    // Bulk update all cards
+    const bulkOps = cards.map(card => ({
+      updateOne: {
+        filter: { _id: card._id },
+        update: { 
+          $set: { 
+            position: card.position,
+            listId: card.listId
+          }
+        }
+      }
+    }));
 
-    await Promise.all(updatePromises);
+    await Card.bulkWrite(bulkOps);
 
-    // Fetch updated cards
+    // Fetch and return updated cards
     const updatedCards = await Card.find({
-      _id: { $in: cards.map(c => c._id) }
-    })
-    .populate('assignedTo', 'firstName lastName avatar')
-    .sort({ position: 1 });
+      _id: { $in: cards.map(card => card._id) }
+    }).populate('assignedTo', 'firstName lastName avatar');
 
     res.json(updatedCards);
+
   } catch (error) {
+    console.error('Error updating card positions:', error);
     res.status(500).json({ 
       message: "Error updating card positions",
       error: error.message 

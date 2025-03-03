@@ -7,13 +7,13 @@ const {
     createCard,
     updateCard,
     deleteCard,
-    // updateCardPositions
+    updateCardPositions
 } = require('../../controllers/kanban/cardController');
 
 router.get('/getCards/:teamId/:listId', isAuthenticatedUser, getAllCardsByList);
 router.post('/createCard', isAuthenticatedUser, createCard);
 router.put('/updateCard/:cardId', isAuthenticatedUser, updateCard);
 router.delete('/deleteCard/:cardId', isAuthenticatedUser, deleteCard);
-// router.put('/updatePositions/:teamId', isAuthenticatedUser, updateCardPositions);
+router.put('/updateCardPositions/:teamId', isAuthenticatedUser, updateCardPositions);
 
 module.exports = router;

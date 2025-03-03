@@ -87,14 +87,15 @@ export const updateCard = createAsyncThunk(
 
 export const deleteCard = createAsyncThunk(
   'cards/deleteCard',
-  async (cardId, { getState, rejectWithValue }) => {
+  async ({ cardId, listId }, { getState, rejectWithValue }) => {
     try {
       const response = await axios.delete(
         `${import.meta.env.VITE_API}/deleteCard/${cardId}`,
         getAuthHeader(getState)
       );
-      return { cardId: response.data.cardId, listId: response.data.listId };
+      return { cardId, listId }; // Return both cardId and listId
     } catch (error) {
+      console.error('Delete card error:', error);
       return rejectWithValue(error.response?.data?.message || 'Failed to delete card');
     }
   }
@@ -102,18 +103,29 @@ export const deleteCard = createAsyncThunk(
 
 export const updateCardPositions = createAsyncThunk(
   'cards/updatePositions',
-  async (positionData, { getState, rejectWithValue }) => {
+  async ({ teamId, sourceListId, destinationListId, cards }, { getState, rejectWithValue, dispatch }) => {
     try {
       const response = await axios.put(
-        `${import.meta.env.VITE_API}/updateCardPositions/${positionData.teamId}`,
+        `${import.meta.env.VITE_API}/updateCardPositions/${teamId}`,
         {
-          sourceListId: positionData.sourceListId,
-          destinationListId: positionData.destinationListId,
-          cards: positionData.cards
+          sourceListId,
+          destinationListId,
+          cards
         },
         getAuthHeader(getState)
       );
-      return response.data;
+      
+      // After successful update, fetch fresh data for both source and destination lists
+      await dispatch(fetchCards({ teamId, listId: sourceListId }));
+      if (sourceListId !== destinationListId) {
+        await dispatch(fetchCards({ teamId, listId: destinationListId }));
+      }
+
+      return {
+        sourceListId,
+        destinationListId,
+        cards: response.data
+      };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update card positions');
     }
@@ -219,23 +231,42 @@ const cardSlice = createSlice({
           state.cardsByList[listId] = state.cardsByList[listId].filter(card => card._id !== cardId);
         }
         state.success = true;
+        state.error = null;
+      })
+      .addCase(deleteCard.rejected, (state, action) => {
+        state.error = action.payload;
+        state.success = false;
       })
       
       // Update card positions
       .addCase(updateCardPositions.fulfilled, (state, action) => {
-        const { sourceListCards, destinationListCards } = action.payload;
+        const { sourceListId, destinationListId, cards } = action.payload;
         
-        if (sourceListCards.length > 0) {
-          const sourceListId = sourceListCards[0].listId;
-          state.cardsByList[sourceListId] = sourceListCards;
+        // Update the cards in their respective lists
+        if (cards) {
+          cards.forEach(card => {
+            const listId = card.listId;
+            if (!state.cardsByList[listId]) {
+              state.cardsByList[listId] = [];
+            }
+            
+            // Remove card from old position
+            state.cardsByList[listId] = state.cardsByList[listId].filter(c => c._id !== card._id);
+            // Add card in new position
+            state.cardsByList[listId].push(card);
+          });
+          
+          // Sort cards by position in each affected list
+          if (state.cardsByList[sourceListId]) {
+            state.cardsByList[sourceListId].sort((a, b) => a.position - b.position);
+          }
+          if (destinationListId !== sourceListId && state.cardsByList[destinationListId]) {
+            state.cardsByList[destinationListId].sort((a, b) => a.position - b.position);
+          }
         }
         
-        if (destinationListCards.length > 0) {
-          const destinationListId = destinationListCards[0].listId;
-          state.cardsByList[destinationListId] = destinationListCards;
-        }
-        
-        state.success = true;
+        state.loading = false;
+        state.error = null;
       });
   }
 });

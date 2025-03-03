@@ -34,3 +34,15 @@ export const calculatePosition = (before, after) => {
   if (!after) return before + 1000; // Insert at end
   return (before + after) / 2; // Insert between
 };
+
+export const updateCardsOrder = (cards, startIndex, endIndex) => {
+  const result = Array.from(cards);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(endIndex, 0, removed);
+
+  // Recalculate positions for all affected cards
+  return result.map((card, index) => ({
+    ...card,
+    position: index * 16384 // Using larger gaps for card positions
+  }));
+};

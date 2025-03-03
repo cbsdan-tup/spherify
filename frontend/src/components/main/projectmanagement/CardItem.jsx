@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useDispatch } from 'react-redux';
-import { deleteCard } from '../../../redux/cardSlice';
+import { deleteCard, updateCardPositions } from '../../../redux/cardSlice';
 import CardModal from './CardModal';
 import "./CardItem.css";
 
-const CardItem = ({ card }) => {
+const CardItem = ({ card, listId, teamId }) => {
   const [showModal, setShowModal] = useState(false);
+  const dragTimeoutRef = useRef(null);
+  const isDraggingRef = useRef(false);
   const dispatch = useDispatch();
 
   const {
@@ -16,17 +18,48 @@ const CardItem = ({ card }) => {
     setNodeRef,
     transform,
     transition,
+    isDragging
   } = useSortable({
     id: card._id,
     data: {
       type: "CARD",
-      card
+      card,
+      listId
     }
   });
 
+  // Modified drag handler
+  const handleDragStart = () => {
+    isDraggingRef.current = true;
+    if (dragTimeoutRef.current) {
+      clearTimeout(dragTimeoutRef.current);
+    }
+  };
+
+  // Modified click handler
+  const handleCardClick = (e) => {
+    e.preventDefault();
+    // If we're dragging, don't trigger click
+    if (isDraggingRef.current) {
+      return;
+    }
+    setShowModal(true);
+  };
+
+  // Add drag end handler
+  const handleDragEnd = () => {
+    // Reset dragging state after a short delay
+    setTimeout(() => {
+      isDraggingRef.current = false;
+    }, 100);
+  };
+
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    position: 'relative',
+    zIndex: isDragging ? 1000 : 1
   };
 
   const getPriorityColor = (priority) => {
@@ -39,15 +72,18 @@ const CardItem = ({ card }) => {
     }
   };
 
-  const handleCardClick = (e) => {
-    e.stopPropagation();
-    setShowModal(true);
-  };
-
-  const handleDelete = async () => {
+  const handleDelete = async (e) => {
+    e.stopPropagation(); // Prevent card click event
     if (window.confirm('Are you sure you want to delete this card?')) {
       try {
-        await dispatch(deleteCard(card._id));
+        const resultAction = await dispatch(deleteCard({
+          cardId: card._id,
+          listId: listId
+        }));
+        
+        if (!deleteCard.fulfilled.match(resultAction)) {
+          console.error('Failed to delete card:', resultAction.error);
+        }
       } catch (error) {
         console.error('Error deleting card:', error);
       }
@@ -67,23 +103,19 @@ const CardItem = ({ card }) => {
       <div 
         ref={setNodeRef} 
         style={style} 
-        {...attributes} 
-        {...listeners}
         className="card-item"
-        onClick={handleCardClick}
       >
-        {card.assignedTo && card.assignedTo.length > 0 && (
-          <div className="card-assigned-user">
-            <img 
-              src={card.assignedTo[0].avatar?.url || "/images/account.png"}
-              alt={card.assignedTo[0].firstName}
-              className="assigned-avatar"
-              title={`${card.assignedTo[0].firstName} ${card.assignedTo[0].lastName}`}
-            />
-          </div>
-        )}
-        
-        <div className="card-content">
+        {/* Drag handle area */}
+        <div 
+          className="card-drag-handle"
+          {...attributes}
+          {...listeners}
+        >
+          <span className="drag-dots">⋮⋮</span>
+        </div>
+
+        {/* Card content - now clickable for modal */}
+        <div className="card-content" onClick={handleCardClick}>
           <div className="card-title">
             {card.cardTitle || card.title}
           </div>
@@ -122,6 +154,7 @@ const CardItem = ({ card }) => {
             </div>
           )}
         </div>
+        
         <div className="card-actions">
           <button 
             className="delete-button"
@@ -138,9 +171,9 @@ const CardItem = ({ card }) => {
       {showModal && (
         <CardModal 
           onClose={() => setShowModal(false)}
-          listId={card.listId}
-          teamId={card.teamId}
-          mode="edit" // Changed from "view" to "edit"
+          listId={listId}
+          teamId={teamId}
+          mode="view"
           initialData={card}
         />
       )}

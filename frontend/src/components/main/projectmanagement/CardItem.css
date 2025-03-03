@@ -3,7 +3,7 @@
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   margin-bottom: 8px;
-  padding: 8px;
+  padding: 0;  /* Remove existing padding */
   cursor: pointer;
   position: relative;
   display: flex;
@@ -39,6 +39,7 @@
   display: flex;
   gap: 4px;
   margin-top: 4px;
+  flex-wrap: wrap; /* Allow wrapping for multiple avatars */
 }
 
 .member-avatar {
@@ -97,7 +98,9 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-right: 64px; /* Increased to accommodate avatar and delete button */
+  padding-right: 24px; /* Reduced padding since we removed the duplicate avatar */
+  cursor: pointer;
+  padding: 8px;
 }
 
 .checklist-progress {
@@ -161,10 +164,7 @@
 }
 
 .card-assigned-user {
-  position: absolute;
-  top: 8px;
-  right: 32px; /* Leave space for delete button */
-  z-index: 1;
+  display: none;
 }
 
 .assigned-avatar {
@@ -179,4 +179,22 @@
 .assigned-avatar:hover {
   transform: scale(1.1);
   transition: transform 0.2s ease;
+}
+
+.card-drag-handle {
+  padding: 4px 8px;
+  cursor: grab;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+}
+
+.card-drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-dots {
+  color: #999;
+  font-size: 14px;
+  user-select: none;
 }
