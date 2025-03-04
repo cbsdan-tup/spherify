@@ -6,9 +6,10 @@
 }
 
 .list-card {
-  background-color: #f1f2f4;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  background-color: #ebecf0;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05), 
+              inset 0 0 0 1px rgba(0, 0, 0, 0.1);
   width: 100%;
   min-height: 100px;
   display: flex;
@@ -16,8 +17,11 @@
 }
 
 .list-header {
-  padding: 8px 16px;
+  padding: 12px 16px;
   cursor: grab;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-radius: 12px 12px 0 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .list-header:active {
@@ -90,15 +94,18 @@
 
 .list-content {
   flex: 1;
-  overflow-y: auto;
-  padding: 8px;
+  overflow-y: visible;
+  padding: 12px;
   min-height: 100px;
+  background-color: rgba(255, 255, 255, 0.4);
 }
 
 .cards-container {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
+  min-height: 8px;
+  padding: 4px;
 }
 
 .card-wrapper {
@@ -113,26 +120,29 @@
 }
 
 .list-footer {
-  padding: 8px;
-  border-top: 1px solid #eee;
+  padding: 12px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 0 0 12px 12px;
 }
 
 .add-card-button {
   width: 100%;
-  padding: 8px;
-  background: transparent;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.6);
   border: none;
-  border-radius: 3px;
-  color: #5e6c84;
+  border-radius: 6px;
+  color: #44546f;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
+  transition: all 0.2s ease;
 }
 
 .add-card-button:hover {
-  background: rgba(0, 0, 0, 0.04);
+  background: rgba(255, 255, 255, 0.8);
   color: #172b4d;
 }
 
