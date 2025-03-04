@@ -31,6 +31,8 @@ function Gantt() {
   });
   const [showColorPresetModal, setShowColorPresetModal] = useState(false);
   const [newPreset, setNewPreset] = useState({ label: '', color: '#000000' });
+  const [editingPresetIndex, setEditingPresetIndex] = useState(null);
+  const [showPresetActionMenu, setShowPresetActionMenu] = useState(null);
 
   const ganttRef = useRef(null);
   const [activeYear, setActiveYear] = useState(null);
@@ -299,12 +301,134 @@ function Gantt() {
 
   const handleAddColorPreset = () => {
     if (newPreset.label.trim()) {
-      const updatedPresets = [...colorPresets, newPreset];
+      let updatedPresets;
+      
+      if (editingPresetIndex !== null) {
+        // Update existing preset
+        updatedPresets = [...colorPresets];
+        updatedPresets[editingPresetIndex] = newPreset;
+        
+        // Update any tasks using this category
+        if (tasks.length > 0) {
+          const oldLabel = colorPresets[editingPresetIndex].label;
+          const tasksToUpdate = tasks.filter(task => task.colorLabel === oldLabel);
+          
+          tasksToUpdate.forEach(async task => {
+            try {
+              await dispatch(updateTask({
+                taskId: task._id,
+                taskData: { 
+                  color: newPreset.color, 
+                  colorLabel: newPreset.label,
+                  teamId: currentTeamId
+                }
+              })).unwrap();
+            } catch (err) {
+              toast.error(`Failed to update task ${task.title}: ${err.message}`);
+            }
+          });
+          
+          if (tasksToUpdate.length > 0) {
+            toast.info(`Updated ${tasksToUpdate.length} tasks with the new category settings`);
+            dispatch(fetchTasks(currentTeamId));
+          }
+        }
+        
+        toast.success("Category updated successfully");
+      } else {
+        // Add new preset
+        updatedPresets = [...colorPresets, newPreset];
+        toast.success("Category added successfully");
+      }
+      
       setColorPresets(updatedPresets);
       localStorage.setItem('ganttColorPresets', JSON.stringify(updatedPresets));
       setNewPreset({ label: '', color: '#000000' });
+      setEditingPresetIndex(null);
       setShowColorPresetModal(false);
     }
+  };
+
+  const handleEditPreset = (index) => {
+    setEditingPresetIndex(index);
+    setNewPreset({ ...colorPresets[index] });
+    setShowColorPresetModal(true);
+    setShowPresetActionMenu(null);
+  };
+
+  const handleDeletePreset = (index) => {
+    const presetToDelete = colorPresets[index];
+    
+    // Check if preset is being used by any tasks
+    const tasksUsingPreset = tasks.filter(task => task.colorLabel === presetToDelete.label);
+    
+    if (tasksUsingPreset.length > 0) {
+      toast.info(
+        <div>
+          <p>This category is used by {tasksUsingPreset.length} tasks. Deleting it will reset them to the Default category.</p>
+          <div className="d-flex justify-content-end gap-2 mt-2">
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              onClick={() => toast.dismiss()}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="danger" 
+              size="sm" 
+              onClick={async () => {
+                confirmDeletePreset(index, tasksUsingPreset);
+                toast.dismiss();
+              }}
+            >
+              Delete Anyway
+            </Button>
+          </div>
+        </div>,
+        { autoClose: false }
+      );
+    } else {
+      confirmDeletePreset(index);
+    }
+    
+    setShowPresetActionMenu(null);
+  };
+
+  const confirmDeletePreset = async (index, affectedTasks = []) => {
+    // Remove the preset
+    const updatedPresets = colorPresets.filter((_, i) => i !== index);
+    setColorPresets(updatedPresets);
+    localStorage.setItem('ganttColorPresets', JSON.stringify(updatedPresets));
+    
+    // Update affected tasks
+    if (affectedTasks.length > 0) {
+      for (const task of affectedTasks) {
+        try {
+          await dispatch(updateTask({
+            taskId: task._id,
+            taskData: { 
+              color: '#007bff', 
+              colorLabel: 'Default',
+              teamId: currentTeamId
+            }
+          })).unwrap();
+        } catch (err) {
+          console.error(`Failed to update task ${task.title}:`, err);
+        }
+      }
+      
+      dispatch(fetchTasks(currentTeamId));
+      toast.success(`Category deleted and ${affectedTasks.length} tasks updated`);
+    } else {
+      toast.success("Category deleted successfully");
+    }
+  };
+
+  const handleCancelColorPreset = () => {
+    setNewPreset({ label: '', color: '#000000' });
+    setEditingPresetIndex(null);
+    setShowColorPresetModal(false);
   };
 
   const getContrastColor = (hexcolor) => {
@@ -567,29 +691,62 @@ function Gantt() {
                   overflowY: 'auto'
                 }}>
                   {colorPresets.map((preset, index) => (
-                    <button
-                      key={index}
-                      className="dropdown-item d-flex justify-content-between align-items-center"
-                      type="button"
-                      onClick={() => {
-                        setTaskForm({
-                          ...taskForm,
-                          color: preset.color,
-                          colorLabel: preset.label
-                        });
-                        // Close dropdown
-                        document.querySelector('.dropdown').classList.remove('show');
-                      }}
-                      style={{
-                        backgroundColor: preset.color,
-                        color: getContrastColor(preset.color)
-                      }}
+                    <div 
+                      key={index} 
+                      className="d-flex align-items-center preset-item position-relative"
+                      onMouseEnter={() => setShowPresetActionMenu(index)}
+                      onMouseLeave={() => setShowPresetActionMenu(null)}
                     >
-                      <span>{preset.label}</span>
-                      {taskForm.colorLabel === preset.label && (
-                        <i className="fas fa-check"></i>
+                      <button
+                        className="dropdown-item d-flex justify-content-between align-items-center flex-grow-1"
+                        type="button"
+                        onClick={() => {
+                          setTaskForm({
+                            ...taskForm,
+                            color: preset.color,
+                            colorLabel: preset.label
+                          });
+                          // Close dropdown
+                          document.querySelector('.dropdown').classList.remove('show');
+                        }}
+                        style={{
+                          backgroundColor: preset.color,
+                          color: getContrastColor(preset.color)
+                        }}
+                      >
+                        <span>{preset.label}</span>
+                        {taskForm.colorLabel === preset.label && (
+                          <i className="fas fa-check"></i>
+                        )}
+                      </button>
+                      
+                      {showPresetActionMenu === index && index > 3 && (
+                        <div className="preset-actions d-flex position-absolute end-0 me-2">
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="p-1 text-dark"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditPreset(index);
+                            }}
+                          >
+                            <i className="fas fa-edit"></i>
+                          </Button>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="p-1 text-danger"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeletePreset(index);
+                            }}
+                          >
+                            <i className="fas fa-trash"></i>
+                          </Button>
+                        </div>
                       )}
-                    </button>
+                    </div>
                   ))}
                   <div className="dropdown-divider"></div>
                   <button
@@ -620,9 +777,11 @@ function Gantt() {
         </Modal.Body>
       </Modal>
 
-      <Modal show={showColorPresetModal} onHide={() => setShowColorPresetModal(false)}>
+      <Modal show={showColorPresetModal} onHide={handleCancelColorPreset}>
         <Modal.Header closeButton>
-          <Modal.Title>Add Color Category</Modal.Title>
+          <Modal.Title>
+            {editingPresetIndex !== null ? 'Edit Color Category' : 'Add Color Category'}
+          </Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form.Group className="mb-3">
@@ -641,13 +800,21 @@ function Gantt() {
               onChange={(e) => setNewPreset({ ...newPreset, color: e.target.value })}
             />
           </Form.Group>
+          <div className="mb-3 p-2" style={{ 
+            backgroundColor: newPreset.color,
+            color: getContrastColor(newPreset.color),
+            borderRadius: '4px',
+            padding: '8px'
+          }}>
+            <div>Preview: {newPreset.label}</div>
+          </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowColorPresetModal(false)}>
+          <Button variant="secondary" onClick={handleCancelColorPreset}>
             Cancel
           </Button>
           <Button variant="primary" onClick={handleAddColorPreset}>
-            Add Category
+            {editingPresetIndex !== null ? 'Save Changes' : 'Add Category'}
           </Button>
         </Modal.Footer>
       </Modal>
