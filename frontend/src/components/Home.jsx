@@ -115,7 +115,7 @@ const Home = () => {
 
           <div className="feature-item">
             <img
-              src="/images/data analytics.png"
+              src="/images/Data Analytics.png"
               alt="Data Analytics"
               className="feature-video"
             />
