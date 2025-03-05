@@ -194,7 +194,7 @@ if (redoButton) {
   // Fetch user from Redux and set currentUser
   useEffect(() => {
   if (user) {
-    setCurrentUser(user.firstName + ' ' + user.lastName); // Set full name of user
+    setCurrentUser(user); // Set full name of user
   } else {
     console.log("User is not yet available in Redux");
   }
@@ -213,7 +213,7 @@ if (redoButton) {
     if (!users) return; // Ensure valid users array
 
     if (receivedDocumentId === documentId) {
-      // Update the editingUsers state to include all users editing the document
+      console.log("Editing Users: ", users);
       setEditingUsers(users);
     }
   };
@@ -229,12 +229,12 @@ if (redoButton) {
     socket.emit('update-user-status', { documentId, user: currentUser });
   };
 
-  quill.on('text-change', updateUserStatus);
+  // Emit user status once when the component mounts
+  updateUserStatus();
 
   // Cleanup listeners on unmount
   return () => {
     socket.off("user-editing", userStatusHandler);
-    quill.off('text-change', updateUserStatus);
   };
   }, [socket, quill, currentUser, documentId]); // Re-run whenever currentUser or documentId changes
 
@@ -375,12 +375,13 @@ return (
         {editingUsers.length > 0 ? (
           editingUsers.map((user, index) => (
             <li key={index} className="editing-user">
-              {user}
+              <img src={user?.avatar?.url || "/images/account.png"} alt={user?.firstName} />
+              <div className="tooltip d-none">{`${user?.firstName} ${user?.lastName}`} </div>
             </li>
           ))
         ) : (
-          <li className="no-users-editing">
-            {currentUser ? `${currentUser} is editing` : 'No users editing'}
+          <li className="no-users-editing" key={1}>
+            {currentUser ? `${currentUser?.firstName} ${currentUser?.lastName} is editing` : 'No users editing'}
           </li> // Display current user or 'No users editing'
         )}
       </ul>

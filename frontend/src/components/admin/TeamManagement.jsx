@@ -6,30 +6,23 @@ import { errMsg } from "../../utils/helper";
 import Swal from "sweetalert2";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import TeamReportModal from "./modals/TeamReportModal";
+// Import FontAwesome if not already included in your main file
+import "@fortawesome/fontawesome-free/css/all.min.css";
+// Import the CSS module with scoped Bootstrap styles
+import styles from "./TeamManagement.module.css";
 
 const TeamManagement = () => {
   const [teams, setTeams] = useState([]);
   const [search, setSearch] = useState("");
   const [filteredTeams, setFilteredTeams] = useState([]);
   const [refresh, setRefresh] = useState(false);
-
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedTeam, setSelectedTeam] = useState(null);
+  const [isLoadingStorageData, setIsLoadingStorageData] = useState(false);
+  
   const token = useSelector((state) => state.auth.token);
-
-  useEffect(() => {
-    // Dynamically add Bootstrap CSS
-    const link = document.createElement("link");
-    link.href = "https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css";
-    link.rel = "stylesheet";
-    link.id = "bootstrap-css";
-    document.head.appendChild(link);
-
-    return () => {
-      const existingLink = document.getElementById("bootstrap-css");
-      if (existingLink) {
-        existingLink.remove();
-      }
-    };
-  }, []);
+  const nextcloudConfig = useSelector((state) => state.configurations.nextcloud);
 
   const fetchTeams = async () => {
     try {
@@ -44,6 +37,26 @@ const TeamManagement = () => {
     } catch (error) {
       console.log(error);
       errMsg(`Error fetching teams: ${error.message}`);
+    }
+  };
+  
+  const fetchTeamStorageUsage = async (teamId) => {
+    try {
+      setIsLoadingStorageData(true);
+      const response = await axios.get(
+        `${import.meta.env.VITE_API}/getFolderSize/?path=${encodeURIComponent(teamId)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      return response.data?.size || 0;
+    } catch (error) {
+      console.error("Error fetching team storage:", error);
+      return 0;
+    } finally {
+      setIsLoadingStorageData(false);
     }
   };
 
@@ -76,6 +89,31 @@ const TeamManagement = () => {
         }
       }
     });
+  };
+
+  const openTeamReport = async (team) => {
+    // First show the modal with loading state
+    setSelectedTeam({
+      ...team,
+      storageUsage: null, // Will be populated after API call
+      storageLimit: nextcloudConfig?.maxSizePerTeam || 0,
+      storageType: nextcloudConfig?.storageTypePerTeam || "standard"
+    });
+    setShowReportModal(true);
+    
+    // Then fetch storage data only for this specific team
+    const storageUsage = await fetchTeamStorageUsage(team._id);
+    
+    // Update the team data with storage information
+    setSelectedTeam(prev => ({
+      ...prev,
+      storageUsage: storageUsage
+    }));
+  };
+
+  const closeTeamReport = () => {
+    setShowReportModal(false);
+    setSelectedTeam(null);
   };
 
   useEffect(() => {
@@ -128,6 +166,11 @@ const TeamManagement = () => {
       center: true,
     },
     {
+      name: "Storage",
+      cell: (row) => "Click Report", // Just placeholder text
+      sortable: false,
+    },
+    {
       name: "Created At",
       selector: (row) => new Date(row.createdAt).toLocaleDateString(),
       sortable: true,
@@ -146,12 +189,23 @@ const TeamManagement = () => {
     {
       name: "Actions",
       cell: (row) => (
-        <button
-          className={`btn ${row.isDisabled ? "btn-success" : "btn-danger"}`}
-          onClick={() => toggleStatus(row._id, row.isDisabled)}
-        >
-          {row.isDisabled ? "Enable" : "Disable"}
-        </button>
+        <div className="d-flex flex-column" style={{ gap: "0.1rem" }}>
+          <button
+            className={`btn ${row.isDisabled ? "btn-success" : "btn-danger"}`}
+            onClick={() => toggleStatus(row._id, row.isDisabled)}
+            style={{fontSize: "0.8rem"}}
+          >
+            <i className={`fa-solid fa-${row.isDisabled ? "check" : "times"}`} style={{width: "1rem", height: "1rem"}}></i>
+            {row.isDisabled ? "Enable" : "Disable"}
+          </button>
+          <button
+            className="btn btn-primary d-flex align-items-center"
+            onClick={() => openTeamReport(row)}
+            style={{fontSize: "0.8rem"}}
+          >
+            <i className="fa-solid fa-chart-line" style={{width: "1rem", height: "1rem"}}></i> REPORT
+          </button>
+        </div>
       ),
       center: true,
     },
@@ -192,7 +246,6 @@ const TeamManagement = () => {
 
     pdf.addImage(imgData, "PNG", margin, margin, contentWidth, contentHeight);
 
-    // ✅ Add watermark
     pdf.setFont("Lexend");
     pdf.setFontSize(14);
     pdf.setTextColor(215, 215, 215);
@@ -214,7 +267,7 @@ const TeamManagement = () => {
   };
 
   return (
-    <div className="team-management-container">
+    <div className={`team-management-container ${styles.bootstrapContainer}`}>
       <h2 className="title">Team Management</h2>
       <input
         type="text"
@@ -240,6 +293,13 @@ const TeamManagement = () => {
           className="teams-datatable"
         />
       </div>
+
+      <TeamReportModal
+        show={showReportModal}
+        onHide={closeTeamReport}
+        team={selectedTeam}
+        isLoading={isLoadingStorageData}
+      />
     </div>
   );
 };

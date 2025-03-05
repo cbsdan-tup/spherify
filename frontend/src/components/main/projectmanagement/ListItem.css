@@ -6,7 +6,7 @@
 }
 
 .list-card {
-  background-color: #f1f2f4;
+  background-color: var(--tertiary-color);
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
   width: 100%;

@@ -11,6 +11,9 @@
   z-index: 9000;
 }
 
+.kanban-create-modal .form-group label{
+  color: var(--header-text-color);
+}
 .card-modal-content {
   background-color: white;
   padding: 24px;
@@ -31,7 +34,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .card-modal-header h3 {

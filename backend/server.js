@@ -39,6 +39,7 @@ const fileSharingRoutes = require("./routes/fileSharingRoutes");
 const teamRequest = require("./routes/teamRequests");
 const ganttRoutes = require("./routes/gantt/ganttRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const teamReportRoutes = require("./routes/teamReportRoutes");
 
 console.log(process.env.NODE_ENV);
 
@@ -106,6 +107,8 @@ app.use("/api/v1", teamRequest);
 app.use("/api/v1", teamRequest);
 app.use("/api/v1", ganttRoutes);
 app.use("/api/v1", adminRoutes);
+app.use("/api/v1", teamReportRoutes);
+
 //404 not found routes
 app.all("*", (req, res) => {
   res.status(404);

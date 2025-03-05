@@ -16,7 +16,7 @@ const AdminPage = () => {
     <>
       <Header />
       <LeftSidePanel isShow={isShowLeftPanel} setIsShow={setIsShowLeftPanel} />
-      <div className={`admin-page-content container ${!isShowLeftPanel ? "full" : ""}`}>
+      <div className={`admin-page-content ${!isShowLeftPanel ? "full" : ""}`}>
         <Routes>
           <Route index element={<Dashboard />} />
           <Route path="profile" element={<Settings />} />

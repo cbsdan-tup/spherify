@@ -13,7 +13,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { fetchTeamMembers } from "../../../functions/TeamFunctions";
 
-function Calendar({setRefresh}) {
+function Calendar({setRefresh = ()=>{}}) {
   const dispatch = useDispatch();
   const { currentTeamId } = useSelector((state) => state.team);
   const { events, error } = useSelector((state) => state.calendar);

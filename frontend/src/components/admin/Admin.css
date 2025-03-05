@@ -52,12 +52,12 @@
 }
 
 .admin-page-content {
-  max-width: 1150px!important;
   padding: 1rem;
   margin-left: 300px !important;
 }
 
 .admin-page-content.full {
+  max-width: 1150px!important;
   margin-left: auto !important;
   margin-right: auto !important;
 }
@@ -466,7 +466,6 @@
 }
 
 .admin-page-content .team-management-container {
-  max-width: 1200px;
   overflow: auto;
 }
 

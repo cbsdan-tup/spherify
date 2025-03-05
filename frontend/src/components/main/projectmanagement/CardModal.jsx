@@ -196,7 +196,7 @@ const CardModal = ({ onClose, listId, teamId, mode = "create", initialData = {} 
   );
 
   return (
-    <div className="card-modal-overlay" onClick={onClose}>
+    <div className="card-modal-overlay kanban-create-modal" onClick={onClose}>
       <div className="card-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="card-modal-header">
           <h3>{mode === "create" ? "Add New Card" : isEditing ? "Edit Card" : "Card Details"}</h3>
