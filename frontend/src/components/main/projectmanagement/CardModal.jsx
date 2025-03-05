@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import axios from 'axios';
-import { createCard, updateCard, addOptimisticCard, deleteOptimisticCard, fetchCards } from "../../../redux/cardSlice";
+import { createCard, updateCard, addOptimisticCard, deleteOptimisticCard, fetchCards, deleteCard } from "../../../redux/cardSlice";
 import { getToken } from "../../../utils/helper";
 import "./CardModal.css";
 
@@ -129,9 +129,18 @@ const CardModal = ({ onClose, listId, teamId, mode = "create", initialData = {} 
   const handleDelete = async () => {
     if (window.confirm('Are you sure you want to delete this card?')) {
       try {
-        await dispatch(deleteCard(initialData._id));
-        onClose();
+        const resultAction = await dispatch(deleteCard({
+          cardId: initialData._id,
+          listId: initialData.listId
+        }));
+        
+        if (deleteCard.fulfilled.match(resultAction)) {
+          onClose();
+        } else {
+          setError(resultAction.error?.message || 'Failed to delete card');
+        }
       } catch (error) {
+        console.error('Error deleting card:', error);
         setError('Failed to delete card');
       }
     }

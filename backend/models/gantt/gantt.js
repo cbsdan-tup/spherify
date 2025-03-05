@@ -18,6 +18,16 @@ const GanttTaskSchema = new mongoose.Schema({
   endDate: {
     type: Date,
     required: true
+  },
+  color: {
+    type: String,
+    default: '#007bff', // Default blue color
+    match: [/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, 'Please use a valid hex color']
+  },
+  colorLabel: {
+    type: String,
+    trim: true,
+    default: 'Default'
   }
 }, {
   timestamps: true

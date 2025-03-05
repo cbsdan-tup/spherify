@@ -33,6 +33,11 @@ exports.createTask = [
   body('title').trim().isLength({ min: 1 }).withMessage('Title is required'),
   body('startDate').isISO8601().withMessage('Valid start date is required'),
   body('endDate').isISO8601().withMessage('Valid end date is required'),
+  body('color')
+    .optional()
+    .matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+    .withMessage('Invalid color format'),
+  body('colorLabel').optional().trim(),
 
   async (req, res) => {
     const errors = validationResult(req);
@@ -41,7 +46,7 @@ exports.createTask = [
     }
 
     try {
-      const { teamId, title, startDate, endDate } = req.body;
+      const { teamId, title, startDate, endDate, color, colorLabel } = req.body;
 
       // Verify team membership
       const team = await Team.findOne({
@@ -64,7 +69,9 @@ exports.createTask = [
         team: teamId,
         title,
         startDate: new Date(startDate),
-        endDate: new Date(endDate)
+        endDate: new Date(endDate),
+        color: color || '#007bff',
+        colorLabel: colorLabel || 'Default'
       });
 
       await task.save();
@@ -84,6 +91,11 @@ exports.updateTask = [
   body('title').optional().trim().isLength({ min: 1 }),
   body('startDate').optional().isISO8601(),
   body('endDate').optional().isISO8601(),
+  body('color')
+    .optional()
+    .matches(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+    .withMessage('Invalid color format'),
+  body('colorLabel').optional().trim(),
 
   async (req, res) => {
     const errors = validationResult(req);
@@ -118,9 +130,15 @@ exports.updateTask = [
         }
       }
 
+      // Ensure color and colorLabel stay in sync
+      const updateData = { ...req.body };
+      if (updateData.color && !updateData.colorLabel) {
+        updateData.colorLabel = 'Custom';
+      }
+
       const updatedTask = await GanttTask.findByIdAndUpdate(
         taskId,
-        { ...req.body },
+        updateData,
         { new: true }
       );
 
