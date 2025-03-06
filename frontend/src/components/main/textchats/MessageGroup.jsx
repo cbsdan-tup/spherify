@@ -81,11 +81,46 @@ const MessageGroup = ({ groupId }) => {
     socket.emit("joinGroup", groupId);
 
     socket.on("receiveMessage", (message) => {
+      // Make sure seenBy is properly initialized if it's undefined
+      if (!message.seenBy) {
+        message.seenBy = [];
+      }
       setMessages((prev) => [...prev, message]);
     });
 
     return () => socket.off("receiveMessage");
   }, [groupId]);
+
+  // 🔥 Mark messages as seen
+  useEffect(() => {
+    if (!groupId || !user || !messages.length) return;
+    
+    const lastMessage = messages[messages.length - 1];
+    // Only emit seen for messages not sent by the current user and if user hasn't already seen it
+    if (lastMessage && lastMessage.sender._id !== user._id) {
+      const userAlreadySeen = lastMessage.seenBy && 
+        lastMessage.seenBy.some(seen => seen.user._id === user._id);
+      
+      if (!userAlreadySeen) {
+        socket.emit('messageSeen', {
+          messageId: lastMessage._id,
+          groupId,
+          userId: user._id
+        });
+      }
+    }
+  }, [messages, groupId, user]);
+
+  // Handle incoming seen notifications
+  useEffect(() => {
+    socket.on('messageSeenUpdate', (updatedMessage) => {
+      setMessages(prev => 
+        prev.map(msg => msg._id === updatedMessage._id ? updatedMessage : msg)
+      );
+    });
+
+    return () => socket.off('messageSeenUpdate');
+  }, []);
 
   // 🔥 Send a message
   const sendMessage = async () => {
@@ -139,6 +174,32 @@ const MessageGroup = ({ groupId }) => {
             <Message index={index} msg={msg} user={user} />
           </React.Fragment>
         ))}
+
+        {/* 🔥 Message seen indicators - Improved condition */}
+        {messages.length > 0 && 
+          messages[messages.length - 1]?.seenBy && 
+          Array.isArray(messages[messages.length - 1].seenBy) && 
+          messages[messages.length - 1].seenBy.length > 0 && (
+            <div className="message-seen-container">
+              <div className="message-seen-avatars">
+                {messages[messages.length - 1].seenBy.map((seen, index) => (
+                  <div key={index} className="message-seen-avatar" 
+                      title={`${seen.user?.firstName || 'User'} ${seen.user?.lastName || ''} • ${moment(seen.seenAt).format('MMM D, YYYY h:mm A')}`}>
+                    <img 
+                      src={(seen.user?.avatar?.url) || "/images/account.png"} 
+                      alt={`${seen.user?.firstName || 'User'} ${seen.user?.lastName || ''}`} 
+                      className="seen-avatar-image" 
+                    />
+                    <div className="seen-tooltip">
+                      <span>{seen.user?.firstName || 'User'} {seen.user?.lastName || ''}</span>
+                      <span>{moment(seen.seenAt).format('MMM D, YYYY h:mm A')}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )
+        }
 
         {/* 🔥 Sending preview */}
         {isSending && newImages.length > 0 && (

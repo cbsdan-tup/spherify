@@ -5,6 +5,10 @@ const MessageSchema = new mongoose.Schema({
   content: { type: String, required: false },
   images: [{ publicId: { type: String }, url: { type: String } }],
   createdAt: { type: Date, default: Date.now },
+  seenBy: [{ 
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    seenAt: { type: Date, default: Date.now }
+  }]
 });
 
 const MessageGroupSchema = new mongoose.Schema({

@@ -326,3 +326,48 @@
   justify-content: center;
   color: var(--primary-color);
 }
+
+.message-seen-container {
+  margin-top: 4px;
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 8px;
+}
+
+.message-seen-avatars {
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.message-seen-avatar {
+  margin-left: -4px;
+  position: relative;
+  cursor: pointer;
+}
+
+.seen-avatar-image {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid white;
+}
+
+.seen-tooltip {
+  position: absolute;
+  bottom: 100%;
+  right: 0;
+  background-color: #333;
+  color: white;
+  padding: 5px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  display: none;
+  white-space: nowrap;
+  flex-direction: column;
+  z-index: 10;
+}
+
+.message-seen-avatar:hover .seen-tooltip {
+  display: flex;
+}

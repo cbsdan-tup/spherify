@@ -122,10 +122,26 @@ exports.deleteMessageGroup = async (req, res) => {
 exports.getMessages = async (req, res) => {
   try {
     const { groupId } = req.params;
-    const group = await MessageGroup.findById(groupId).populate("messages.sender", "firstName lastName email avatar status statusUpdatedAt");
+    
+    // Enhanced population to ensure all needed fields are available
+    const group = await MessageGroup.findById(groupId)
+      .populate("messages.sender", "firstName lastName email avatar status statusUpdatedAt")
+      .populate("messages.seenBy.user", "firstName lastName email avatar")
+      .lean(); // Use lean() for better performance
+    
     if (!group) return res.status(404).json({ error: "Group not found" });
-    res.json(group.messages);
+    
+    // Ensure seenBy is initialized for all messages
+    const messages = group.messages.map(msg => {
+      if (!msg.seenBy) {
+        msg.seenBy = [];
+      }
+      return msg;
+    });
+    
+    res.json(messages);
   } catch (error) {
+    console.error("Error fetching messages:", error);
     res.status(500).json({ error: "Error fetching messages" });
   }
 };

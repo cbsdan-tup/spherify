@@ -260,21 +260,28 @@ io.on("connection", (socket) => {
         );
       }
 
+      // Create new message with the sender automatically added to seenBy array
       const newMessage = {
         sender: senderDetails._id,
         content,
         createdAt: new Date(),
         images: uploadedImages,
+        seenBy: [{ user: senderDetails._id, seenAt: new Date() }] // Add sender as first seener
       };
 
       messageGroup.messages.push(newMessage);
       await messageGroup.save();
 
+      // Get the newly created message with its ID from the database
+      const savedMessage = messageGroup.messages[messageGroup.messages.length - 1];
+
       // Notify sender that message is sent
       socket.emit("messageSentConfirmation");
-      // Emit the message with populated sender details
+      
+      // Emit the message with populated sender details and seenBy information
       io.to(groupId).emit("receiveMessage", {
-        ...newMessage,
+        ...savedMessage.toObject(),
+        _id: savedMessage._id, // Ensure _id is included
         sender: {
           _id: senderDetails._id,
           firstName: senderDetails.firstName,
@@ -282,9 +289,56 @@ io.on("connection", (socket) => {
           email: senderDetails.email,
           avatar: senderDetails.avatar,
         },
+        seenBy: [{
+          user: {
+            _id: senderDetails._id,
+            firstName: senderDetails.firstName,
+            lastName: senderDetails.lastName,
+            email: senderDetails.email,
+            avatar: senderDetails.avatar,
+          },
+          seenAt: new Date()
+        }]
       });
     } catch (error) {
       console.error("Error sending message:", error);
+    }
+  });
+
+  // Add this new socket handler for message seen functionality
+  socket.on("messageSeen", async ({ messageId, groupId, userId }) => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(groupId) || !mongoose.Types.ObjectId.isValid(userId)) {
+        console.error("Invalid groupId or userId in messageSeen event");
+        return;
+      }
+      
+      const messageGroup = await MessageGroup.findById(groupId);
+      if (!messageGroup) return;
+      
+      // Find the message in the messages array
+      const message = messageGroup.messages.id(messageId);
+      if (!message) return;
+      
+      // Check if user already marked this message as seen
+      const alreadySeen = message.seenBy.some(seen => seen.user.toString() === userId);
+      
+      if (!alreadySeen) {
+        message.seenBy.push({ user: userId, seenAt: new Date() });
+        await messageGroup.save();
+        
+        // Populate the seenBy field to include user details
+        const updatedGroup = await MessageGroup.findById(groupId)
+          .populate("messages.sender", "firstName lastName email avatar status statusUpdatedAt")
+          .populate("messages.seenBy.user", "firstName lastName email avatar");
+        
+        const updatedMessage = updatedGroup.messages.id(messageId);
+        
+        // Broadcast to all users in the group
+        io.to(groupId).emit("messageSeenUpdate", updatedMessage);
+      }
+    } catch (err) {
+      console.error("Error handling message seen:", err);
     }
   });
 
