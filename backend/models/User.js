@@ -37,6 +37,22 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    disableStartTime: {
+      type: Date,
+      default: null,
+    },
+    disableEndTime: {
+      type: Date,
+      default: null,
+    },
+    disableReason: {
+      type: String,
+      default: "",
+    },
+    disableCount: {
+      type: Number,
+      default: 0,
+    },
     status: {
       type: String,
       enum: ["active", "offline", "inactive", "banned"],

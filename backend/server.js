@@ -41,6 +41,9 @@ const ganttRoutes = require("./routes/gantt/ganttRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const teamReportRoutes = require("./routes/teamReportRoutes");
 
+// Import and start the scheduler
+require("./scheduler/enableUsers");
+
 console.log(process.env.NODE_ENV);
 
 let usersEditing = {};

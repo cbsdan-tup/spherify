@@ -1,6 +1,7 @@
 const User = require("../models/User");
 const cloudinary = require("cloudinary").v2;
 const moment = require("moment");
+const sendEmail = require("../utils/sendEmail");
 
 exports.registerUser = async (req, res, next) => {
   try {
@@ -428,33 +429,6 @@ exports.isAdminExists = async (req, res) => {
   }
 };
 
-exports.disableUser = async (req, res) => {
-  try {
-    console.log(`Disabling user with ID: ${req.params.id}`); 
-    const user = await User.findByIdAndUpdate(req.params.id, { isDisable: true }, { new: true });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    return res.status(200).json({ success: true, message: "User disabled successfully", user });
-  } catch (error) {
-    console.error("Error disabling user:", error); 
-    return res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
-exports.enableUser = async (req, res) => {
-  try {
-    const user = await User.findByIdAndUpdate(req.params.id, { isDisable: false }, { new: true });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    return res.status(200).json({ success: true, message: "User enabled successfully", user });
-  } catch (error) {
-    console.error("Error enabling user:", error); 
-    return res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await User.find();
@@ -468,5 +442,142 @@ exports.getAllUsers = async (req, res) => {
       success: false,
       message: "Server error",
     });
+  }
+};
+
+exports.disableUser = async (req, res) => {
+  try {
+    const { startTime, endTime, reason } = req.body;
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const emailOptions = {
+      email: user.email,
+      subject: "Spherify Account Suspended",
+      message: `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 8px; background-color: #f9f9f9;">
+          <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #f0f0f0;">
+            <h1 style="color: #4a4a4a; margin: 0; font-size: 24px;">Spherify</h1>
+            <p style="color: #777777; margin: 5px 0 0;">Account Notification</p>
+          </div>
+          
+          <div style="padding: 20px 0;">
+            <h2 style="color: #d9534f; margin-top: 0;">Account Temporarily Suspended</h2>
+            <p style="color: #555555; line-height: 1.5; font-size: 16px;">
+              Dear ${user.firstName || 'User'},
+            </p>
+            <p style="color: #555555; line-height: 1.5; font-size: 16px;">
+              We regret to inform you that your Spherify account has been temporarily suspended.
+            </p>
+            
+            <div style="background-color: #fff; border-left: 4px solid #d9534f; padding: 15px; margin: 20px 0; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <p style="color: #555555; margin: 0 0 10px; font-weight: bold;">Suspension Details:</p>
+              <p style="color: #555555; margin: 5px 0;"><strong>Reason:</strong> ${reason}</p>
+              <p style="color: #555555; margin: 5px 0;"><strong>Start Time:</strong> ${startTime}</p>
+              <p style="color: #555555; margin: 5px 0;"><strong>End Time:</strong> ${endTime}</p>
+            </div>
+            
+            <p style="color: #555555; line-height: 1.5; font-size: 16px;">
+              During this period, you will not be able to access your account or use Spherify services.
+              Your account will be automatically reactivated after the suspension period ends.
+            </p>
+          </div>
+          
+          <div style="background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin-top: 20px; text-align: center;">
+            <p style="color: #777777; margin: 0; font-size: 14px;">
+              If you have any questions about this suspension, please contact our support team.
+            </p>
+            <p style="color: #777777; margin: 10px 0 0; font-size: 14px;">
+              &copy; ${new Date().getFullYear()} Spherify. All rights reserved.
+            </p>
+          </div>
+        </div>
+      `,
+    };
+    sendEmail(emailOptions);
+
+    user.isDisable = true;
+    user.disableStartTime = startTime;
+    user.disableEndTime = endTime;
+    user.disableReason = reason;
+    user.disableCount = (user.disableCount || 0) + 1;
+
+    await user.save();
+
+    return res.status(200).json({ success: true, message: "User disabled successfully", user });
+  } catch (error) {
+    console.error("Error disabling user:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+exports.enableUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, {
+      isDisable: false,
+      disableStartTime: null,
+      disableEndTime: null,
+      disableReason: "",
+    }, { new: true });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const emailOptions = {
+      email: user.email,
+      subject: "Spherify Account Reactivated",
+      message: `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e4e4e4; border-radius: 8px; background-color: #f9f9f9;">
+          <div style="text-align: center; padding: 20px 0; border-bottom: 2px solid #f0f0f0;">
+            <h1 style="color: #4a4a4a; margin: 0; font-size: 24px;">Spherify</h1>
+            <p style="color: #777777; margin: 5px 0 0;">Account Notification</p>
+          </div>
+          
+          <div style="padding: 20px 0;">
+            <h2 style="color: #5cb85c; margin-top: 0;">Good News! Your Account is Reactivated</h2>
+            
+            <p style="color: #555555; line-height: 1.5; font-size: 16px;">
+              Dear ${user.firstName || 'User'},
+            </p>
+            
+            <div style="background-color: #fff; border-left: 4px solid #5cb85c; padding: 15px; margin: 20px 0; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <p style="color: #555555; margin: 0; font-size: 16px;">
+                We're pleased to inform you that your Spherify account has been reactivated.
+                You now have full access to your account and all Spherify services.
+              </p>
+            </div>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="https://spherify.vercel.app/login" style="background-color: #5cb85c; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">
+                Log In Now
+              </a>
+            </div>
+            
+            <p style="color: #555555; line-height: 1.5; font-size: 16px;">
+              Thank you for your patience and understanding. We look forward to continuing to serve you.
+            </p>
+          </div>
+          
+          <div style="background-color: #f0f0f0; padding: 15px; border-radius: 5px; margin-top: 20px; text-align: center;">
+            <p style="color: #777777; margin: 0; font-size: 14px;">
+              If you have any questions, our support team is always here to help.
+            </p>
+            <p style="color: #777777; margin: 10px 0 0; font-size: 14px;">
+              &copy; ${new Date().getFullYear()} Spherify. All rights reserved.
+            </p>
+          </div>
+        </div>
+      `,
+    };
+    sendEmail(emailOptions);
+
+    return res.status(200).json({ success: true, message: "User enabled successfully", user });
+  } catch (error) {
+    console.error("Error enabling user:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 };

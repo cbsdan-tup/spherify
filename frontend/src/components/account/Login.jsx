@@ -63,7 +63,20 @@ const Login = () => {
       } else {
         errMsg("Login Failed");
         if (response.user.isDisable) {
-          Swal.fire("Account Disabled", "Your account has been disabled. Contact Administrator for assistance.", "error");
+          const disableEndTime = new Date(
+            response.user.disableEndTime
+          ).toLocaleString("en-US", {
+            month: "2-digit",
+            day: "2-digit",
+            year: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+            second: "2-digit",
+          });
+          Swal.fire(
+            "Account Disabled",
+            `Your account has been disabled because ${response.user.disableReason}. You can log in back again until ${disableEndTime}`
+          );
           return;
         }
       }

@@ -42,7 +42,7 @@ function SignWithGoogle({ method }) {
               };
 
               socket.emit("login", response.user._id)
-              
+
               succesMsg("Login Successfully!");
               {
                 response?.user?.isAdmin
@@ -55,10 +55,17 @@ function SignWithGoogle({ method }) {
               }
             } else {
               if (response.user.isDisable) {
+                const disableEndTime = new Date(response.user.disableEndTime).toLocaleString("en-US", {
+                  month: "2-digit",
+                  day: "2-digit",
+                  year: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                });
                 Swal.fire(
                   "Account Disabled",
-                  "Your account has been disabled. Contact Administrator for assistant.",
-                  "error"
+                  `Your account has been disabled because ${response.user.disableReason}. Contact Administrator for assistance. You can log in back again until ${disableEndTime}`
                 );
                 return;
               }

@@ -57,33 +57,70 @@ const UserManagement = () => {
 
   // Toggle user status
   const toggleUserStatus = async (id, isDisabled) => {
-    const action = isDisabled ? "enable" : "disable";
+    const action = isDisabled ? "Enable" : "Disable";
+  
     Swal.fire({
-      title: "Are you sure?",
-      text: `Do you want to ${action} this user?`,
+      title: `${action} User`,
+      html: `
+        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+          <p style="font-size: 16px;">Are you sure you want to <b>${action.toLowerCase()}</b> this user?</p>
+          ${
+            !isDisabled
+              ? `
+              <input type="datetime-local" id="startTime" class="swal2-input" style="width: 90%;" placeholder="Start Time">
+              <input type="datetime-local" id="endTime" class="swal2-input" style="width: 90%;" placeholder="End Time">
+              <textarea id="reason" class="swal2-textarea" style="width: 90%;" placeholder="Reason for disabling (optional)"></textarea>
+            `
+              : ""
+          }
+        </div>
+      `,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#3085d6",
-      cancelButtonColor: "#d33",
-      confirmButtonText: `Yes, ${action}!`,
+      confirmButtonText: `Yes, ${action}`,
+      cancelButtonText: "Cancel",
+      confirmButtonColor: isDisabled ? "#28a745" : "#dc3545",
+      cancelButtonColor: "#6c757d",
+      preConfirm: () => {
+        if (!isDisabled) {
+          const startTime = Swal.getPopup().querySelector("#startTime").value;
+          const endTime = Swal.getPopup().querySelector("#endTime").value;
+          const reason = Swal.getPopup().querySelector("#reason").value;
+  
+          if (!startTime || !endTime) {
+            Swal.showValidationMessage("Start and End time are required.");
+            return false;
+          }
+          return { startTime, endTime, reason };
+        }
+      },
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
+          const data = isDisabled
+            ? {}
+            : {
+                startTime: result.value.startTime,
+                endTime: result.value.endTime,
+                reason: result.value.reason,
+              };
+  
           await axios.put(
-            `${import.meta.env.VITE_API}/${
-              isDisabled ? "enableUser" : "disableUser"
-            }/${id}`,
-            {},
+            `${import.meta.env.VITE_API}/${isDisabled ? "enableUser" : "disableUser"}/${id}`,
+            data,
             { headers: { Authorization: `Bearer ${token}` } }
           );
+  
           fetchUsers();
-          Swal.fire("Updated!", `User has been ${action}d.`, "success");
+          Swal.fire("Success!", `User has been ${action.toLowerCase()}d.`, "success");
         } catch (error) {
           console.error(`Error updating user status: ${error.message}`);
+          Swal.fire("Error", "Failed to update user status. Try again later.", "error");
         }
       }
     });
   };
+  
 
   // Define table columns
   const columns = [
@@ -103,11 +140,31 @@ const UserManagement = () => {
       center: true,
     },
     {
+      name: "Disable Start Time",
+      selector: (row) => row.disableStartTime ? new Date(row.disableStartTime).toLocaleString() : "N/A",
+      sortable: true,
+      center: true,
+    },
+    {
+      name: "Disable End Time",
+      selector: (row) => row.disableEndTime ? new Date(row.disableEndTime).toLocaleString() : "N/A",
+      sortable: true,
+      center: true,
+    },
+    {
+      name: "Disable Count",
+      selector: (row) => row.disableCount || 0,
+      sortable: true,
+      center: true,
+    },
+    {
       name: "Actions",
       cell: (row) => (
         <button
           className={`btn ${row.isDisable ? "btn-success" : "btn-danger"}`}
           onClick={() => toggleUserStatus(row._id, row.isDisable)}
+          disabled={row.isAdmin}
+          title={row.isAdmin && row.isDisable ? "Admin users cannot be disabled" : ""}
         >
           {row.isDisable ? "Enable" : "Disable"}
         </button>
