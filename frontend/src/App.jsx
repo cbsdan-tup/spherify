@@ -16,22 +16,21 @@ import "./FileSharing.css";
 import "./TextChats.css";
 import "./Conferencing.css";
 import { Navigate } from "react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { useSelector, useDispatch } from "react-redux";
-import { useCallback } from "react";
 import { refreshFirebaseToken } from "./config/firebase-config";
 import { updateToken } from "./redux/authSlice";
 import AdminPage from "./components/AdminPage";
 import { fetchConfigurations } from "./redux/configurationSlice";
+import { setupTokenRefresh } from "./utils/tokenService"; // We'll create this file
 
 function App() {
   const authState = useSelector((state) => state.auth);
-
-  let dispatch = useDispatch();
-
+  const dispatch = useDispatch();
   const favIcon = useSelector((state) => state.configurations.site?.favicon);
 
+  // Set up favicon
   useEffect(() => {
     if (favIcon) {
       const link = document.querySelector("link[rel~='icon']");
@@ -44,30 +43,17 @@ function App() {
     }
   }, [favIcon]);
 
-  const refreshToken = useCallback(async () => {
-    try {
-      console.log("Refreshing token...");
-      const token = await refreshFirebaseToken();
-      if (token) {
-        dispatch(updateToken(token));
-        console.log("token:", token);
-      }
-    } catch (error) {
-      console.error("Error refreshing token:", error);
-    }
+  // Initialize the token refresh service once on app start
+  useEffect(() => {
+    // This function returns a cleanup function
+    const cleanup = setupTokenRefresh(dispatch, updateToken);
+    return cleanup;
   }, [dispatch]);
 
-  useEffect(() => {
-    refreshToken();
-
-    const interval = setInterval(refreshToken, 55 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, [refreshToken]);
-
+  // Fetch configurations once
   useEffect(() => {
     dispatch(fetchConfigurations());
-  }, []);
+  }, [dispatch]);
 
   const LandingRoutes = () => {
     return (

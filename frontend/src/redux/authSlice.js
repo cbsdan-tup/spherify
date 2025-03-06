@@ -41,3 +41,19 @@ const authSlice = createSlice({
 
 export const { loginUser, updateToken, logoutUser, updateUser } = authSlice.actions;
 export default authSlice.reducer;
+
+// This is a store enhancer that saves auth state to localStorage 
+// whenever it changes
+export const setupAuthStateStorage = (store) => {
+  let currentAuthState = store.getState().auth;
+  
+  store.subscribe(() => {
+    const previousAuthState = currentAuthState;
+    currentAuthState = store.getState().auth;
+    
+    // If auth state changed, save to localStorage
+    if (previousAuthState !== currentAuthState) {
+      localStorage.setItem('auth_state', JSON.stringify(currentAuthState));
+    }
+  });
+};

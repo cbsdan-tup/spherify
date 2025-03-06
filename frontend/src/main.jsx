@@ -5,7 +5,10 @@ import { BrowserRouter } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import { store, persistor } from "./redux/store";
 import { Provider } from "react-redux";
-import { PersistGate } from "redux-persist/integration/react"; // Import PersistGate
+import { PersistGate } from "redux-persist/integration/react";
+import { setupAuthStateStorage } from "./redux/authSlice";
+
+setupAuthStateStorage(store);
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
