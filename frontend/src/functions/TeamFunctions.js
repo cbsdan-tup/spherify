@@ -1,7 +1,7 @@
 import axios from "axios";
 import { errMsg, getToken, getUser, succesMsg } from "../utils/helper";
 
-export const fetchTeamMembers = async (currentTeamId, authState = null) => {
+export const fetchTeamMembers = async (currentTeamId, authState = null, searchTerm = '') => {
   try {
     const token = getToken(authState);
     const config = {
@@ -10,7 +10,13 @@ export const fetchTeamMembers = async (currentTeamId, authState = null) => {
         Authorization: `Bearer ${token}`,
       },
     };
-    const url = `${import.meta.env.VITE_API}/getTeamMembers/${currentTeamId}`;
+    let url = `${import.meta.env.VITE_API}/getTeamMembers/${currentTeamId}`;
+    
+    // Add search parameter if provided
+    if (searchTerm && searchTerm.trim() !== '') {
+      url += `?search=${encodeURIComponent(searchTerm)}`;
+    }
+    
     const response = await axios.get(url, config);
     console.log("Team members:", response.data);
     return response.data.members;

@@ -459,6 +459,8 @@ body {
 .main-container .team-container .team-content .kanban-team-members .card .card-body {
   box-shadow: none !important;
   border: 1px solid var(--secondary-color);
+  max-height: 625px;
+  overflow-y: auto;
 }
 
 .main-container .team-container .team-content .kanban-team-members .card-body .role {

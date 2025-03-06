@@ -112,6 +112,7 @@ exports.getTeamByUser = async (req, res) => {
 exports.getTeamMembers = async (req, res) => {
   try {
     const { teamId } = req.params;
+    const { search } = req.query;
     
     const team = await Team.findById(teamId).populate("members.user", "firstName lastName email avatar status statusUpdatedAt");
 
@@ -119,7 +120,23 @@ exports.getTeamMembers = async (req, res) => {
       return res.status(404).json({ error: "Team not found" });
     }
 
-    const activeMembers = team.members.filter(member => member.leaveAt === null);
+    // Filter for active members (leaveAt is null)
+    let activeMembers = team.members.filter(member => member.leaveAt === null);
+    
+    // Apply search filter if provided
+    if (search && search.trim() !== '') {
+      const searchRegex = new RegExp(search, 'i');
+      activeMembers = activeMembers.filter(member => {
+        const user = member.user;
+        return (
+          searchRegex.test(user.firstName) || 
+          searchRegex.test(user.lastName) || 
+          searchRegex.test(user.email) || 
+          searchRegex.test(member.nickname) || 
+          searchRegex.test(member.role)
+        );
+      });
+    }
 
     res.status(200).json({ members: activeMembers});
   } catch (error) {
