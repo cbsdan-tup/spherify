@@ -180,14 +180,42 @@ exports.leaveTeam = async (req, res) => {
       return res.status(404).json({ message: "Team not found." });
     }
 
-    const member = team.members.find((m) => m.user.toString() === userId);
-    if (!member) {
+    const memberIndex = team.members.findIndex((m) => m.user.toString() === userId);
+    if (memberIndex === -1) {
       return res
         .status(404)
         .json({ message: "User is not a member of the team." });
     }
 
-    member.leaveAt = new Date();
+    // Check if the user leaving is an owner
+    if (team.members[memberIndex].role === "owner") {
+      // Find active members (excluding the leaving member)
+      const activeMembers = team.members.filter(
+        (m) => m.user.toString() !== userId && m.leaveAt === null
+      );
+      
+      if (activeMembers.length > 0) {
+        // Sort active members by joinedAt (earliest first) to get the most senior member
+        activeMembers.sort((a, b) => a.joinedAt - b.joinedAt);
+        
+        // Make the most senior member the new owner
+        const newOwnerIndex = team.members.findIndex(
+          (m) => m.user.toString() === activeMembers[0].user.toString()
+        );
+        
+        team.members[newOwnerIndex].role = "owner";
+        team.members[newOwnerIndex].isAdmin = true;
+        
+        // Make all other active members admins
+        team.members.forEach((m, idx) => {
+          if (m.leaveAt === null && m.user.toString() !== userId) {
+            team.members[idx].isAdmin = true;
+          }
+        });
+      }
+    }
+
+    team.members[memberIndex].leaveAt = new Date();
     await team.save();
 
     res.status(200).json({ message: "User has left the team successfully." });
@@ -224,6 +252,125 @@ exports.inviteMembers = async (req, res) => {
   }
 };
 
+exports.updateTeamMember = async (req, res) => {
+  try {
+    const { teamId, userId } = req.params;
+    const { nickname, role, isAdmin } = req.body;
+    
+    // Validate the team exists
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+    
+    // Find the requesting user in the team to check permissions
+    const requestingUser = team.members.find(
+      member => member.user.toString() === req.user._id.toString()
+    );
+    
+    if (!requestingUser) {
+      return res.status(403).json({ message: "You are not a member of this team" });
+    }
+    
+    // Check if requesting user has permission (must be admin or owner)
+    if (!requestingUser.isAdmin && requestingUser.role !== "owner") {
+      return res.status(403).json({ message: "You don't have permission to update members" });
+    }
+    
+    // Find the member to update
+    const memberIndex = team.members.findIndex(
+      member => member.user.toString() === userId
+    );
+    
+    if (memberIndex === -1) {
+      return res.status(404).json({ message: "Member not found in this team" });
+    }
+    
+    // Special restriction: Only owner can update another owner's role
+    if (
+      team.members[memberIndex].role === "owner" && 
+      requestingUser.role !== "owner"
+    ) {
+      return res.status(403).json({ message: "Only team owner can modify another owner's role" });
+    }
+    
+    // Update member info
+    if (nickname !== undefined) team.members[memberIndex].nickname = nickname;
+    
+    // Only update role and admin status if allowed (owner can change anything)
+    if (requestingUser.role === "owner" || team.members[memberIndex].role !== "owner") {
+      if (role !== undefined) team.members[memberIndex].role = role;
+      if (isAdmin !== undefined) team.members[memberIndex].isAdmin = isAdmin;
+    }
+    
+    await team.save();
+    
+    res.status(200).json({ 
+      success: true,
+      message: "Member updated successfully",
+      updatedMember: team.members[memberIndex]
+    });
+    
+  } catch (error) {
+    console.error("Error updating team member:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// Remove member from team
+exports.removeTeamMember = async (req, res) => {
+  try {
+    const { teamId, userId } = req.params;
+    
+    // Validate the team exists
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ message: "Team not found" });
+    }
+    
+    // Find requesting user in the team to check permissions
+    const requestingUser = team.members.find(
+      member => member.user.toString() === req.user._id.toString()
+    );
+    
+    if (!requestingUser) {
+      return res.status(403).json({ message: "You are not a member of this team" });
+    }
+    
+    // Check if requesting user has permission (must be admin or owner)
+    if (!requestingUser.isAdmin && requestingUser.role !== "owner") {
+      return res.status(403).json({ message: "You don't have permission to remove members" });
+    }
+    
+    // Find the member to remove
+    const memberIndex = team.members.findIndex(
+      member => member.user.toString() === userId
+    );
+    
+    if (memberIndex === -1) {
+      return res.status(404).json({ message: "Member not found in this team" });
+    }
+    
+    // Cannot remove an owner unless you are also an owner
+    if (team.members[memberIndex].role === "owner" && requestingUser.role !== "owner") {
+      return res.status(403).json({ message: "Only team owner can remove another owner" });
+    }
+    
+    // Set leaveAt date rather than removing completely
+    team.members[memberIndex].leaveAt = new Date();
+    
+    await team.save();
+    
+    res.status(200).json({ 
+      success: true,
+      message: "Member removed successfully" 
+    });
+    
+  } catch (error) {
+    console.error("Error removing team member:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
 
 exports.getMessageGroupInfo = async (req, res) => {
   try {

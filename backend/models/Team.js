@@ -64,6 +64,32 @@ const TeamSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+TeamSchema.pre('save', function(next) {
+  const userMap = new Map();
+  
+  const filteredMembers = [];
+  
+  for (const member of this.members) {
+    const userId = member.user.toString();
+    
+    if (userMap.has(userId)) {
+      const existingIndex = userMap.get(userId);
+      const existingMember = filteredMembers[existingIndex];
+      
+      if (existingMember.leaveAt && !member.leaveAt) {
+        filteredMembers[existingIndex] = member;
+      }
+    } else {
+      userMap.set(userId, filteredMembers.length);
+      filteredMembers.push(member);
+    }
+  }
+  
+  this.members = filteredMembers;
+  
+  next();
+});
+
 const Team = mongoose.model("Team", TeamSchema);
 const MessageGroup = mongoose.model("MessageGroup", MessageGroupSchema);
 

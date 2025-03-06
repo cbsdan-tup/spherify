@@ -19,6 +19,7 @@ import Calendar from "../projectmanagement/Calendar";
 import moment from "moment";
 import { Link } from "react-router";
 import CreateNewFile from "../live-editing/CreateNewFile";
+import { Modal, Button, Form } from "react-bootstrap";
 
 // Register chart elements
 ChartJS.register(
@@ -29,6 +30,116 @@ ChartJS.register(
   LinearScale,
   BarElement
 );
+
+// New component for editing team members
+const EditMemberModal = ({ show, onHide, member, isCurrentUserAdmin, onUpdateMember, onRemoveMember }) => {
+  const [nickname, setNickname] = useState(member?.nickname || "");
+  const [role, setRole] = useState(member?.role || "member");
+  const [isAdmin, setIsAdmin] = useState(member?.isAdmin || false);
+
+  useEffect(() => {
+    if (member) {
+      setNickname(member.nickname || "");
+      setRole(member.role || "member");
+      setIsAdmin(member.isAdmin || false);
+    }
+  }, [member]);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onUpdateMember({
+      userId: member.user._id,
+      nickname,
+      role,
+      isAdmin
+    });
+  };
+
+  return (
+    <Modal show={show} onHide={onHide} centered className="edit-member-modal"> 
+      <Modal.Header closeButton>
+        <Modal.Title>Edit Team Member</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        {member && (
+          <Form onSubmit={handleSubmit}>
+            <div className="d-flex align-items-center mb-4 header">
+              <img
+                src={member.user?.avatar?.url || "/images/account.png"}
+                alt={member.user?.firstName}
+                className="rounded-circle me-3"
+                width="60"
+                height="60"
+              />
+              <div>
+                <h5 className="mb-0">{member.user.firstName} {member.user.lastName}</h5>
+                <p className="text-muted mb-0">{member.user.email}</p>
+                <span className={`badge text-white ${member.user?.status === "active" ? "bg-success" : "bg-secondary"}`}>
+                  {member.user?.status === "active" ? "Active" : "Offline"}
+                </span>
+              </div>
+            </div>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Nickname (optional)</Form.Label>
+              <Form.Control
+                type="text"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                placeholder="Enter nickname"
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Role</Form.Label>
+              <Form.Select 
+                value={role} 
+                onChange={(e) => setRole(e.target.value)}
+                disabled={member.role === "owner" || !isCurrentUserAdmin}
+              >
+                <option value="member">Member</option>
+                <option value="moderator">Moderator</option>
+                {isCurrentUserAdmin && <option value="owner">Owner</option>}
+              </Form.Select>
+              <Form.Text className="text-muted">
+                Only team owners can change roles to owner
+              </Form.Text>
+            </Form.Group>
+
+            {isCurrentUserAdmin && (
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="checkbox"
+                  label="Grant admin privileges"
+                  checked={isAdmin}
+                  onChange={(e) => setIsAdmin(e.target.checked)}
+                  disabled={member.role === "owner"}
+                />
+              </Form.Group>
+            )}
+          </Form>
+        )}
+      </Modal.Body>
+      <Modal.Footer>
+        {isCurrentUserAdmin && member?.role !== "owner" && (
+          <Button 
+            variant="danger" 
+            onClick={() => onRemoveMember(member.user._id)}
+            className="me-auto"
+          >
+            Remove from Team
+          </Button>
+        )}
+        <Button className="cancel" onClick={onHide}>
+          Cancel
+        </Button>
+        <Button className="save" onClick={handleSubmit}>
+          Save Changes
+        </Button>
+      </Modal.Footer>
+    </Modal>
+  );
+};
 
 const Dashboard = () => {
   // Kanban Pie Chart Data
@@ -71,6 +182,10 @@ const Dashboard = () => {
   const [ganttTasks, setGanttTasks] = useState([]);
 
   const token = useSelector((state) => state.auth.token);
+
+  const [selectedMember, setSelectedMember] = useState(null);
+  const [showMemberEditModal, setShowMemberEditModal] = useState(false);
+  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
 
   const handleShowCreateFileClose = () => {
     setShowCreateFileModal(false);
@@ -230,6 +345,74 @@ const Dashboard = () => {
     fetchGanttTasks();
   }, [currentTeamId]);
 
+  const handleMemberClick = (member) => {
+    setSelectedMember(member);
+    setShowMemberEditModal(true);
+  };
+
+  const handleUpdateMember = async (memberData) => {
+    try {
+      const token = getToken(authState);
+      const config = {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      };
+      
+      const response = await axios.put(
+        `${import.meta.env.VITE_API}/updateTeamMember/${currentTeamId}/${memberData.userId}`,
+        memberData,
+        config
+      );
+      
+      succesMsg("Member updated successfully");
+      setShowMemberEditModal(false);
+      fetchTeamMembers(); // Refresh the member list
+    } catch (error) {
+      console.error("Error updating team member:", error);
+      errMsg("Error updating team member", error);
+    }
+  };
+
+  const handleRemoveMember = async (userId) => {
+    try {
+      if (window.confirm("Are you sure you want to remove this member from the team?")) {
+        const token = getToken(authState);
+        const config = {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        };
+        
+        await axios.delete(
+          `${import.meta.env.VITE_API}/removeTeamMember/${currentTeamId}/${userId}`,
+          config
+        );
+        
+        succesMsg("Member removed from team");
+        setShowMemberEditModal(false);
+        fetchTeamMembers(); // Refresh the member list
+      }
+    } catch (error) {
+      console.error("Error removing team member:", error);
+      errMsg("Error removing team member", error);
+    }
+  };
+
+  // Check if current user is a team admin
+  useEffect(() => {
+    if (members.length > 0 && authState.user) {
+      const currentUserMember = members.find(member => 
+        member.user._id === authState.user._id
+      );
+      
+      setIsCurrentUserAdmin(
+        currentUserMember?.isAdmin || 
+        currentUserMember?.role === "owner"
+      );
+    }
+  }, [members, authState.user]);
+
   return (
     <div className="team-content container">
       <FileShare />
@@ -346,10 +529,16 @@ const Dashboard = () => {
                       <div className="px-2">
                         <p className="mb-0 fw-semibold name">
                           {member.user.firstName} {member.user.lastName}
+                          {member.nickname && <span className="text-muted ms-1">({member.nickname})</span>}
                         </p>
-                        <p className="mb-0 fw-semibold role">
-                          {member.role.charAt(0).toUpperCase() +
-                            member.role.slice(1)}
+                        <p className="mb-0 fw-semibold role d-flex align-items-center" style={{ gap: '5px' }}>
+                          {member.isAdmin && member.role !== "owner" && 
+                            <span className="badge w-auto bg-info ms-1">Admin</span>
+                          }
+                          <span>
+                            {member.role.charAt(0).toUpperCase() +
+                              member.role.slice(1)}
+                          </span>
                         </p>
                         <p
                           className={`status mb-0 text-sm ${
@@ -368,7 +557,15 @@ const Dashboard = () => {
                         </p>
                       </div>
                     </div>
-                    <FaPencilAlt className="text-muted" />
+                    {isCurrentUserAdmin && (
+                      <div 
+                        className="edit-member-btn" 
+                        onClick={() => handleMemberClick(member)}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <FaPencilAlt className="text-primary" />
+                      </div>
+                    )}
                   </div>
                 ))}
             </div>
@@ -482,6 +679,14 @@ const Dashboard = () => {
         show={showCreateFileModal}
         onHide={handleShowCreateFileClose}
         onCreateFile={addNewFile}
+      />
+      <EditMemberModal 
+        show={showMemberEditModal}
+        onHide={() => setShowMemberEditModal(false)}
+        member={selectedMember}
+        isCurrentUserAdmin={isCurrentUserAdmin}
+        onUpdateMember={handleUpdateMember}
+        onRemoveMember={handleRemoveMember}
       />
     </div>
   );

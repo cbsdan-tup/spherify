@@ -17,7 +17,9 @@ const {
     getRecentTeamAndUsers,
     getAllTeams,
     updateTeamStatus,
-    fetchTeamsByName
+    fetchTeamsByName,
+    updateTeamMember,   // New endpoint
+    removeTeamMember    // New endpoint
 } = require('../controllers/TeamController');
 
 router.post('/addTeam', upload.single('logo'), addTeam);
@@ -34,5 +36,9 @@ router.get('/getRecentTeamAndUsers', isAdmin, getRecentTeamAndUsers);
 router.get('/getAllTeams', isAdmin, getAllTeams);
 router.put('/updateTeamStatus/:teamId', isAdmin, updateTeamStatus);
 router.get('/fetchTeamsByName', isAuthenticatedUser, fetchTeamsByName)
+
+// Add new routes for team member management
+router.put('/updateTeamMember/:teamId/:userId', isAuthenticatedUser, updateTeamMember);
+router.delete('/removeTeamMember/:teamId/:userId', isAuthenticatedUser, removeTeamMember);
 
 module.exports = router

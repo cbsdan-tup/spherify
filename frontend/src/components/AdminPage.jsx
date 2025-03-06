@@ -7,6 +7,7 @@ import { Routes, Route } from "react-router-dom";
 import Settings from "./main/Settings";
 import UserManagement from "./admin/UserManagement";
 import TeamManagement from "./admin/TeamManagement";
+import FileManagement from "./admin/FileManagement";
 import Configurations from "./admin/Configurations";
 
 const AdminPage = () => {
@@ -22,6 +23,7 @@ const AdminPage = () => {
           <Route path="profile" element={<Settings />} />
           <Route path="user-management" element={<UserManagement />} />
           <Route path="team-management" element={<TeamManagement />} />
+          <Route path="file-management" element={<FileManagement />} />
           <Route path="configurations" element={<Configurations />} />
         </Routes>
       </div>

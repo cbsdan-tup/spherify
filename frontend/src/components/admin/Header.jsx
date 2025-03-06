@@ -3,10 +3,13 @@ import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { logout } from "../../utils/helper";
+import { useNavigate } from "react-router-dom";
 
 const Header = () => {
   const user = useSelector((state) => state.auth.user);
   const dispatch = useDispatch();
+  let navigate = useNavigate();
+
   const logoutHandler = () => {
     logout(dispatch, () => {
       navigate("/");

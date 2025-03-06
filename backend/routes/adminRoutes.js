@@ -1,6 +1,7 @@
 const express = require("express");
 const AdminConfig = require("../models/AdminConfiguration");
 const { isAdmin } = require("../middleware/auth");
+const { getAllFiles, getStorageStatistics, getFilesAndFoldersByPath } = require("../controllers/AdminFileController");
 
 const router = express.Router();
 
@@ -65,5 +66,10 @@ router.get("/admin-configuration/nextcloud-details", async (req, res) => {
     res.status(500).json({ message: "Error fetching Nextcloud details" });
   }
 });
+
+// File management routes - ensure these don't have 'admin/' prefix since the router may already be mounted at /admin
+router.get("/admin/getAllFiles", isAdmin, getAllFiles);
+router.get("/admin/getFilesAndFoldersByPath", isAdmin, getFilesAndFoldersByPath);
+router.get("/admin/getStorageStatistics", isAdmin, getStorageStatistics);
 
 module.exports = router;

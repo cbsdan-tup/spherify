@@ -66,6 +66,14 @@ const LeftSidePanel = ({ isShow = false, setIsShow }) => {
             <span className="text">Team Management</span>
           </Link>
           <Link
+            className={`nav ${activeNav === "file-management" ? "active" : ""}`}
+            to="/admin/file-management"
+            onClick={() => switchActiveNav("file-management")}
+          >
+            <i className="fa-solid fa-file-alt"></i>
+            <span className="text">File Management</span>
+          </Link>
+          <Link
             className={`nav ${activeNav === "configurations" ? "active" : ""}`}
             to="/admin/configurations"
             onClick={() => switchActiveNav("configurations")}

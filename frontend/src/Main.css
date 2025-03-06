@@ -1144,13 +1144,21 @@ body {
   background-color: var(--secondary-color);
   border-bottom-right-radius: 10px !important;
 }
-.calendar-main .card  .card-body .accordion-item {
-  /* background-color: var(--tertiary-color) !important; */
-}
+
 .calendar-main .calendar-container {
   flex: 2;
 }
 
 .calendar-main .upcoming-events {
   flex: 1;
+}
+
+.edit-member-modal .modal-content {
+  max-width: 500px;
+}
+.edit-member-modal .modal-content .modal-body form{
+  width: 100%;
+}
+.edit-member-modal .modal-content .modal-body form .header {
+  gap: 0.5rem;
 }
