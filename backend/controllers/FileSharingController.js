@@ -1010,8 +1010,10 @@ exports.createNewFolder = async (req, res) => {
 exports.generatePublicLink = async (req, res) => {
   try {
     const { filePath } = req.query; // Get filePath from query parameters
+    const permissions = parseInt(req.query.permissions) || 1; // Default to read-only (1) if not specified
 
     console.log("Generating public link for:", filePath);
+    console.log("Requested permissions:", permissions);
 
     if (!filePath) {
       return res
@@ -1046,7 +1048,7 @@ exports.generatePublicLink = async (req, res) => {
       new URLSearchParams({
         path: relativePath,
         shareType: 3, // 3 = Public link
-        permissions: 3, // 1 = Read-only
+        permissions: permissions, // Use requested permissions (1 = Read-only, 3 = Read+Write)
       }),
       {
         headers: {
@@ -1081,6 +1083,45 @@ exports.generatePublicLink = async (req, res) => {
     res
       .status(500)
       .json({ success: false, error: "Failed to generate public link" });
+  }
+};
+
+// Add new function to record file activity
+exports.recordFileActivity = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const { action, details } = req.body;
+    const userId = req.user._id;
+
+    if (!fileId || !action) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "File ID and action are required" 
+      });
+    }
+
+    // Find the file
+    const file = await File.findById(fileId);
+    if (!file) {
+      return res.status(404).json({
+        success: false,
+        error: "File not found"
+      });
+    }
+
+    // Add the history entry
+    await file.addHistory(action, userId, details || {});
+
+    return res.status(200).json({
+      success: true,
+      message: "File activity recorded successfully"
+    });
+  } catch (error) {
+    console.error("Error recording file activity:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to record file activity"
+    });
   }
 };
 

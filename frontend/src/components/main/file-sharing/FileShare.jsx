@@ -305,6 +305,56 @@ const FileUpload = () => {
     [token]
   );
 
+  // Add new function for file editing
+  const handleFileEdit = useCallback(async (file) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API}/getPublicLink`,
+        {
+          params: { 
+            filePath: file.url,
+            permissions: 3 // Request write permissions (3 = read + write)
+          },
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      if (response.data.publicUrl) {
+        // Open the URL in a new tab
+        window.open(response.data.publicUrl, "_blank");
+        
+        // Record the edit activity in file history
+        try {
+          await axios.post(
+            `${import.meta.env.VITE_API}/recordActivity/${file._id}`,
+            { 
+              action: 'edited',
+              details: { comment: `File opened for editing` }
+            },
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
+          
+          // Refresh after a short delay to show updated history
+          setTimeout(() => setRefresh(prev => !prev), 1500);
+        } catch (historyError) {
+          console.error("Failed to record edit activity:", historyError);
+          // Don't block the edit flow if history recording fails
+        }
+      } else {
+        errMsg("Failed to generate edit link");
+      }
+    } catch (error) {
+      console.error("Edit error:", error);
+      errMsg("Error opening file for editing");
+    }
+  }, [token, setRefresh]);
+
   const getTimeFeedback = useCallback(
     (createdAt) => moment(createdAt).fromNow(),
     []
@@ -852,7 +902,7 @@ const FileUpload = () => {
                       ></i>
                       {showMenu && fileSelected === file._id && (
                         <div className="menu-options">
-                          <div className="view option" onClick={() => {}}>
+                          <div className="view option" onClick={() => handleFileClick(file.url)}>
                             <i className="fa-solid fa-eye"></i>
                             <span>View</span>
                           </div>
@@ -870,7 +920,10 @@ const FileUpload = () => {
                             <i className="fa-solid fa-pencil"></i>
                             <span>Rename</span>
                           </div>
-                          <div className="edit option" onClick={() => {}}>
+                          <div 
+                            className="edit option" 
+                            onClick={() => handleFileEdit(file)}
+                          >
                             <i className="fa-solid fa-pen-to-square"></i>{" "}
                             <span>Edit</span>
                           </div>
