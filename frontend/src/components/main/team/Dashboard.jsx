@@ -839,82 +839,99 @@ useEffect(() => {
 
               {/* Team Member List */}
               {members && members.length > 0 ? (
-                members.map((member, index) => (
-                  <div
-                    key={index}
-                    className="d-flex justify-content-between align-items-center bg-light p-2 mb-2 rounded member-list-item"
-                    onClick={() => handleMemberClick(member)}
-                    style={{ cursor: "pointer" }}
-                  >
-                    <div className="d-flex align-items-center gap-2">
-                      <div className="member-avatar-container">
-                        <img
-                          src={
-                            member.user?.avatar?.url
-                              ? member.user.avatar.url
-                              : "/images/account.png"
-                          }
-                          alt={member?.user?.firstName}
-                          className="rounded-circle"
-                          width="35"
-                        />
-                        <span
-                          className={`member-status-dot ${
-                            member.user?.status === "active" 
-                              ? "active" 
-                              : member.user?.status === "inactive" 
-                                ? "inactive" 
-                                : "offline"
-                          }`}
-                        ></span>
-                      </div>
-                      <div className="px-2">
-                        <p className="mb-0 fw-semibold name">
-                          {member.user.firstName} {member.user.lastName}
-                          {member.nickname && (
-                            <span className="text-muted ms-1">
-                              ({member.nickname})
+                // Sort members by status: active first, then inactive, then offline
+                [...members]
+                  .sort((a, b) => {
+                    // Create priority mapping for statuses
+                    const statusPriority = {
+                      active: 1,
+                      inactive: 2,
+                      offline: 3
+                    };
+                    
+                    // Get the priority values (defaulting to lowest priority if undefined)
+                    const priorityA = statusPriority[a.user?.status] || 3;
+                    const priorityB = statusPriority[b.user?.status] || 3;
+                    
+                    // Sort by priority
+                    return priorityA - priorityB;
+                  })
+                  .map((member, index) => (
+                    <div
+                      key={index}
+                      className="d-flex justify-content-between align-items-center bg-light p-2 mb-2 rounded member-list-item"
+                      onClick={() => handleMemberClick(member)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <div className="d-flex align-items-center gap-2">
+                        <div className="member-avatar-container">
+                          <img
+                            src={
+                              member.user?.avatar?.url
+                                ? member.user.avatar.url
+                                : "/images/account.png"
+                            }
+                            alt={member?.user?.firstName}
+                            className="rounded-circle"
+                            width="35"
+                          />
+                          <span
+                            className={`member-status-dot ${
+                              member.user?.status === "active" 
+                                ? "active" 
+                                : member.user?.status === "inactive" 
+                                  ? "inactive" 
+                                  : "offline"
+                            }`}
+                          ></span>
+                        </div>
+                        <div className="px-2">
+                          <p className="mb-0 fw-semibold name">
+                            {member.user.firstName} {member.user.lastName}
+                            {member.nickname && (
+                              <span className="text-muted ms-1">
+                                ({member.nickname})
+                              </span>
+                            )}
+                          </p>
+                          <p
+                            className="mb-0 fw-semibold role d-flex align-items-center"
+                            style={{ gap: "5px" }}
+                          >
+                            {member.isAdmin && member.role !== "owner" && (
+                              <span className="badge w-auto bg-info ms-1">
+                                Admin
+                              </span>
+                            )}
+                            <span>
+                              {member.role.charAt(0).toUpperCase() +
+                                member.role.slice(1)}
                             </span>
-                          )}
-                        </p>
-                        <p
-                          className="mb-0 fw-semibold role d-flex align-items-center"
-                          style={{ gap: "5px" }}
-                        >
-                          {member.isAdmin && member.role !== "owner" && (
-                            <span className="badge w-auto bg-info ms-1">
-                              Admin
-                            </span>
-                          )}
-                          <span>
-                            {member.role.charAt(0).toUpperCase() +
-                              member.role.slice(1)}
-                          </span>
-                        </p>
-                        <p
-                          className={`status mb-0 text-sm ${
-                            member.user?.status === "active"
-                              ? "text-success"
+                          </p>
+                          <p
+                            className={`status mb-0 text-sm ${
+                              member.user?.status === "active"
+                                ? "text-success"
+                                : member.user?.status === "inactive"
+                                  ? "text-warning"
+                                  : "text-muted"
+                            }`}
+                          >
+                            {member.user?.status === "active"
+                              ? "Active now"
                               : member.user?.status === "inactive"
-                                ? "text-warning"
-                                : "text-muted"
-                          }`}
-                        >
-                          {member.user?.status === "active"
-                            ? "Active now"
-                            : member.user?.status === "inactive"
-                              ? "Inactive" 
-                              : `Last seen ${moment(
-                                  member.user.statusUpdatedAt
-                                ).fromNow()}`}
-                        </p>
+                                ? "Inactive" 
+                                : `Last seen ${moment(
+                                    member.user.statusUpdatedAt
+                                  ).fromNow()}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="view-member-btn">
+                        <i className="fa-solid fa-chevron-right text-primary"></i>
                       </div>
                     </div>
-                    <div className="view-member-btn">
-                      <i className="fa-solid fa-chevron-right text-primary"></i>
-                    </div>
-                  </div>
-                ))
+                  ))
               ) : (
                 <div className="text-center py-3">
                   <p className="text-muted">No members found</p>
