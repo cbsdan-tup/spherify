@@ -198,3 +198,25 @@
   font-size: 14px;
   user-select: none;
 }
+
+.card-drag-over {
+  box-shadow: 0 0 0 2px #2684ff;
+}
+
+.card-drag-preview {
+  background: white;
+  border-radius: 3px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+  padding: 8px;
+  width: 280px;
+}
+
+.card-preview-content {
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.card-preview-priority {
+  display: flex;
+  justify-content: flex-start;
+}

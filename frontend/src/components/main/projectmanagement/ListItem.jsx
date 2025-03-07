@@ -5,9 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import "./ListItem.css";
 import CardItem from "./CardItem";
 import CardModal from "./CardModal";
-import { fetchCards, updateCardPositions } from "../../../redux/cardSlice";
-import { DndContext } from '@dnd-kit/core';
-import { calculatePosition } from '../../../utils/dragDropUtils';
+import { fetchCards } from "../../../redux/cardSlice";
 
 const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) {
   const dispatch = useDispatch();
@@ -32,7 +30,6 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
     transform,
     transition,
     isDragging,
-    over
   } = useSortable({
     id,
     data: {
@@ -80,45 +77,13 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
     setShowCardModal(false);
   };
 
-  const handleDragEnd = async (event) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const activeIndex = cards.findIndex(card => card._id === active.id);
-    const overIndex = cards.findIndex(card => card._id === over.id);
-    
-    if (activeIndex === -1 || overIndex === -1) return;
-
-    const updatedCards = Array.from(cards);
-    const [movedCard] = updatedCards.splice(activeIndex, 1);
-    updatedCards.splice(overIndex, 0, movedCard);
-
-    const cardsWithNewPositions = updatedCards.map((card, index) => ({
-      ...card,
-      position: index * 16384,
-      listId: list._id
-    }));
-
-    try {
-      await dispatch(updateCardPositions({
-        teamId,
-        sourceListId: list._id,
-        destinationListId: list._id,
-        cards: cardsWithNewPositions
-      }));
-
-      // Refresh the cards after updating positions
-      dispatch(fetchCards({ teamId, listId: list._id }));
-    } catch (error) {
-      console.error('Error updating card positions:', error);
-    }
-  };
-
   return (
     <div 
       ref={setNodeRef} 
       style={style} 
       className={`list-item-container ${isDragging ? 'is-dragging' : ''}`}
+      data-type="LIST"
+      data-list-id={list._id}
     >
       <div className="list-card">
         {/* List Header */}
@@ -151,30 +116,29 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
 
         {/* Cards Container */}
         <div className="list-content">
-          <DndContext onDragEnd={handleDragEnd}>
-            <SortableContext 
-              items={cards.map(card => card._id)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="cards-container">
-                {cards && cards.length > 0 ? (
-                  cards.map((card, index) => (
-                    <CardItem 
-                      key={card._id} 
-                      card={card}
-                      listId={list._id}
-                      teamId={teamId}
-                      index={index}
-                    />
-                  ))
-                ) : (
-                  <div className="empty-list-message">
-                    No cards in {list.title}
-                  </div>
-                )}
-              </div>
-            </SortableContext>
-          </DndContext>
+          {/* IMPORTANT: Removed nested DndContext from here */}
+          <SortableContext 
+            items={cards.map(card => card._id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="cards-container">
+              {cards && cards.length > 0 ? (
+                cards.map((card, index) => (
+                  <CardItem 
+                    key={card._id} 
+                    card={card}
+                    listId={list._id}
+                    teamId={teamId}
+                    index={index}
+                  />
+                ))
+              ) : (
+                <div className="empty-list-message">
+                  No cards in {list.title}
+                </div>
+              )}
+            </div>
+          </SortableContext>
         </div>
 
         {/* List Footer */}

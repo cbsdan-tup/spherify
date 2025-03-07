@@ -1,16 +1,17 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { useDispatch } from 'react-redux';
-import { deleteCard, updateCardPositions } from '../../../redux/cardSlice';
+import { deleteCard } from '../../../redux/cardSlice';
 import CardModal from './CardModal';
 import "./CardItem.css";
 
-const CardItem = ({ card, listId, teamId }) => {
+const CardItem = ({ card, listId, teamId, index }) => {
   const [showModal, setShowModal] = useState(false);
   const dragTimeoutRef = useRef(null);
   const isDraggingRef = useRef(false);
   const dispatch = useDispatch();
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const {
     attributes,
@@ -18,13 +19,15 @@ const CardItem = ({ card, listId, teamId }) => {
     setNodeRef,
     transform,
     transition,
-    isDragging
+    isDragging,
+    over
   } = useSortable({
     id: card._id,
     data: {
       type: "CARD",
       card,
-      listId
+      listId,
+      index
     }
   });
 
@@ -54,12 +57,22 @@ const CardItem = ({ card, listId, teamId }) => {
     }, 100);
   };
 
+  // Check if this card is being dragged over
+  useEffect(() => {
+    if (over && over.id === card._id && !isDragging) {
+      setIsDragOver(true);
+    } else {
+      setIsDragOver(false);
+    }
+  }, [over, card._id, isDragging]);
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
     position: 'relative',
-    zIndex: isDragging ? 1000 : 1
+    zIndex: isDragging ? 1000 : 1,
+    borderTop: isDragOver ? '2px solid #2684ff' : 'none'
   };
 
   const getPriorityColor = (priority) => {
@@ -76,14 +89,10 @@ const CardItem = ({ card, listId, teamId }) => {
     e.stopPropagation(); // Prevent card click event
     if (window.confirm('Are you sure you want to delete this card?')) {
       try {
-        const resultAction = await dispatch(deleteCard({
+        await dispatch(deleteCard({
           cardId: card._id,
           listId: listId
         }));
-        
-        if (!deleteCard.fulfilled.match(resultAction)) {
-          console.error('Failed to delete card:', resultAction.error);
-        }
       } catch (error) {
         console.error('Error deleting card:', error);
       }
@@ -103,13 +112,16 @@ const CardItem = ({ card, listId, teamId }) => {
       <div 
         ref={setNodeRef} 
         style={style} 
-        className="card-item"
+        className={`card-item ${isDragOver ? 'card-drag-over' : ''}`}
+        data-list-id={listId}
       >
         {/* Drag handle area */}
         <div 
           className="card-drag-handle"
           {...attributes}
           {...listeners}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
         >
           <span className="drag-dots">⋮⋮</span>
         </div>
