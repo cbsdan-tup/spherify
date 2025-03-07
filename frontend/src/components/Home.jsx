@@ -235,8 +235,8 @@ const Home = () => {
 
           <h3>Our Vision</h3> {/* Focused on Mission */}
           <p>
-          To be the top platform for team collaboration,
-          making teamwork easier for businesses around the world by 
+          To be a top platform for team collaboration,
+          making teamwork easier for teams of software developers around the world by 
           constantly improving our tools for communication and productivity.
           </p>
         </div>

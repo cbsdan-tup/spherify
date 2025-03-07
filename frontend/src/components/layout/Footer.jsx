@@ -21,8 +21,8 @@ function Footer() {
           <a href="#" className="links">
             <i className="fas fa-phone"></i> 1245-147-2589
           </a>
-          <a href="#" className="links">
-            <i className="fas fa-envelope"></i> info@spherify.com
+          <a href="mailto:spherify.unity@gmail.com" className="links">
+            <i className="fas fa-envelope"></i> spherify.unity@gmail.com
           </a>
           <a href="#" className="links">
             <i className="fas fa-map-marker-alt"></i> Taguig City, Philippines

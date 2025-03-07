@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import "../../index.css";
 
 const Contact = () => {
@@ -10,6 +11,8 @@ const Contact = () => {
     message: ''
   });
   const [formErrors, setFormErrors] = useState({});
+  const [submitStatus, setSubmitStatus] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,74 +31,125 @@ const Contact = () => {
     return errors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     const errors = validateForm();
     setFormErrors(errors);
 
     if (Object.keys(errors).length === 0) {
-      // Submit the form data, for example, using an API call or sending an email
-      console.log('Form submitted:', formData);
-      // Reset form after submission
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
-      });
+      setIsSubmitting(true);
+      setSubmitStatus(null);
+      
+      try {
+        const response = await axios.post(
+          `${import.meta.env.VITE_API}/contact/submit`, 
+          formData
+        );
+        
+        const data = response.data;
+        
+        if (data.success) {
+          setSubmitStatus({
+            type: 'success',
+            message: data.message || 'Thank you! Your message has been sent successfully.'
+          });
+          
+          // Reset form after submission
+          setFormData({
+            name: '',
+            email: '',
+            number: '',
+            subject: '',
+            message: ''
+          });
+        } else {
+          setSubmitStatus({
+            type: 'error',
+            message: data.message || 'Failed to send message. Please try again.'
+          });
+        }
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        setSubmitStatus({
+          type: 'error',
+          message: error.response?.data?.message || 'Network error. Please check your connection and try again.'
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 
   return (
     <div className="contact-page">
-    <form onSubmit={handleSubmit}>
-      <div className="form-group">
-      <h2>Contact Us</h2>
-        <label>Name</label>
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          className={formErrors.name ? 'error' : ''}
-        />
-        {formErrors.name && <span className="error-message">{formErrors.name}</span>}
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <h2>Contact Us</h2>
+          <label>Name</label>
+          <input
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            className={formErrors.name ? 'error' : ''}
+            disabled={isSubmitting}
+          />
+          {formErrors.name && <span className="error-message">{formErrors.name}</span>}
+        </div>
+    
+        <div className="form-group">
+          <label>Email</label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className={formErrors.email ? 'error' : ''}
+            disabled={isSubmitting}
+          />
+          {formErrors.email && <span className="error-message">{formErrors.email}</span>}
+        </div>
+        
+        <div className="form-group">
+          <label>Subject (Optional)</label>
+          <input
+            type="text"
+            name="subject"
+            value={formData.subject}
+            onChange={handleChange}
+            disabled={isSubmitting}
+          />
+        </div>
+    
+        <div className="form-group">
+          <label>Message</label>
+          <textarea
+            name="message"
+            value={formData.message}
+            onChange={handleChange}
+            className={formErrors.message ? 'error' : ''}
+            disabled={isSubmitting}
+          ></textarea>
+          {formErrors.message && <span className="error-message">{formErrors.message}</span>}
+        </div>
+    
+        {submitStatus && (
+          <div className={`submit-status ${submitStatus.type}`}>
+            {submitStatus.message}
+          </div>
+        )}
+    
+        <button type="submit" className="submit-button" disabled={isSubmitting}>
+          {isSubmitting ? 'Sending...' : 'Send Message'}
+        </button>
+      </form>
+    
+      {/* Add icon on the right side */}
+      <div className="contact-icon">
+        <img src="/images/contact-icon.png" alt="Contact Icon" />
       </div>
-  
-      <div className="form-group">
-        <label>Email</label>
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          className={formErrors.email ? 'error' : ''}
-        />
-        {formErrors.email && <span className="error-message">{formErrors.email}</span>}
-      </div>
-  
-      <div className="form-group">
-        <label>Message</label>
-        <textarea
-          name="message"
-          value={formData.message}
-          onChange={handleChange}
-          className={formErrors.message ? 'error' : ''}
-        ></textarea>
-        {formErrors.message && <span className="error-message">{formErrors.message}</span>}
-      </div>
-  
-      <button type="submit" className="submit-button">Send Message</button>
-
-    </form>
-  
-    {/* Add icon on the right side */}
-    <div className="contact-icon">
-      <img src="/images/contact-icon.png" alt="Contact Icon" />
     </div>
-  </div>
-
   );
 };
 

@@ -41,6 +41,7 @@ const teamRequest = require("./routes/teamRequests");
 const ganttRoutes = require("./routes/gantt/ganttRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const teamReportRoutes = require("./routes/teamReportRoutes");
+const contactRoutes = require("./routes/contactRoutes"); // Add this line
 
 // Import and start the scheduler
 require("./scheduler/enableUsers");
@@ -111,6 +112,7 @@ app.use("/api/v1", teamRequest);
 app.use("/api/v1", ganttRoutes);
 app.use("/api/v1", adminRoutes);
 app.use("/api/v1", teamReportRoutes);
+app.use("/api/v1/contact", contactRoutes); // Add this line
 
 // 404 not found routes
 app.all("*", (req, res) => {
