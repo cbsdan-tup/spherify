@@ -573,3 +573,115 @@ exports.fetchTeamsByName = async (req, res) => {
   }
 };
 
+exports.getUserChatStatistics = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const pastMonth = moment().subtract(1, 'month').toDate();
+    
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    console.log("Fetching chat stats for user:", userId);
+    console.log("From date:", pastMonth);
+    
+    // Convert userId to MongoDB ObjectId explicitly
+    const mongoose = require('mongoose');
+    let userObjectId;
+    
+    try {
+      userObjectId = new mongoose.Types.ObjectId(userId);
+    } catch (err) {
+      console.error("Invalid userId format:", err);
+      return res.status(400).json({ 
+        success: false, 
+        message: "Invalid user ID format" 
+      });
+    }
+    
+    // Check if any message groups exist for validation
+    const messageGroupCount = await MessageGroup.countDocuments();
+    console.log("Total message groups in system:", messageGroupCount);
+    
+    // Aggregate to count messages by day
+    const result = await MessageGroup.aggregate([
+      // Unwind messages array to work with individual messages
+      { $unwind: "$messages" },
+      // Match messages from target user within timeframe
+      { 
+        $match: {
+          "messages.sender": userObjectId,
+          "messages.createdAt": { $gte: pastMonth }
+        }
+      },
+      // Group by date and count
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$messages.createdAt" } },
+          count: { $sum: 1 }
+        }
+      },
+      // Sort by date
+      { $sort: { _id: 1 } }
+    ]);
+    
+    console.log("Raw aggregation result:", result);
+    
+    // Convert to chart-friendly format with all days included
+    const chartData = [];
+    const today = moment().format('YYYY-MM-DD');
+    const monthAgo = moment(pastMonth).format('YYYY-MM-DD');
+    
+    // Create a map of dates with counts
+    const dataMap = {};
+    result.forEach(item => {
+      dataMap[item._id] = item.count;
+    });
+    
+    // Fill in all days in the range
+    for (let m = moment(monthAgo); m.isSameOrBefore(today); m.add(1, 'days')) {
+      const dateStr = m.format('YYYY-MM-DD');
+      chartData.push({
+        date: dateStr,
+        count: dataMap[dateStr] || 0
+      });
+    }
+    
+    // Calculate total messages
+    const totalMessages = result.reduce((sum, item) => sum + item.count, 0);
+    
+    // Also run a simple count query as a sanity check
+    const countCheck = await MessageGroup.aggregate([
+      { $unwind: "$messages" },
+      { 
+        $match: {
+          "messages.sender": userObjectId,
+          "messages.createdAt": { $gte: pastMonth }
+        }
+      },
+      { $count: "total" }
+    ]);
+    
+    const verifiedTotal = countCheck.length > 0 ? countCheck[0].total : 0;
+    console.log("Verified total messages:", verifiedTotal);
+    console.log("Calculated total messages:", totalMessages);
+    
+    if (totalMessages !== verifiedTotal) {
+      console.warn("Total message count mismatch!");
+    }
+    
+    res.status(200).json({
+      success: true,
+      totalMessages,
+      chartData
+    });
+  } catch (error) {
+    console.error("Error fetching user chat statistics:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error", 
+      error: error.message 
+    });
+  }
+};
+
