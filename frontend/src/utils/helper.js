@@ -1,20 +1,166 @@
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { loginUser, logoutUser } from "../redux/authSlice";
+import { io } from "socket.io-client";
 
-// export const authenticate = (data, next) => {
-//   const dispatch = useDispatch();
-//   dispatch(loginUser(data));
-//   //   if (window !== "undefined") {
-//   //     sessionStorage.setItem("token", JSON.stringify(data.token));
-//   //     sessionStorage.setItem("user", JSON.stringify(data.user));
-//   //     console.log(data.user);
-//   //   }
-//   next();
-// };
+// Create a single socket instance to be reused across the app
+export const socket = io(`${import.meta.env.VITE_SOCKET_API}`, {
+  reconnection: true,
+  reconnectionAttempts: Infinity,
+  reconnectionDelay: 1000,
+});
+
+// Add socket connection monitoring
+socket.on('connect', () => {
+  console.log('Socket connected:', socket.id);
+});
+
+socket.on('disconnect', () => {
+  console.log('Socket disconnected');
+});
+
+socket.on('connect_error', (error) => {
+  console.error('Socket connection error:', error);
+});
+
+// User inactivity timeout in milliseconds (5 minutes)
+const INACTIVITY_TIMEOUT = 5 * 60 * 1000;
+let inactivityTimer;
+let isPageVisible = true;
+
+// Throttle status updates to prevent too many requests
+const THROTTLE_INTERVAL = 3000; // 3 seconds
+let lastStatusUpdate = {
+  timestamp: 0,
+  status: null
+};
+
+// Log user status changes in a consistent format
+export const logUserStatusChange = (userId, userName, prevStatus, newStatus) => {
+  const timestamp = new Date().toISOString().split('T')[1].slice(0, 8);
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active': return 'green';
+      case 'inactive': return 'orange';
+      case 'offline': return 'gray';
+      default: return 'black';
+    }
+  };
+  
+  console.log(
+    `%c[${timestamp}] ${userName} (${userId.slice(-4)}): ${prevStatus || '?'} → ${newStatus}`,
+    `color: ${getStatusColor(newStatus)}; font-weight: bold`
+  );
+  
+  // Also log to server if needed
+  if (socket.connected) {
+    socket.emit("logStatusChange", { userId, userName, prevStatus, newStatus, timestamp });
+  }
+};
+
+// Enhanced function to update user status with logging
+export const updateUserStatus = (userId, status) => {
+  if (!userId || !socket.connected) return;
+  
+  const now = Date.now();
+  
+  // Only emit if status changed or if it's been more than the throttle interval
+  if (
+    status !== lastStatusUpdate.status || 
+    now - lastStatusUpdate.timestamp > THROTTLE_INTERVAL
+  ) {
+    // Log the status update attempt
+    console.log(`[STATUS UPDATE] Sending status update for ${userId}: ${status}`);
+    
+    socket.emit('updateStatus', { userId, status });
+    
+    lastStatusUpdate = {
+      timestamp: now,
+      status
+    };
+  }
+};
+
+// Setup user activity tracking with proper reference management
+export const setupActivityTracking = (userId) => {
+  if (!userId) return;
+
+  // Store references to event handlers so we can remove them later
+  const handleVisibility = () => {
+    isPageVisible = document.visibilityState === 'visible';
+    
+    if (isPageVisible) {
+      updateUserStatus(userId, 'active');
+      resetInactivityTimer(userId);
+    } else {
+      updateUserStatus(userId, 'inactive');
+    }
+  };
+
+  const handleActivity = () => {
+    if (isPageVisible && userId) {
+      updateUserStatus(userId, 'active');
+      resetInactivityTimer(userId);
+    }
+  };
+
+  // Save references globally so we can access them during cleanup
+  window._spherifyEventHandlers = {
+    visibility: handleVisibility,
+    activity: handleActivity,
+    userId
+  };
+
+  // Visibility change detection
+  document.addEventListener('visibilitychange', handleVisibility);
+
+  // Activity monitoring
+  const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+  activityEvents.forEach(eventType => {
+    document.addEventListener(eventType, handleActivity);
+  });
+
+  // Initial setup
+  updateUserStatus(userId, 'active');
+  resetInactivityTimer(userId);
+};
+
+// Enhanced cleanup with proper reference management
+export const cleanupActivityTracking = () => {
+  const handlers = window._spherifyEventHandlers;
+  
+  if (handlers) {
+    document.removeEventListener('visibilitychange', handlers.visibility);
+    
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+    activityEvents.forEach(eventType => {
+      document.removeEventListener(eventType, handlers.activity);
+    });
+    
+    // Final status update when leaving
+    if (handlers.userId) {
+      updateUserStatus(handlers.userId, 'offline');
+    }
+    
+    delete window._spherifyEventHandlers;
+  }
+  
+  if (inactivityTimer) {
+    clearTimeout(inactivityTimer);
+    inactivityTimer = null;
+  }
+  
+  console.log('Activity tracking cleaned up');
+};
 
 export const authenticate = (data, dispatch, next) => {
   dispatch(loginUser(data));
+  
+  // Setup activity tracking for the logged in user
+  if (data?.user?.user?._id) {
+    setupActivityTracking(data.user.user._id);
+  }
+  
   setTimeout(() => {
     next();
   }, 1000); 
@@ -27,50 +173,30 @@ export const isAuthenticated = (state) => {
 export const getToken = (state) => {
   return state?.token;
 };
-// export const isAuthenticated = () => {
-//   if (typeof window !== "undefined") {
-//     const token = sessionStorage.getItem("token");
-//     const user = sessionStorage.getItem("user");
-//     if (token && user) {
-//       return true;
-//     }
-//   }
-//   return false;
-// };
 
-// export const getToken = () => {
-//   if (window !== "undefined") {
-//     if (sessionStorage.getItem("token")) {
-//       return JSON.parse(sessionStorage.getItem("token"));
-//     } else {
-//       return false;
-//     }
-//   }
-// };
-
-// ✅ Get user from Redux store
 export const getUser = (state) => {
   console.log(state);
   return state?.user;
 };
 
 // ✅ Logout function using Redux (No `sessionStorage`)
-export const logout = (dispatch, next) => {
+export const logout = (dispatch, next, currentUser = null) => {
+  // Clean up activity tracking
+  cleanupActivityTracking();
+  
+  // Get user ID directly from the parameter or from redux state if available
+  const userId = currentUser?._id;
+  
+  if (userId) {
+    // Emit logout event before clearing user data
+    socket.emit('logout', userId);
+  }
+  
   dispatch(logoutUser());
   setTimeout(() => {
     next(); // Call callback function after logout if provided
   }, 1000); // 1 second delay
 };
-
-// export const getUser = () => {
-//   if (window !== "undefined") {
-//     if (sessionStorage.getItem("user")) {
-//       return JSON.parse(sessionStorage.getItem("user"));
-//     } else {
-//       return false;
-//     }
-//   }
-// };
 
 export const isAdmin = () => {
   if (typeof window !== "undefined") {
@@ -82,17 +208,6 @@ export const isAdmin = () => {
   }
   return false;
 };
-
-// export const logout = (next) => {
-//   if (window !== "undefined") {
-//     sessionStorage.removeItem("token");
-//     sessionStorage.removeItem("user");
-//   }
-//   const dispatch = useDispatch();
-
-//   dispatch(logoutUser());
-//   next();
-// };
 
 export const errMsg = (message = "") =>
   toast.error(message, {

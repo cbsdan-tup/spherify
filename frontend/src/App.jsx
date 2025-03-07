@@ -6,7 +6,7 @@ import NotFound404 from "./components/NotFound404";
 import Header from "./components/layout/Header";
 import FeaturesPage from "./components/FeaturesPage";
 import AboutPage from "./components/AboutPage";
-import { isAuthenticated, getToken, getUser, errMsg } from "./utils/helper";
+import { isAuthenticated, getToken, getUser, errMsg, socket } from "./utils/helper";
 import Main from "./components/Main";
 import "./Variables.css";
 import "./App.css";
@@ -28,6 +28,7 @@ function App() {
   const authState = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const favIcon = useSelector((state) => state.configurations.site?.favicon);
+  const userId = authState?.user?._id;
 
   // Set up favicon
   useEffect(() => {
@@ -53,6 +54,7 @@ function App() {
   useEffect(() => {
     dispatch(fetchConfigurations());
   }, [dispatch]);
+
 
   const LandingRoutes = () => {
     return (

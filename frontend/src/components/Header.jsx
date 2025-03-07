@@ -101,7 +101,7 @@ const Header = ({ setIsLoading, setTeams }) => {
         position: "bottom-right",
       });
       window.location.reload();
-    });
+    }, user); // Pass the current user to logout function
   };
 
   return (

@@ -1,4 +1,8 @@
 import { createSlice } from "@reduxjs/toolkit";
+import { socket } from "../utils/helper";
+
+// Store reference to be used in helper.js
+let store;
 
 const initialState = {
   user: null,
@@ -43,9 +47,13 @@ export const { loginUser, updateToken, logoutUser, updateUser } = authSlice.acti
 export default authSlice.reducer;
 
 // This is a store enhancer that saves auth state to localStorage 
-// whenever it changes
-export const setupAuthStateStorage = (store) => {
+// and handles user status
+export const setupAuthStateStorage = (reduxStore) => {
+  // Store the store reference for use elsewhere
+  store = reduxStore;
+  
   let currentAuthState = store.getState().auth;
+  
   
   store.subscribe(() => {
     const previousAuthState = currentAuthState;
@@ -54,6 +62,16 @@ export const setupAuthStateStorage = (store) => {
     // If auth state changed, save to localStorage
     if (previousAuthState !== currentAuthState) {
       localStorage.setItem('auth_state', JSON.stringify(currentAuthState));
+      
+      // If user just logged in, ensure status is set to active
+      if (!previousAuthState.isAuthenticated && currentAuthState.isAuthenticated) {
+        if (currentAuthState?.user?._id) {
+          socket.emit('login', currentAuthState.user._id);
+        }
+      }
     }
   });
 };
+
+// Export the store for use in helper.js
+export { store };

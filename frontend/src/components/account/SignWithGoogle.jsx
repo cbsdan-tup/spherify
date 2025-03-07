@@ -1,11 +1,9 @@
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { auth } from "../../config/firebase-config";
-import { authenticate, succesMsg, errMsg } from "../../utils/helper";
+import { authenticate, succesMsg, errMsg, socket } from "../../utils/helper";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import Swal from "sweetalert2";
-import { io } from "socket.io-client";
-const socket = io(`${import.meta.env.VITE_SOCKET_API}`);
 
 function SignWithGoogle({ method }) {
   const dispatch = useDispatch();
@@ -41,7 +39,7 @@ function SignWithGoogle({ method }) {
                 user: response.user,
               };
 
-              socket.emit("login", response.user._id)
+              // socket.emit("login", response.user._id)
 
               succesMsg("Login Successfully!");
               {
