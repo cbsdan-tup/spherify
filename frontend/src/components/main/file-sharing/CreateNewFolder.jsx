@@ -9,6 +9,7 @@ const CreateNewFolder = ({parentFolder, refresh, setRefresh, relativePath}) => {
   const [show, setShow] = useState(false);
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const user = useSelector((state) => state.auth.user);
+  const token = useSelector((state) => state.auth.token);
 
   const handleCreateFolder = async () => {
     if (!folderName.trim()) {
@@ -23,6 +24,11 @@ const CreateNewFolder = ({parentFolder, refresh, setRefresh, relativePath}) => {
         createdBy: user._id,
         owner: user._id,
         parentFolder: parentFolder,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`, 
+          "Content-Type": "application/json",
+        }
       });
       
       succesMsg("Folder created successfully!");

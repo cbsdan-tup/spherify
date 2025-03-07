@@ -146,26 +146,6 @@ const Dashboard = () => {
           "Over the past 7 days, ",
           { text: `${last7DaysUsers || 0}`, style: "keyMetric" },
           " new users have registered. ",
-          userGrowthTrend !== null
-            ? [
-                "This represents a ",
-                {
-                  text: `${userGrowthTrend.toFixed(2)}%`,
-                  style:
-                    userGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
-                },
-                " change compared to the previous 7 days, indicating a ",
-                {
-                  text:
-                    userGrowthTrend >= 0
-                      ? "positive growth trend"
-                      : "decline in growth",
-                  style:
-                    userGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
-                },
-                ".",
-              ]
-            : "There is an insufficient data to determine growth trend.",
         ],
         style: "paragraph",
       });
@@ -176,6 +156,31 @@ const Dashboard = () => {
         style: "paragraph",
       });
     }
+
+    let userGrowthAnalysis
+    if (userGrowthTrend !== null && !isNaN(userGrowthTrend)) {
+      userGrowthAnalysis = [
+        "This represents a ",
+        {
+          text: `${userGrowthTrend.toFixed(2)}%`,
+          style:
+            userGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
+        },
+        " change compared to the previous 7 days, indicating a ",
+        {
+          text:
+            userGrowthTrend >= 0
+              ? "positive growth trend"
+              : "decline in growth",
+          style:
+            userGrowthTrend >= 0 ? "positiveTrend" : "negativeTrend",
+        },
+        ".",
+      ]
+    } else {
+      userGrowthAnalysis = "There is an insufficient data to determine growth trend."
+    }
+    content.push({ text: userGrowthAnalysis, style: "paragraph" });
 
     // 📊 Team Engagement Analysis
     content.push({ text: "Team Engagement Analysis", style: "sectionHeader" });
@@ -236,9 +241,9 @@ const Dashboard = () => {
         ],
         style: "paragraph",
       });
-      content.push({ text: teamAnalysisText, style: "paragraph" });
-
+      
       content.push(...(await addChartWithAnalysis("pastTeamsChart")));
+      content.push({ text: teamAnalysisText, style: "paragraph" });
     } else {
       content.push({
         text: "Analyzing Team Engagement Data...",

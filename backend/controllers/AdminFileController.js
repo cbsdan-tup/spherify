@@ -50,98 +50,55 @@ exports.getAllFiles = async (req, res) => {
 };
 
 /**
- * Get files and folders by path for admin
+ * Get files and folders by path for admin - using same approach as FileSharingController
  */
 exports.getFilesAndFoldersByPath = async (req, res) => {
   try {
-    const { path } = req.query;
+    const relativePath = req.query.path || "";
+    const teamId = req.query.teamId || null; // Optional teamId filter for admin view
+
+    console.log("Admin fetching files for path:", relativePath || "(root)");
+    console.log("TeamId filter (optional):", teamId);
+
+    // Escape special regex characters in path
+    const escapedPath = relativePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     
-    console.log('Requested path parameter:', path);
-    
-    if (!path) {
-      return res.status(400).json({
-        success: false,
-        message: 'Path is required',
-      });
-    }
-    
-    // First try to find by MongoDB ID (if path is an ID)
-    if (mongoose.isValidObjectId(path)) {
-      console.log('Path looks like a valid MongoDB ID, trying to find folder by ID');
-      const folder = await File.findOne({
-        _id: path,
-        type: 'folder',
-        isDeleted: { $ne: true }
-      });
-      
-      if (folder) {
-        console.log('Found folder by ID:', folder.name);
-        // Get all files with this folder as parent
-        const files = await File.find({
-          parentFolder: folder._id,
-          isDeleted: { $ne: true }
-        }).populate('owner', 'firstName lastName email');
-        
-        return res.json({
-          success: true,
-          files,
-          currentFolder: folder
-        });
-      }
-      console.log('No folder found with that ID, continuing with path lookup');
-    }
-    
-    console.log('Looking for folder with URL containing:', path);
-    
-    // Next try to find by URL matching
-    // Get the client to determine the correct base URL
     const { NEXTCLOUD_URL, NEXTCLOUD_USER, NEXTCLOUD_PASSWORD } = await createWebDAVClient();
+
+    // Base path for Nextcloud
+    const basePath = `https://spherify-cloud.mooo.com/remote.php/dav/files/spherify/Spherify_Data`;
     
-    // Try different path formats that might match
-    const possibleUrls = [
-      // Full URL with Spherify_Data
-      `${NEXTCLOUD_URL}/${NEXTCLOUD_USER}/Spherify_Data/${path}`,
-      // URL without Spherify_Data
-      `${NEXTCLOUD_URL}/${NEXTCLOUD_USER}/${path}`,
-      // Just the path itself
-      path
-    ];
+    // Build regex pattern similar to FileShareController
+    const pathRegex = relativePath
+      ? `^${basePath}/${escapedPath}(/[^/]+)?$`
+      : `^${basePath}/[^/]+$`;
     
-    console.log('Trying possible URLs:', possibleUrls);
+    console.log("Using path regex:", pathRegex);
+
+    // Build query object - similar to FileShareController but without requiring teamId
+    const query = {
+      isDeleted: false,
+      url: { $regex: new RegExp(pathRegex, "i") },
+    };
     
-    // Try to find the folder by any of these URL patterns
-    let folder = null;
-    for (const url of possibleUrls) {
-      folder = await File.findOne({
-        url: { $regex: new RegExp(url, 'i') },
-        type: 'folder',
-        isDeleted: { $ne: true }
-      });
-      
-      if (folder) {
-        console.log('Found folder with URL:', url);
-        console.log('Folder details:', folder.name, folder._id);
-        break;
-      }
+    // Add teamId filter if provided
+    if (teamId) {
+      query.teamId = teamId;
     }
+
+    // Fetch files matching the path pattern
+    let files = await File.find(query)
+      .populate("owner", "firstName lastName email")
+      .populate("parentFolder")
+      .populate("history.performedBy", "firstName lastName email avatar");
+
+    console.log(`Found ${files.length} files at path ${relativePath}`);
     
-    if (!folder) {
-      return res.status(404).json({
-        success: false,
-        message: 'Folder not found with any URL pattern',
-        triedPaths: possibleUrls
-      });
-    }
-    
-    // Found the folder, now get all its children
-    const files = await File.find({
-      parentFolder: folder._id,
-      isDeleted: { $ne: true }
-    }).populate('owner', 'firstName lastName email');
-    
-    console.log(`Found ${files.length} files/folders in this folder`);
-    
-    // Add file sizes if possible
+    // Exclude the queried folder itself
+    const currentFolderUrl = `${basePath}/${relativePath}`;
+    files = files.filter((file) => file.url !== currentFolderUrl);
+
+    // Handle file sizes
     let totalFolderSize = 0;
     const updatedFiles = await Promise.all(
       files.map(async (file) => {
@@ -177,13 +134,11 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
       })
     );
 
-    return res.json({ 
+    return res.status(200).json({ 
       success: true, 
-      files: updatedFiles, 
-      totalFolderSize,
-      currentFolder: folder
+      files: updatedFiles,
+      totalFolderSize 
     });
-    
   } catch (error) {
     console.error('Error fetching files by path:', error);
     return res.status(500).json({

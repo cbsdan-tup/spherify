@@ -8,6 +8,8 @@ import UploadFiles from "./UploadFiles";
 import UploadFolder from "./UploadFolder";
 import Swal from "sweetalert2";
 import ArchiveModal from "./ArchiveModal";
+import { Modal, Button, Form } from "react-bootstrap";
+import FileHistoryModal from "./FileHistoryModal";
 
 const FileUpload = () => {
   const [files, setFiles] = useState([]);
@@ -28,8 +30,17 @@ const FileUpload = () => {
   const [fileSelected, setFileSelected] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
 
+  // Rename modal state
+  const [showRenameModal, setShowRenameModal] = useState(false);
+  const [itemToRename, setItemToRename] = useState(null);
+  const [newName, setNewName] = useState("");
+
   //Archive modal
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+
+  // Add state for history modal
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [selectedItemForHistory, setSelectedItemForHistory] = useState(null);
 
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const user = useSelector((state) => state.auth.user);
@@ -42,6 +53,51 @@ const FileUpload = () => {
     setShowMenu((prev) => !prev);
   };
 
+  // Handle rename modal
+  const handleRenameModalOpen = (item) => {
+    setItemToRename(item);
+    setNewName(item.name);
+    setShowRenameModal(true);
+  };
+
+  const handleRenameModalClose = () => {
+    setShowRenameModal(false);
+    setItemToRename(null);
+    setNewName("");
+  };
+
+  const handleRename = async () => {
+    if (!newName.trim()) {
+      errMsg("Name cannot be empty.");
+      return;
+    }
+
+    try {
+      const response = await axios.put(
+        `${import.meta.env.VITE_API}/rename/${itemToRename._id}`,
+        { newName },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      succesMsg(
+        `${
+          itemToRename.type === "folder" ? "Folder" : "File"
+        } renamed successfully.`
+      );
+      handleRenameModalClose();
+      setRefresh((prev) => !prev); // Refresh the file list
+    } catch (error) {
+      console.error("Rename error:", error);
+      errMsg(
+        `Failed to rename ${itemToRename.type === "folder" ? "folder" : "file"}.`
+      );
+    }
+  };
+
   const handleArchiveModalClose = () => {
     console.log("Archive modal close");
     setIsArchiveModalOpen(false);
@@ -49,6 +105,17 @@ const FileUpload = () => {
   const handleArchiveModalOpen = () => {
     console.log("Archive modal open");
     setIsArchiveModalOpen(true);
+  };
+
+  // Function to handle opening history modal
+  const handleHistoryModalOpen = (item) => {
+    setSelectedItemForHistory(item);
+    setShowHistoryModal(true);
+  };
+
+  const handleHistoryModalClose = () => {
+    setShowHistoryModal(false);
+    setSelectedItemForHistory(null);
   };
 
   useEffect(() => {
@@ -243,7 +310,11 @@ const FileUpload = () => {
       if (result.isConfirmed) {
         try {
           await axios.delete(
-            `${import.meta.env.VITE_API}/soft-delete/${fileId}`
+            `${import.meta.env.VITE_API}/soft-delete/${fileId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
           );
           succesMsg(
             `${
@@ -290,7 +361,11 @@ const FileUpload = () => {
           // Use forEach to delete each selected item
           selectedItems.forEach(async (itemId) => {
             await axios.delete(
-              `${import.meta.env.VITE_API}/soft-delete/${itemId}`
+              `${import.meta.env.VITE_API}/soft-delete/${itemId}`, {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
             );
           });
           succesMsg("Selected items moved to trash successfully!");
@@ -346,6 +421,19 @@ const FileUpload = () => {
       errMsg("Failed to download file or folder");
     }
   };
+
+  // Add this helper function to format history action text
+  const formatHistoryAction = useCallback((action) => {
+    switch(action) {
+      case 'created': return 'Created';
+      case 'renamed': return 'Renamed';
+      case 'moved': return 'Moved';
+      case 'edited': return 'Edited';
+      case 'deleted': return 'Moved to trash';
+      case 'restored': return 'Restored';
+      default: return action;
+    }
+  }, []);
 
   return (
     <div className="file-sharing">
@@ -503,8 +591,21 @@ const FileUpload = () => {
                   </div>
                   <div className="modification-menu">
                     <div className="modification">
-                      {getTimeFeedback(folder.createdAt)} by{" "}
-                      {folder.owner?.firstName} {folder.owner?.lastName}{" "}
+                      {folder.history && folder.history.length > 0 ? (
+                        <>
+                          <div className="last-action">
+                            {formatHistoryAction(folder.history[folder.history.length-1].action)} {" "}
+                            {getTimeFeedback(folder.history[folder.history.length-1].timestamp)} by{" "}
+                            {folder.history[folder.history.length-1].performedBy?.firstName || ""} {" "}
+                            {folder.history[folder.history.length-1].performedBy?.lastName || ""}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          Created {getTimeFeedback(folder.createdAt)} by{" "}
+                          {folder.owner?.firstName} {folder.owner?.lastName}{" "}
+                        </>
+                      )}
                     </div>
                     <div className="menu">
                       <i
@@ -518,7 +619,17 @@ const FileUpload = () => {
                         <div className="menu-options">
                           {folder.name !== currentTeamId && (
                             <>
-                              <div className="rename option" onClick={() => {}}>
+                              <div
+                                className="history option"
+                                onClick={() => handleHistoryModalOpen(folder)}
+                              >
+                                <i className="fa-solid fa-clock-rotate-left"></i>
+                                <span>History</span>
+                              </div>
+                              <div
+                                className="rename option"
+                                onClick={() => handleRenameModalOpen(folder)}
+                              >
                                 <i className="fa-solid fa-pencil"></i>{" "}
                                 <span>Rename</span>
                               </div>
@@ -575,8 +686,21 @@ const FileUpload = () => {
                   </div>
                   <div className="modification-menu">
                     <div className="modification">
-                      {getTimeFeedback(file.createdAt)} by{" "}
-                      {file.owner?.firstName} {file.owner?.lastName}{" "}
+                      {file.history && file.history.length > 0 ? (
+                        <>
+                          <div className="last-action">
+                            {formatHistoryAction(file.history[file.history.length-1].action)} {" "}
+                            {getTimeFeedback(file.history[file.history.length-1].timestamp)} by{" "}
+                            {file.history[file.history.length-1].performedBy?.firstName || ""} {" "}
+                            {file.history[file.history.length-1].performedBy?.lastName || ""}
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          Created {getTimeFeedback(file.createdAt)} by{" "}
+                          {file.owner?.firstName} {file.owner?.lastName}{" "}
+                        </>
+                      )}
                     </div>
                     <div className="menu">
                       <i
@@ -592,7 +716,17 @@ const FileUpload = () => {
                             <i className="fa-solid fa-eye"></i>
                             <span>View</span>
                           </div>
-                          <div className="rename option" onClick={() => {}}>
+                          <div
+                            className="history option"
+                            onClick={() => handleHistoryModalOpen(file)}
+                          >
+                            <i className="fa-solid fa-clock-rotate-left"></i>
+                            <span>History</span>
+                          </div>
+                          <div
+                            className="rename option"
+                            onClick={() => handleRenameModalOpen(file)}
+                          >
                             <i className="fa-solid fa-pencil"></i>
                             <span>Rename</span>
                           </div>
@@ -688,6 +822,41 @@ const FileUpload = () => {
         teamId={currentTeamId}
         setRefresh={setRefresh}
       />
+      {/* File History Modal */}
+      <FileHistoryModal 
+        isOpen={showHistoryModal} 
+        onClose={handleHistoryModalClose} 
+        item={selectedItemForHistory} 
+      />
+      {/* Rename Modal */}
+      <Modal show={showRenameModal} onHide={handleRenameModalClose} className="rename-modal">
+        <Modal.Header closeButton>
+          <Modal.Title>
+            Rename {itemToRename?.type === "folder" ? "Folder" : "File"}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group>
+              <Form.Label>New Name</Form.Label>
+              <Form.Control
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Enter new name"
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleRenameModalClose}>
+            Cancel
+          </Button>
+          <Button className="rename-btn" onClick={handleRename}>
+            Rename
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

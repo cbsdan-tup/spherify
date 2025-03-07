@@ -18,25 +18,27 @@ const {
     getStorageInfo,
     getFolderSize,
     downloadFileOrFolder,
-    getDeletedFilesAndFolders
+    getDeletedFilesAndFolders,
+    renameFileOrFolder
 } = require("../controllers/FileSharingController");
 
 const upload = multer({ dest: "uploads/" });
 
 // Route to create a file or folder
-router.post("/upload", upload.array("files"), createFileOrFolder);
-router.post("/uploadFiles", upload.array("files"), uploadFiles);
-router.post("/uploadFolders", upload.array("files"), uploadFolders);
-router.post("/createTeamFolder/:teamId", createFolder);
+router.post("/upload", isAuthenticatedUser, upload.array("files"), createFileOrFolder);
+router.post("/uploadFiles", isAuthenticatedUser, upload.array("files"), uploadFiles);
+router.post("/uploadFolders", isAuthenticatedUser, upload.array("files"), uploadFolders);
+router.post("/createTeamFolder/:teamId", isAuthenticatedUser, createFolder);
 router.get("/getAllFiles", upload.array("files"), getAllFilesAndFolders);
 router.get("/getTeamFiles/:teamId", getFilesAndFoldersByTeam);
 router.get("/getFilesAndFoldersByPath/:teamId", getFilesAndFoldersByPath);
-router.post("/createNewFolder", createNewFolder)
+router.post("/createNewFolder", isAuthenticatedUser, createNewFolder)
 router.get("/getPublicLink", generatePublicLink);
-router.delete("/delete/:fileId", deleteFileOrFolder);
-router.delete("/soft-delete/:fileId", softDeleteFileOrFolder);
+router.delete("/delete/:fileId", isAuthenticatedUser, deleteFileOrFolder);
+router.delete("/soft-delete/:fileId", isAuthenticatedUser, softDeleteFileOrFolder);
 router.get("/get-deleted-files/:teamId", getDeletedFilesAndFolders);
-router.put("/restore/:fileId", restoreFileOrFolder);
+router.put("/restore/:fileId", isAuthenticatedUser, restoreFileOrFolder);
+router.put("/rename/:fileId", isAuthenticatedUser, renameFileOrFolder); 
 
 router.get("/getStorageInfo", isAdmin, getStorageInfo);
 router.get("/getFolderSize", isAuthenticatedUser, getFolderSize);

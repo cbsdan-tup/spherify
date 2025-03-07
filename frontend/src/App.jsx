@@ -9,7 +9,6 @@ import AboutPage from "./components/AboutPage";
 import { isAuthenticated, getToken, getUser, errMsg } from "./utils/helper";
 import Main from "./components/Main";
 import "./Variables.css";
-// import "./MainHeader.css";
 import "./App.css";
 import "./Main.css";
 import "./FileSharing.css";

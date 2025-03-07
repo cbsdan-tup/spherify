@@ -1,0 +1,150 @@
+.file-history-modal .modal-content {
+  border-radius: 10px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.file-history-modal .modal-header {
+  border-bottom: 1px solid #eaeaea;
+  padding: 15px 20px;
+}
+
+.file-history-modal .modal-title {
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.file-history-modal .modal-body {
+  padding: 0;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.history-timeline {
+  position: relative;
+  padding: 20px;
+}
+
+.history-timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 30px;
+  width: 4px;
+  background: #e9ecef;
+  border-radius: 4px;
+}
+
+.timeline-item {
+  position: relative;
+  margin-bottom: 30px;
+  display: flex;
+}
+
+.timeline-item:last-child {
+  margin-bottom: 0;
+}
+
+.timeline-icon {
+  position: relative;
+  z-index: 1;
+  margin-right: 15px;
+  color: var(--text-white)
+}
+
+.action-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.timeline-content {
+  flex: 1;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  border-left: 5px solid #e9ecef;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.action-type {
+  font-size: 1rem;
+}
+
+.timestamp {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.user-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-right: 8px;
+  object-fit: cover;
+}
+
+.comment {
+  margin-bottom: 8px;
+  font-style: italic;
+  color: #495057;
+}
+
+.detail-item {
+  margin-top: 5px;
+  font-size: 0.9rem;
+}
+
+.detail-label {
+  font-weight: 600;
+  margin-right: 5px;
+  color: #495057;
+}
+
+.detail-value {
+  color: #212529;
+}
+
+/* Timeline colors based on action type */
+.timeline-content[data-action="created"] {
+  border-left-color: #28a745;
+}
+
+.timeline-content[data-action="renamed"] {
+  border-left-color: #007bff;
+}
+
+.timeline-content[data-action="moved"] {
+  border-left-color: #17a2b8;
+}
+
+.timeline-content[data-action="edited"] {
+  border-left-color: #ffc107;
+}
+
+.timeline-content[data-action="deleted"] {
+  border-left-color: #dc3545;
+}
+
+.timeline-content[data-action="restored"] {
+  border-left-color: #6c757d;
+}

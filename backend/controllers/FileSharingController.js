@@ -76,6 +76,13 @@ exports.createFileOrFolder = async (req, res) => {
         collaborators: collaborators || [],
       });
       await folderRecord.save();
+      
+      // Add history entry for folder creation
+      if (createdBy) {
+        await folderRecord.addHistory('created', createdBy, {
+          comment: `Folder "${name}" created`
+        });
+      }
     }
 
     if (req.files && req.files.length > 0) {
@@ -114,6 +121,14 @@ exports.createFileOrFolder = async (req, res) => {
         });
 
         await fileRecord.save();
+        
+        // Add history entry for file upload
+        if (createdBy) {
+          await fileRecord.addHistory('created', createdBy, {
+            comment: `File "${fileName}" uploaded`
+          });
+        }
+        
         uploadedFiles.push(fileRecord);
       }
     } else {
@@ -204,6 +219,14 @@ exports.uploadFolders = async (req, res) => {
               parentFolder: lastParentId,
             });
             const savedFolder = await newFolder.save();
+            
+            // Add history entry for folder creation
+            if (createdBy) {
+              await savedFolder.addHistory('created', createdBy, {
+                comment: `Folder "${folder}" created in folder upload operation`
+              });
+            }
+            
             lastParentId = savedFolder._id; // Update parent ID for nested folders
           } else {
             throw err; // Throw if error is not 404
@@ -300,6 +323,14 @@ exports.uploadFolders = async (req, res) => {
             parentFolder: lastParentId,
           });
           const savedFolder = await newFolder.save();
+          
+          // Add history entry for auto-created parent folder
+          if (createdBy) {
+            await savedFolder.addHistory('created', createdBy, {
+              comment: `Folder "${folderName}" auto-created during folder upload`
+            });
+          }
+          
           lastParentId = savedFolder._id; // Update for nested folder tracking
         } else {
           throw err;
@@ -325,6 +356,15 @@ exports.uploadFolders = async (req, res) => {
         parentFolder: validParentFolder,
       });
       await newFile.save();
+      
+      // Add history entry for file upload
+      if (createdBy) {
+        await newFile.addHistory('created', createdBy, {
+          comment: `File "${path.basename(relativeFilePath)}" uploaded as part of folder upload`,
+          path: relativeFilePath
+        });
+      }
+      
       uploadedFiles.push(newFile);
     }
 
@@ -407,6 +447,14 @@ exports.uploadFiles = async (req, res) => {
           : null,
       });
       await fileRecord.save();
+      
+      // Add history entry for file upload
+      if (createdBy) {
+        await fileRecord.addHistory('created', createdBy, {
+          comment: `File "${fileName}" uploaded to ${relativePath || 'root folder'}`
+        });
+      }
+      
       uploadedFiles.push(fileRecord);
     }
 
@@ -482,7 +530,7 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
       teamId,
       isDeleted: false, // ✅ Only fetch non-deleted files
       url: { $regex: new RegExp(pathRegex, "i") },
-    }).populate("createdBy owner parentFolder branchParent");
+    }).populate("createdBy owner parentFolder branchParent").populate("history.performedBy", "firstName lastName email avatar");
 
     console.log("pathRegex", pathRegex);
 
@@ -612,6 +660,13 @@ exports.createFolder = async (req, res) => {
     });
     await newFolder.save();
 
+    // Add history entry for team folder creation
+    if (createdBy) {
+      await newFolder.addHistory('created', createdBy, {
+        comment: `Team folder created for team ${teamId}`
+      });
+    }
+
     res.status(201).json({
       success: true,
       message: "Folder created successfully",
@@ -673,6 +728,13 @@ exports.createNewFolder = async (req, res) => {
         : null,
     });
     await newFolder.save();
+    
+    // Add history entry for new folder creation
+    if (createdBy) {
+      await newFolder.addHistory('created', createdBy, {
+        comment: `Folder "${name}" created${relativePath ? ` in ${relativePath}` : ''}`
+      });
+    }
 
     res.status(201).json({
       success: true,
@@ -790,13 +852,25 @@ const deleteFolderRecursively = async (folderId, webdavClient) => {
 exports.softDeleteFile = async (req, res) => {
   try {
       const {fileId} = req.params;
+      // Get user ID from authenticated request
+      const userId = req.user ? req.user._id : null;
+      
       const file = await File.findById(fileId);
       if (!file) {
         throw new Error("File not found");
       }
-      await file.softDelete();
+      
+      // Use the userId if available
+      if (userId) {
+        await file.addHistory('deleted', userId, {
+          comment: `${file.type === 'folder' ? 'Folder' : 'File'} "${file.name}" moved to trash`
+        });
+      } else {
+        await file.softDelete();
+      }
+      
       console.log("File soft deleted successfully");
-
+      res.status(200).json({ success: true, message: "Item moved to trash successfully" });
   } catch (error) {
     console.error("File deletion error:", error);
     res.status(500).json({ success: false, error: "Deletion failed" });
@@ -809,6 +883,8 @@ exports.softDeleteFile = async (req, res) => {
 exports.deleteFileOrFolder = async (req, res) => {
   try {
     const { fileId } = req.params;
+    // Get user ID for history tracking
+    const userId = req.user ? req.user._id : null;
 
     if (!mongoose.Types.ObjectId.isValid(fileId)) {
       return res.status(400).json({ success: false, error: "Invalid file ID" });
@@ -819,17 +895,22 @@ exports.deleteFileOrFolder = async (req, res) => {
       return res.status(404).json({ success: false, error: "File not found" });
     }
 
+    // Store file information before deletion for history
+    const fileName = fileRecord.name;
+    const fileType = fileRecord.type;
+    const filePath = fileRecord.url;
+
     const { webdavClient } = await createWebDAVClient();
-    const filePath = fileRecord.url.replace(
+    const nextcloudPath = fileRecord.url.replace(
       "https://spherify-cloud.mooo.com/remote.php/dav/files/spherify/Spherify_Data/",
       ""
     );
 
-    console.log(`Deleting: ${filePath}`);
+    console.log(`Deleting: ${nextcloudPath}`);
 
     // Check if file/folder exists before attempting deletion
     try {
-      await webdavClient.stat(filePath);
+      await webdavClient.stat(nextcloudPath);
     } catch (err) {
       if (err.status === 404) {
         console.log("File or folder does not exist in Nextcloud.");
@@ -838,12 +919,22 @@ exports.deleteFileOrFolder = async (req, res) => {
       }
     }
 
+    // If this is a team-level deletion and we have a userId, record it in a system log
+    if (userId) {
+      // Create a system-wide deletion log entry - this would be stored even after the file is deleted
+      // You could create a separate SystemLog model for this purpose
+      console.log(`User ${userId} permanently deleted ${fileType} "${fileName}" at ${filePath}`);
+      
+      // Optional: If you want to keep deletion records, you could implement a separate
+      // DeletionLog model that stores information about permanently deleted files
+    }
+
     if (fileRecord.type === "folder") {
       await deleteFolderRecursively(fileId, webdavClient); // Recursively delete all sub-files & sub-folders
     }
 
     // Delete the main file/folder
-    await webdavClient.deleteFile(filePath);
+    await webdavClient.deleteFile(nextcloudPath);
     await File.findByIdAndDelete(fileId); // Remove from MongoDB
 
     res.status(200).json({
@@ -1002,17 +1093,25 @@ exports.downloadFileOrFolder = async (req, res) => {
 };
 
 // Recursive function to soft delete a folder and all nested files/folders
-async function recursiveSoftDelete(folderId) {
+async function recursiveSoftDelete(folderId, userId = null) {
   const children = await File.find({ parentFolder: folderId });
 
   for (const child of children) {
     child.isDeleted = true;
     child.deletedAt = new Date();
-    await child.save();
+    
+    // Add history entry if userId is provided
+    if (userId) {
+      await child.addHistory('deleted', userId, {
+        comment: `${child.type === 'folder' ? 'Folder' : 'File'} "${child.name}" moved to trash with parent folder`
+      });
+    } else {
+      await child.save();
+    }
 
     // If the child is a folder, recursively delete its children
     if (child.type === "folder") {
-      await recursiveSoftDelete(child._id);
+      await recursiveSoftDelete(child._id, userId);
     }
   }
 }
@@ -1020,6 +1119,8 @@ async function recursiveSoftDelete(folderId) {
 exports.softDeleteFileOrFolder = async (req, res) => {
   try {
     const { fileId } = req.params;
+    // Get user ID from authenticated request
+    const userId = req.user ? req.user._id : null;
 
     const file = await File.findById(fileId);
     if (!file) {
@@ -1028,10 +1129,18 @@ exports.softDeleteFileOrFolder = async (req, res) => {
 
     file.isDeleted = true;
     file.deletedAt = new Date();
-    await file.save();
+    
+    // Add history entry if userId is provided
+    if (userId) {
+      await file.addHistory('deleted', userId, {
+        comment: `${file.type === 'folder' ? 'Folder' : 'File'} "${file.name}" moved to trash`
+      });
+    } else {
+      await file.save();
+    }
 
     if (file.type === "folder") {
-      await recursiveSoftDelete(file._id);
+      await recursiveSoftDelete(file._id, userId);
     }
 
     res.status(200).json({ success: true, message: "File/folder soft deleted successfully." });
@@ -1086,16 +1195,24 @@ exports.getDeletedFilesAndFolders = async (req, res) => {
   }
 };
 
-async function restoreNestedFiles(folderId) {
+async function restoreNestedFiles(folderId, userId = null) {
   const children = await File.find({ parentFolder: folderId, isDeleted: true });
 
   for (const child of children) {
     child.isDeleted = false;
     child.deletedAt = null;
-    await child.save();
+    
+    // Add history entry if userId is provided
+    if (userId) {
+      await child.addHistory('restored', userId, {
+        comment: `${child.type === 'folder' ? 'Folder' : 'File'} "${child.name}" restored with parent folder`
+      });
+    } else {
+      await child.save();
+    }
 
     if (child.type === "folder") {
-      await restoreNestedFiles(child._id);
+      await restoreNestedFiles(child._id, userId);
     }
   }
 }
@@ -1103,6 +1220,8 @@ async function restoreNestedFiles(folderId) {
 exports.restoreFileOrFolder = async (req, res) => {
   try {
     const { fileId } = req.params;
+    // Get user ID from authenticated request
+    const userId = req.user ? req.user._id : null;
 
     const file = await File.findById(fileId);
     if (!file) {
@@ -1111,15 +1230,185 @@ exports.restoreFileOrFolder = async (req, res) => {
 
     file.isDeleted = false;
     file.deletedAt = null;
-    await file.save();
+    
+    // Add history entry if userId is provided
+    if (userId) {
+      await file.addHistory('restored', userId, {
+        comment: `${file.type === 'folder' ? 'Folder' : 'File'} "${file.name}" restored from trash`
+      });
+    } else {
+      await file.save();
+    }
 
     if (file.type === "folder") {
-      await restoreNestedFiles(file._id);
+      await restoreNestedFiles(file._id, userId);
     }
 
     res.status(200).json({ success: true, message: "File/folder restored successfully." });
   } catch (error) {
     console.error("Error restoring file/folder:", error);
     res.status(500).json({ success: false, message: "Failed to restore file/folder." });
+  }
+};
+
+exports.renameFileOrFolder = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const { newName } = req.body;
+    // Get user ID from the authenticated request
+    const userId = req.user ? req.user._id : null;
+
+    if (!fileId || !newName) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "File ID and new name are required." 
+      });
+    }
+
+    // Get file info from MongoDB
+    const fileRecord = await File.findById(fileId);
+    if (!fileRecord) {
+      return res.status(404).json({ 
+        success: false, 
+        error: "File or folder not found." 
+      });
+    }
+
+    // Store original name and path for history
+    const originalName = fileRecord.name;
+    const { webdavClient, BASE_URL } = await createWebDAVClient();
+    const url = fileRecord.url;
+    console.log("Original URL:", url);
+
+    // We need to handle paths correctly for WebDAV
+    // The WebDAV client already knows the base path including "Spherify_Data"
+    // So we need to extract only the relative path after that
+    
+    // First, identify where "Spherify_Data" is in the URL
+    const dataIndex = url.indexOf("/Spherify_Data/");
+    
+    // Extract the path relative to Spherify_Data, but DO NOT include "Spherify_Data" itself
+    let relativePath;
+    if (dataIndex !== -1) {
+      relativePath = url.substring(dataIndex + "/Spherify_Data/".length);
+    } else {
+      // Fallback if structure is different
+      relativePath = url.substring(url.indexOf("/spherify/") + "/spherify/".length);
+    }
+
+    console.log("Relative path for WebDAV:", relativePath);
+    
+    // Now split the relative path to get components
+    const relativePathParts = relativePath.split('/');
+    
+    // Replace the last part (filename) with the new name
+    relativePathParts[relativePathParts.length - 1] = newName;
+    
+    // Create source and destination paths for the WebDAV operation
+    const oldPath = relativePath;
+    const newPath = relativePathParts.join('/');
+    
+    console.log(`WebDAV rename from "${oldPath}" to "${newPath}"`);
+
+    // Rename the file in Nextcloud
+    try {
+      await webdavClient.moveFile(oldPath, newPath);
+    } catch (err) {
+      console.error("Nextcloud rename error:", err);
+      
+      // Try an alternative approach if the first one fails
+      try {
+        console.log("Trying alternative rename approach...");
+        // Some WebDAV clients require full paths
+        const fullOldPath = `remote.php/dav/files/spherify/${oldPath}`;
+        const fullNewPath = `remote.php/dav/files/spherify/${newPath}`;
+        await webdavClient.moveFile(fullOldPath, fullNewPath);
+      } catch (altErr) {
+        console.error("Alternative approach also failed:", altErr);
+        return res.status(500).json({ 
+          success: false, 
+          error: "Failed to rename in storage system.", 
+          details: err.message,
+          fullPath: url
+        });
+      }
+    }
+
+    // Update MongoDB record with the new name
+    fileRecord.name = newName;
+    
+    // Update the URL in the database
+    fileRecord.url = url.substring(0, url.lastIndexOf('/') + 1) + newName;
+    
+    // Add history entry if we have a userId
+    if (userId) {
+      await fileRecord.addHistory('renamed', userId, {
+        previousName: originalName,
+        newName: newName,
+        previousPath: oldPath,
+        newPath: newPath,
+        comment: `Renamed from "${originalName}" to "${newName}"`
+      });
+    } else {
+      // Just save without history if no user ID is available
+      await fileRecord.save();
+    }
+
+    // If renaming a folder, update URLs of all children using bulk operation
+    if (fileRecord.type === "folder") {
+      const oldUrlPrefix = url + '/';
+      const newUrlPrefix = fileRecord.url + '/';
+      
+      // Build the regex pattern for the URL prefix to match
+      const urlRegex = new RegExp('^' + oldUrlPrefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      
+      // Find all files that need updating
+      const files = await File.find({ url: { $regex: urlRegex } });
+      
+      if (files.length > 0) {
+        // Prepare bulk operations
+        const bulkOps = files.map(file => ({
+          updateOne: {
+            filter: { _id: file._id },
+            update: { 
+              $set: { 
+                url: file.url.replace(oldUrlPrefix, newUrlPrefix),
+                updatedAt: new Date()
+              }
+            }
+          }
+        }));
+        
+        // Execute bulk operation
+        const bulkResult = await File.bulkWrite(bulkOps);
+        console.log(`Bulk updated ${bulkResult.modifiedCount} nested files/folders`);
+        
+        // Add history entries for nested files (can't use bulk update for this)
+        if (userId) {
+          for (const file of files) {
+            const updatedFile = await File.findById(file._id);
+            if (updatedFile) {
+              await updatedFile.addHistory('moved', userId, {
+                previousPath: file.url,
+                newPath: file.url.replace(oldUrlPrefix, newUrlPrefix),
+                comment: `Path updated due to parent folder rename from "${originalName}" to "${newName}"`
+              });
+            }
+          }
+        }
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "File/folder renamed successfully.",
+      file: fileRecord
+    });
+  } catch (error) {
+    console.error("Error renaming file/folder:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: "Failed to rename file/folder." 
+    });
   }
 };

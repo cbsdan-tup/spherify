@@ -2,12 +2,15 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "./ArchiveModal.css";
 import Swal from "sweetalert2";
+import { useSelector } from "react-redux";
 
 const ArchiveModal = ({ isOpen, onClose, teamId, setRefresh }) => {
   const [deletedFiles, setDeletedFiles] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [selectAll, setSelectAll] = useState(false); // ✅ Track select all state
+
+  const token = useSelector((state) => state.auth.token);
 
   useEffect(() => {
     if (isOpen) {
@@ -69,7 +72,14 @@ const ArchiveModal = ({ isOpen, onClose, teamId, setRefresh }) => {
 
   const handleRestore = async (fileId) => {
     try {
-      await axios.put(`${import.meta.env.VITE_API}/restore/${fileId}`);
+      await axios.put(`${import.meta.env.VITE_API}/restore/${fileId}`, 
+        {}, // Empty request body
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
       fetchDeletedFiles();
       Swal.fire(
         "Restored!",
@@ -116,7 +126,14 @@ const ArchiveModal = ({ isOpen, onClose, teamId, setRefresh }) => {
   const handleBulkRestore = async () => {
     try {
       for (const fileId of selectedFiles) {
-        await axios.put(`${import.meta.env.VITE_API}/restore/${fileId}`);
+        await axios.put(`${import.meta.env.VITE_API}/restore/${fileId}`, 
+          {}, // Empty request body
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        );
       }
       setSelectedFiles(new Set());
       fetchDeletedFiles();

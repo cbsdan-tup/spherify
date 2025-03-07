@@ -8,7 +8,8 @@ const UploadFolder = ({ currentPath, setRefresh, parentFolder, setProgress, avai
   const folderInputRef = useRef(null);
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const user = useSelector((state) => state.auth.user);
-
+  const token = useSelector((state) => state.auth.token);
+  
   const handleFolderChange = async (event) => {
     const files = Array.from(event.target.files);
     if (!files.length) return;
@@ -50,6 +51,7 @@ const UploadFolder = ({ currentPath, setRefresh, parentFolder, setProgress, avai
         formData,
         {
           headers: {
+            "Authorization": `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
             "X-Folder-Name": paths[0].split("/")[0], // Send root folder name
           },

@@ -14,7 +14,8 @@ const UploadFiles = ({
   const fileInputRef = useRef(null);
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const user = useSelector((state) => state.auth.user);
-
+  const token = useSelector((state) => state.auth.token);
+  
   const handleFileChange = async (event) => {
     const uploadingFiles = Array.from(event.target.files);
     if (!uploadingFiles.length) return;
@@ -60,7 +61,7 @@ const UploadFiles = ({
         )}`,
         formData,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { "Authorization": `Bearer ${token}`, "Content-Type": "multipart/form-data" },
           onUploadProgress: (progressEvent) => {
             const percentCompleted = Math.round(
               (progressEvent.loaded * 100) / progressEvent.total

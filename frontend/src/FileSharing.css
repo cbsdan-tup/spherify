@@ -342,7 +342,7 @@
   cursor: pointer;
 }
 
-.fs-content .menu .menu-options .option.view, .fs-content .menu .menu-options .option.edit, .fs-content .menu .menu-options .option.rename{
+.fs-content .menu .menu-options .option.view, .fs-content .menu .menu-options .option.edit, .fs-content .menu .menu-options .option.rename, .fs-content .menu .menu-options .option.history{
   color: var(--header-text-color);
 }
 

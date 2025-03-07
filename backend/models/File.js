@@ -28,6 +28,10 @@ const fileSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
   isMainBranch: {
     type: Boolean,
     default: false,
@@ -76,13 +80,71 @@ const fileSchema = new mongoose.Schema({
     type: Date,
     default: null
   },
+  history: [{
+    action: {
+      type: String,
+      enum: ['created', 'renamed', 'moved', 'edited', 'deleted', 'restored'],
+      required: true
+    },
+    timestamp: {
+      type: Date,
+      default: Date.now
+    },
+    performedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
+    details: {
+      previousName: String,
+      newName: String,
+      previousPath: String,
+      newPath: String,
+      comment: String
+    }
+  }]
+});
+
+// Pre-save hook to update the updatedAt field
+fileSchema.pre('save', function(next) {
+  // Only update updatedAt if document is modified (and not new)
+  if (this.isModified() && !this.isNew) {
+    this.updatedAt = Date.now();
+  }
+  next();
 });
 
 // Soft delete method
-fileSchema.methods.softDelete = async function () {
+fileSchema.methods.softDelete = async function (userId) {
   this.isDeleted = true;
   this.deletedAt = new Date();
+  this.updatedAt = new Date();
+  
+  // Add to history if userId is provided
+  if (userId) {
+    this.history.push({
+      action: 'deleted',
+      timestamp: new Date(),
+      performedBy: userId,
+      details: {
+        comment: 'File moved to trash'
+      }
+    });
+  }
+  
   await this.save();
+};
+
+// Method to add history entry
+fileSchema.methods.addHistory = async function(action, userId, details = {}) {
+  this.history.push({
+    action,
+    performedBy: userId,
+    timestamp: new Date(),
+    details
+  });
+  this.updatedAt = new Date();
+  return this.save();
 };
 
 // Static method to find non-deleted files
