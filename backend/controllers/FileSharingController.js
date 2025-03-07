@@ -169,10 +169,10 @@ exports.uploadFolders = async (req, res) => {
 
     const { webdavClient, BASE_URL } = await createWebDAVClient();
     const uploadPath = relativePath || teamId;
-    let uploadedFolders = new Set();
+    let uploadedFolders = new Map(); // Changed from Set to Map to track folder objects with their paths
     let uploadedFiles = [];
 
-    // ✅ Ensure the upload directory exists
+    // Ensure the upload directory exists
     try {
       await webdavClient.stat(uploadPath);
     } catch (err) {
@@ -183,200 +183,352 @@ exports.uploadFolders = async (req, res) => {
       }
     }
 
-    // 🔹 Function to create parent directories recursively
-    const createParentFolders = async (
-      folderPath,
-      teamId,
-      createdBy,
-      owner,
-      parentFolder
-    ) => {
-      const folders = folderPath.split("/");
-      let currentPath = uploadPath;
-      let lastParentId =
-        parentFolder && mongoose.Types.ObjectId.isValid(parentFolder)
-          ? new mongoose.Types.ObjectId(parentFolder)
-          : null;
+    // Set response headers for event stream
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
 
-      for (const folder of folders) {
-        currentPath = `${currentPath}/${folder}`;
+    // Important flag to track if we've started writing to the response
+    let responseStarted = false;
+    
+    // Function to safely write to the response
+    const safeWrite = (data) => {
+      responseStarted = true;
+      res.write(JSON.stringify(data) + '\n');
+    };
 
+    // Extract root folder name from the first path (usually all files will share this)
+    const rootFolderName = relativePaths.length > 0 ? 
+      relativePaths[0].split('/')[0] : 
+      req.headers['x-folder-name'] || 'uploaded_folder';
+    
+    console.log("Root folder name:", rootFolderName);
+    
+    // Create the root folder first
+    const rootFolderPath = `${uploadPath}/${rootFolderName}`;
+    let rootFolderId = null;
+    
+    try {
+      await webdavClient.stat(rootFolderPath);
+      console.log("Root folder already exists:", rootFolderPath);
+      
+      // Find existing folder in DB
+      const existingFolder = await File.findOne({
+        teamId,
+        type: "folder",
+        name: rootFolderName,
+        url: new RegExp(`${BASE_URL}/${uploadPath}/${rootFolderName}$`, 'i')
+      });
+      
+      if (existingFolder) {
+        rootFolderId = existingFolder._id;
+        uploadedFolders.set(rootFolderPath, existingFolder);
+      }
+    } catch (err) {
+      if (err.status === 404) {
+        console.log("Creating root folder:", rootFolderPath);
+        await webdavClient.createDirectory(rootFolderPath);
+        
+        // Save root folder to database
+        const rootFolder = new File({
+          teamId,
+          type: "folder",
+          name: rootFolderName,
+          url: `${BASE_URL}/${rootFolderPath}`,
+          createdBy,
+          owner,
+          parentFolder: mongoose.Types.ObjectId.isValid(parentFolder)
+            ? parentFolder
+            : null,
+        });
+        const savedRootFolder = await rootFolder.save();
+        
+        // Add history entry for root folder creation
+        if (createdBy) {
+          await savedRootFolder.addHistory('created', createdBy, {
+            comment: `Root folder "${rootFolderName}" created during folder upload`
+          });
+        }
+        
+        rootFolderId = savedRootFolder._id;
+        uploadedFolders.set(rootFolderPath, savedRootFolder);
+      } else {
+        throw err;
+      }
+    }
+
+    // Function to create parent directories recursively with proper parent-child relationships
+    const createParentFolders = async (folderPath) => {
+      // Split the path into segments, but keep the root folder as is
+      const pathWithoutRoot = folderPath.substring(folderPath.indexOf('/') + 1);
+      const segments = pathWithoutRoot.split('/').filter(Boolean);
+      
+      if (segments.length === 0) return rootFolderId; // It's just the root folder
+      
+      let currentPath = rootFolderPath;
+      let parentId = rootFolderId;
+      
+      // Traverse each segment (skip the last one if it's a filename)
+      for (let i = 0; i < segments.length; i++) {
+        const segment = segments[i];
+        currentPath = `${currentPath}/${segment}`;
+        
+        // Check if we already processed this folder
+        if (uploadedFolders.has(currentPath)) {
+          parentId = uploadedFolders.get(currentPath)._id;
+          continue;
+        }
+        
+        // Create folder if it doesn't exist
         try {
-          await webdavClient.stat(currentPath); // Check if folder exists
+          await webdavClient.stat(currentPath);
+          console.log(`Folder exists: ${currentPath}`);
         } catch (err) {
           if (err.status === 404) {
             console.log(`Creating missing folder: ${currentPath}`);
-            await webdavClient.createDirectory(currentPath); // Create the missing folder
-
-            // 🔹 Save folder to database
-            const newFolder = new File({
-              teamId,
-              type: "folder",
-              name: folder,
-              url: `${BASE_URL}/${currentPath}`,
-              createdBy,
-              owner,
-              parentFolder: lastParentId,
-            });
-            const savedFolder = await newFolder.save();
-            
-            // Add history entry for folder creation
-            if (createdBy) {
-              await savedFolder.addHistory('created', createdBy, {
-                comment: `Folder "${folder}" created in folder upload operation`
-              });
-            }
-            
-            lastParentId = savedFolder._id; // Update parent ID for nested folders
+            await webdavClient.createDirectory(currentPath);
           } else {
-            throw err; // Throw if error is not 404
+            console.error(`Error checking folder ${currentPath}:`, err);
+            throw err;
           }
         }
-      }
-    };
-
-    // 🔹 Sort folder paths to create parents before children
-    const folderPaths = new Set(relativePaths.filter((p) => p.endsWith("/")));
-    const sortedPaths = [...folderPaths].sort(
-      (a, b) => a.split("/").length - b.split("/").length
-    );
-
-    // 🔹 Ensure all folders exist in Nextcloud
-    for (const folderPath of sortedPaths) {
-      const fullFolderPath = `${uploadPath}/${folderPath}`.replace(/\/$/, "");
-      if (!uploadedFolders.has(fullFolderPath)) {
-        await createParentFolders(
-          folderPath,
+        
+        // Save folder to database
+        const folderRecord = new File({
           teamId,
+          type: "folder",
+          name: segment,
+          url: `${BASE_URL}/${currentPath}`,
           createdBy,
           owner,
-          parentFolder
-        );
-        uploadedFolders.add(fullFolderPath);
+          parentFolder: parentId
+        });
+        
+        const savedFolder = await folderRecord.save();
+        
+        // Add history entry for folder creation
+        if (createdBy) {
+          await savedFolder.addHistory('created', createdBy, {
+            comment: `Folder "${segment}" created as part of folder structure upload`
+          });
+        }
+        
+        // Update parent ID for next iteration
+        parentId = savedFolder._id;
+        uploadedFolders.set(currentPath, savedFolder);
       }
+      
+      return parentId;
+    };
+
+    // First, process all folder paths to create necessary directory structure
+    // This ensures all parent folders exist before we upload files
+    console.log("Processing folder structure...");
+    
+    // Get all unique directory paths from the relativePaths
+    const uniqueFolderPaths = new Set();
+    
+    relativePaths.forEach(relPath => {
+      // Get directory path by removing file name
+      const pathParts = relPath.split('/');
+      if (pathParts.length > 1) {
+        // Add all parent paths
+        let currentPath = pathParts[0];
+        uniqueFolderPaths.add(currentPath);
+        
+        for (let i = 1; i < pathParts.length - 1; i++) {
+          currentPath = `${currentPath}/${pathParts[i]}`;
+          uniqueFolderPaths.add(currentPath);
+        }
+      }
+    });
+    
+    // Sort folders by depth (shortest paths first)
+    const sortedFolderPaths = [...uniqueFolderPaths].sort(
+      (a, b) => a.split('/').length - b.split('/').length
+    );
+    
+    // Create all folders
+    for (const folderPath of sortedFolderPaths) {
+      const fullPath = `${uploadPath}/${folderPath}`;
+      await createParentFolders(folderPath);
     }
 
-    // 🔹 Function to retry file uploads (fix ECONNRESET)
-    const retryUpload = async (fileStream, nextcloudPath, retries = 3) => {
+    // Function to retry file uploads with exponential backoff
+    const retryUpload = async (fileStream, nextcloudPath, fileName, retries = 3) => {
+      let lastError = null;
+      
       for (let attempt = 1; attempt <= retries; attempt++) {
         try {
+          console.log(`Upload attempt ${attempt} for ${fileName}`);
           await webdavClient.putFileContents(nextcloudPath, fileStream, {
             overwrite: true,
           });
+          console.log(`Successfully uploaded ${fileName} on attempt ${attempt}`);
           return;
         } catch (err) {
-          if (attempt === retries) throw err;
-          console.log(
-            `Retrying upload (${attempt}/${retries}) for: ${nextcloudPath}`
-          );
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          lastError = err;
+          console.log(`Upload attempt ${attempt} failed for ${fileName}:`, err.message);
+          
+          if (attempt < retries) {
+            // Exponential backoff: 1s, 2s, 4s, etc.
+            const delay = Math.pow(2, attempt - 1) * 1000;
+            console.log(`Waiting ${delay}ms before retry...`);
+            await setTimeoutPromise(delay);
+            
+            // Create a new file stream for retry
+            fileStream = fs.createReadStream(filePath);
+          }
         }
       }
+      
+      throw lastError || new Error(`Failed to upload ${fileName} after ${retries} attempts`);
     };
 
-    // 🔹 Upload files into their respective folders
+    // Now upload all the files with clear status reporting
+    console.log("Uploading files...");
+    const totalFiles = req.files.length;
+    let completedFiles = 0;
+    
     for (const file of req.files) {
       const filePath = file.path;
-      const relativeFilePath =
-        relativePaths.find((p) => p.endsWith(file.originalname)) ||
-        file.originalname;
-      const nextcloudPath = `${uploadPath}/${relativeFilePath}`.replace(
-        /\/$/,
-        ""
-      ); // 🔥 Remove trailing slash
-      const fileStream = fs.createReadStream(filePath);
-
-      fileStream.setMaxListeners(15); // Fix memory leak warning
-
-      // ✅ Check if the file exists before uploading
-      try {
-        await webdavClient.stat(nextcloudPath);
-        console.log(`File exists, deleting before re-upload: ${nextcloudPath}`);
-        await webdavClient.deleteFile(nextcloudPath);
-      } catch (err) {
-        if (err.status !== 404) throw err; // Ignore "not found" errors
+      const fileName = file.originalname;
+      
+      // Find the matching relative path for this file
+      let relativeFilePath = relativePaths.find(p => p.endsWith(fileName));
+      if (!relativeFilePath) {
+        console.log(`No matching path found for ${fileName}, using filename only`);
+        relativeFilePath = fileName;
       }
-
-      // Ensure parent folder exists before uploading file
-      const parentFolderPath = path.dirname(nextcloudPath);
-      let lastParentId =
-        parentFolder && mongoose.Types.ObjectId.isValid(parentFolder)
-          ? new mongoose.Types.ObjectId(parentFolder)
-          : null;
-
-      try {
-        await webdavClient.stat(parentFolderPath);
-      } catch (err) {
-        if (err.status === 404) {
-          console.log(`Parent folder missing, creating: ${parentFolderPath}`);
-          await webdavClient.createDirectory(parentFolderPath);
-
-          // 🔹 Save the folder in MongoDB
-          const folderName = path.basename(parentFolderPath);
-          const newFolder = new File({
-            teamId,
-            type: "folder",
-            name: folderName,
-            url: `${BASE_URL}/${parentFolderPath}`,
-            createdBy,
-            owner,
-            parentFolder: lastParentId,
-          });
-          const savedFolder = await newFolder.save();
-          
-          // Add history entry for auto-created parent folder
-          if (createdBy) {
-            await savedFolder.addHistory('created', createdBy, {
-              comment: `Folder "${folderName}" auto-created during folder upload`
-            });
-          }
-          
-          lastParentId = savedFolder._id; // Update for nested folder tracking
+      
+      const nextcloudPath = `${uploadPath}/${relativeFilePath}`;
+      console.log(`Uploading file: ${fileName} to ${nextcloudPath}`);
+      
+      // Send start event for this file
+      safeWrite({
+        type: 'fileStart',
+        file: relativeFilePath,
+        status: 'uploading',
+        message: `Starting upload of ${relativeFilePath}`
+      });
+      
+      // Get the parent folder path for this file
+      const parentFolderPath = path.dirname(relativeFilePath);
+      let parentFolderId = rootFolderId;
+      
+      if (parentFolderPath && parentFolderPath !== '.') {
+        const fullParentPath = `${uploadPath}/${parentFolderPath}`;
+        
+        // If parent folder was already processed, use its ID
+        if (uploadedFolders.has(fullParentPath)) {
+          parentFolderId = uploadedFolders.get(fullParentPath)._id;
         } else {
-          throw err;
+          // Create any missing parent folders
+          parentFolderId = await createParentFolders(parentFolderPath);
         }
       }
 
-      await retryUpload(fileStream, nextcloudPath);
-      fs.unlinkSync(filePath);
+      // Create file stream with increased max listeners
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.setMaxListeners(15);
 
-      // 🔹 Save file to MongoDB
-      const validParentFolder =
-        parentFolder && mongoose.Types.ObjectId.isValid(parentFolder)
-          ? new mongoose.Types.ObjectId(parentFolder)
-          : null;
-
-      const newFile = new File({
-        teamId,
-        type: "file",
-        name: path.basename(relativeFilePath),
-        url: `${BASE_URL}/${nextcloudPath}`,
-        createdBy,
-        owner,
-        parentFolder: validParentFolder,
-      });
-      await newFile.save();
-      
-      // Add history entry for file upload
-      if (createdBy) {
-        await newFile.addHistory('created', createdBy, {
-          comment: `File "${path.basename(relativeFilePath)}" uploaded as part of folder upload`,
-          path: relativeFilePath
+      // Upload the file with retry logic and status reporting
+      try {
+        await retryUpload(fileStream, nextcloudPath, fileName);
+        
+        // Save file to MongoDB
+        const newFile = new File({
+          teamId,
+          type: "file",
+          name: path.basename(fileName),
+          url: `${BASE_URL}/${nextcloudPath}`,
+          createdBy,
+          owner,
+          parentFolder: parentFolderId
+        });
+        
+        const savedFile = await newFile.save();
+        
+        // Add history entry for file creation
+        if (createdBy) {
+          await savedFile.addHistory('created', createdBy, {
+            comment: `File "${fileName}" uploaded as part of folder structure`,
+            path: relativeFilePath
+          });
+        }
+        
+        uploadedFiles.push(savedFile);
+        completedFiles++;
+        
+        // Send completion event for this file
+        safeWrite({
+          type: 'fileComplete',
+          file: relativeFilePath,
+          fileId: savedFile._id,
+          status: 'complete',
+          progress: '100',
+          message: `Successfully uploaded ${relativeFilePath}`,
+          completedAt: new Date().toISOString()
+        });
+        
+        // Clean up the temporary file
+        fs.unlinkSync(filePath);
+      } catch (error) {
+        console.error(`Error uploading file ${fileName}:`, error);
+        
+        // Send error event for this file
+        safeWrite({
+          type: 'fileError',
+          file: relativeFilePath,
+          status: 'error',
+          error: error.message || "Upload failed",
+          message: `Failed to upload ${relativeFilePath}`
         });
       }
-      
-      uploadedFiles.push(newFile);
     }
 
-    res.status(201).json({
+    // Send final summary
+    const finalResponse = {
+      type: 'summary',
       success: true,
       message: "Folders and files uploaded successfully",
-      uploadedFolders: Array.from(uploadedFolders),
-      uploadedFiles,
-    });
+      totalFiles,
+      completedFiles,
+      failedFiles: totalFiles - completedFiles,
+      uploadedFolders: Array.from(uploadedFolders.values()).map(folder => ({
+        _id: folder._id,
+        name: folder.name
+      })),
+      uploadedFiles: uploadedFiles.map(file => ({
+        _id: file._id,
+        name: file.name
+      }))
+    };
+    
+    if (responseStarted) {
+      safeWrite(finalResponse);
+      res.end();
+    } else {
+      res.status(201).json(finalResponse);
+    }
   } catch (error) {
     console.error("Folder upload error:", error);
-    res.status(500).json({ success: false, error: "Folder upload failed" });
+    // Check if headers have been sent before trying to send an error response
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, error: "Folder upload failed" });
+    } else {
+      // If headers are already sent, just end the response
+      try {
+        res.write(JSON.stringify({ 
+          type: 'error',
+          success: false, 
+          error: "Folder upload failed" 
+        }) + '\n');
+        res.end();
+      } catch (e) {
+        console.error("Error sending error response:", e);
+      }
+    }
   }
 };
 
@@ -407,10 +559,16 @@ exports.uploadFiles = async (req, res) => {
       }
     }
 
-    res.setHeader("Content-Type", "text/event-stream");
+    // Set response headers for event stream
+    res.setHeader("Content-Type", "application/json");
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Connection", "keep-alive");
 
+    // For streaming progress updates
+    const totalFiles = req.files.length;
+    let completedFiles = 0;
+    
+    // Process each file one by one to better track individual progress
     for (const file of req.files) {
       const filePath = file.path;
       const fileName = file.originalname;
@@ -419,56 +577,110 @@ exports.uploadFiles = async (req, res) => {
       const fileSize = fs.statSync(filePath).size;
       let uploadedBytes = 0;
 
-      await webdavClient.putFileContents(nextcloudPath, fileStream, {
-        overwrite: true,
-        onUploadProgress: (progress) => {
-          uploadedBytes = progress.loaded;
-          const percentage = ((uploadedBytes / fileSize) * 100).toFixed(2);
-          res.write(
-            `data: ${JSON.stringify({
+      try {
+        console.log(`Uploading file: ${fileName} to ${nextcloudPath}`);
+        
+        // Send start event for this file
+        res.write(JSON.stringify({
+          type: 'fileStart',
+          file: fileName,
+          status: 'uploading',
+          message: `Starting upload of ${fileName}`
+        }) + '\n');
+
+        await webdavClient.putFileContents(nextcloudPath, fileStream, {
+          overwrite: true,
+          onUploadProgress: (progress) => {
+            uploadedBytes = progress.loaded;
+            const percentage = ((uploadedBytes / fileSize) * 100).toFixed(2);
+            
+            // Send progress update
+            res.write(JSON.stringify({
+              type: 'progress',
               file: fileName,
-              progress: `${percentage}%`,
-            })}\n\n`
-          );
-        },
-      });
-
-      fs.unlinkSync(filePath);
-
-      const fileRecord = new File({
-        teamId,
-        type: "file",
-        name: fileName,
-        url: `${BASE_URL}/${nextcloudPath}`,
-        createdBy,
-        owner,
-        parentFolder: mongoose.Types.ObjectId.isValid(parentFolder)
-          ? parentFolder
-          : null,
-      });
-      await fileRecord.save();
-      
-      // Add history entry for file upload
-      if (createdBy) {
-        await fileRecord.addHistory('created', createdBy, {
-          comment: `File "${fileName}" uploaded to ${relativePath || 'root folder'}`
+              progress: percentage,
+              status: 'uploading'
+            }) + '\n');
+          },
         });
+
+        fs.unlinkSync(filePath);
+
+        const fileRecord = new File({
+          teamId,
+          type: "file",
+          name: fileName,
+          url: `${BASE_URL}/${nextcloudPath}`,
+          createdBy,
+          owner,
+          parentFolder: mongoose.Types.ObjectId.isValid(parentFolder)
+            ? parentFolder
+            : null,
+        });
+        
+        const savedFile = await fileRecord.save();
+        
+        // Add history entry for file upload
+        if (createdBy) {
+          await fileRecord.addHistory('created', createdBy, {
+            comment: `File "${fileName}" uploaded to ${relativePath || 'root folder'}`
+          });
+        }
+        
+        uploadedFiles.push(savedFile);
+        completedFiles++;
+        
+        // Send completion event for this file
+        res.write(JSON.stringify({
+          type: 'fileComplete',
+          file: fileName,
+          fileId: savedFile._id,
+          status: 'complete',
+          progress: '100',
+          message: `Successfully uploaded ${fileName}`,
+          completedAt: new Date().toISOString()
+        }) + '\n');
+        
+        console.log(`Successfully uploaded ${fileName}`);
+      } catch (error) {
+        console.error(`Error uploading file ${fileName}:`, error);
+        
+        // Send error event for this file
+        res.write(JSON.stringify({
+          type: 'fileError',
+          file: fileName,
+          status: 'error',
+          error: error.message || "Upload failed",
+          message: `Failed to upload ${fileName}`
+        }) + '\n');
       }
-      
-      uploadedFiles.push(fileRecord);
     }
 
-    res.write(
-      `data: ${JSON.stringify({
-        success: true,
-        message: "Files uploaded successfully",
-        uploadedFiles,
-      })}\n\n`
-    );
+    // Send final summary
+    const responseData = {
+      type: 'summary',
+      success: true,
+      message: "Files uploaded successfully",
+      totalFiles,
+      completedFiles,
+      failedFiles: totalFiles - completedFiles,
+      uploadedFiles: uploadedFiles.map(file => ({
+        _id: file._id,
+        name: file.name,
+        url: file.url
+      }))
+    };
+
+    res.write(JSON.stringify(responseData) + '\n');
     res.end();
   } catch (error) {
     console.error("File upload error:", error);
-    res.status(500).json({ success: false, error: "File upload failed" });
+    res.write(JSON.stringify({ 
+      type: 'error',
+      success: false, 
+      error: "File upload failed" 
+    }) + '\n');
+    res.end();
   }
 };
 
@@ -514,6 +726,13 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
       relativePath || "(root)"
     );
 
+    if (!mongoose.Types.ObjectId.isValid(teamId)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid teamId format"
+      });
+    }
+
     const escapedPath = relativePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
     const { NEXTCLOUD_URL, NEXTCLOUD_USER, NEXTCLOUD_PASSWORD } =
@@ -525,6 +744,8 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
       ? `^${basePath}/${escapedPath}(/[^/]+)?$`
       : `^${basePath}/[^/]+$`;
 
+    console.log("Using regex pattern:", pathRegex);
+
     // Fetch only active files
     let files = await File.find({
       teamId,
@@ -532,84 +753,123 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
       url: { $regex: new RegExp(pathRegex, "i") },
     }).populate("createdBy owner parentFolder branchParent").populate("history.performedBy", "firstName lastName email avatar");
 
-    console.log("pathRegex", pathRegex);
+    console.log(`Found ${files.length} files before filtering`);
 
     // 🔥 Exclude the queried folder itself
     const currentFolderUrl = `${basePath}/${relativePath}`;
     files = files.filter((file) => file.url !== currentFolderUrl);
+    
+    console.log(`${files.length} files after excluding current folder`);
 
     // 🔥 Exclude files if **ANY** ancestor folder is deleted
     const isParentDeleted = new Set();
 
     async function checkParentDeletion(file) {
+      if (!file.parentFolder) return false;
+      
       let parent = file.parentFolder;
       while (parent) {
         if (parent.isDeleted) {
           isParentDeleted.add(file._id.toString());
           return true;
         }
-        parent = await File.findById(parent.parentFolder); // Move up the hierarchy
+        
+        // Break if we've reached a null parent to avoid potential infinite loop
+        if (!parent.parentFolder) break;
+        
+        // Get the next parent in the hierarchy
+        try {
+          parent = await File.findById(parent.parentFolder);
+          if (!parent) break;
+        } catch (err) {
+          console.error("Error checking parent deletion:", err);
+          break;
+        }
       }
       return false;
     }
 
     // Check all files for deleted ancestors
-    files = await Promise.all(
-      files.map(async (file) => {
-        const hasDeletedParent = await checkParentDeletion(file);
-        return hasDeletedParent ? null : file;
-      })
-    );
+    try {
+      files = await Promise.all(
+        files.map(async (file) => {
+          try {
+            const hasDeletedParent = await checkParentDeletion(file);
+            return hasDeletedParent ? null : file;
+          } catch (err) {
+            console.error("Error checking parent deletion for file:", file._id, err);
+            return file; // Return the file anyway if the check fails
+          }
+        })
+      );
+    } catch (err) {
+      console.error("Error in parent deletion check:", err);
+    }
 
     // Remove `null` entries (files with deleted parents)
     files = files.filter((file) => file !== null);
+    
+    console.log(`${files.length} files after filtering deleted parents`);
 
     let totalFolderSize = 0;
 
-    // Fetch file sizes from Nextcloud
-    const updatedFiles = await Promise.all(
-      files.map(async (file) => {
-        let fileSize = null;
-        try {
-          const response = await axios({
-            method: "PROPFIND",
-            url: file.url,
-            auth: {
-              username: NEXTCLOUD_USER,
-              password: NEXTCLOUD_PASSWORD,
-            },
-            headers: {
-              Depth: 1,
-            },
-          });
+    try {
+      // Fetch file sizes from Nextcloud
+      const updatedFiles = await Promise.all(
+        files.map(async (file) => {
+          let fileSize = null;
+          try {
+            const response = await axios({
+              method: "PROPFIND",
+              url: file.url,
+              auth: {
+                username: NEXTCLOUD_USER,
+                password: NEXTCLOUD_PASSWORD,
+              },
+              headers: {
+                Depth: 1,
+              },
+              timeout: 5000, // Add timeout to prevent hanging
+            });
 
-          // Extract all file sizes
-          const sizeMatches = response.data.match(
-            /<d:getcontentlength>(\d+)<\/d:getcontentlength>/g
-          );
-          if (sizeMatches) {
-            fileSize = sizeMatches.reduce((sum, match) => {
-              const size = parseInt(match.match(/\d+/)[0], 10);
-              return sum + size;
-            }, 0);
+            // Extract all file sizes
+            const sizeMatches = response.data.match(
+              /<d:getcontentlength>(\d+)<\/d:getcontentlength>/g
+            );
+            if (sizeMatches) {
+              fileSize = sizeMatches.reduce((sum, match) => {
+                const size = parseInt(match.match(/\d+/)[0], 10);
+                return sum + size;
+              }, 0);
+            }
+
+            totalFolderSize += fileSize || 0;
+          } catch (err) {
+            console.error("Error fetching file size for", file.url, err.message || err);
+            // Continue with null file size
           }
+          return { ...file.toObject(), size: fileSize };
+        })
+      );
 
-          totalFolderSize += fileSize || 0;
-        } catch (err) {
-          console.error("Error fetching file size for", file.url, err);
-        }
-        return { ...file.toObject(), size: fileSize };
-      })
-    );
-
-    res
-      .status(200)
-      .json({ success: true, files: updatedFiles, totalFolderSize });
+      res
+        .status(200)
+        .json({ success: true, files: updatedFiles, totalFolderSize });
+    } catch (sizeErr) {
+      console.error("Error fetching file sizes:", sizeErr);
+      // If size fetch fails, return files without sizes
+      res.status(200).json({ 
+        success: true, 
+        files: files.map(file => ({ ...file.toObject(), size: null })),
+        totalFolderSize: 0,
+        sizeError: true
+      });
+    }
   } catch (error) {
     console.error("Fetch files and folders by path error:", error);
     res.status(500).json({
       success: false,
-      error: "Failed to fetch files and folders by path",
+      error: "Failed to fetch files and folders by path"
     });
   }
 };

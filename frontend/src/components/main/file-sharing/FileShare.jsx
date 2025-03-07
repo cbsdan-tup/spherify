@@ -10,6 +10,7 @@ import Swal from "sweetalert2";
 import ArchiveModal from "./ArchiveModal";
 import { Modal, Button, Form } from "react-bootstrap";
 import FileHistoryModal from "./FileHistoryModal";
+import UploadStatusModal from "./UploadStatusModal";
 
 const FileUpload = () => {
   const [files, setFiles] = useState([]);
@@ -41,6 +42,11 @@ const FileUpload = () => {
   // Add state for history modal
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [selectedItemForHistory, setSelectedItemForHistory] = useState(null);
+
+  // Add this near the top of your component
+  const [lastUploadStatus, setLastUploadStatus] = useState({});
+  const [lastUploadSummary, setLastUploadSummary] = useState(null);
+  const [showUploadStatusModal, setShowUploadStatusModal] = useState(false);
 
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const user = useSelector((state) => state.auth.user);
@@ -118,30 +124,23 @@ const FileUpload = () => {
     setSelectedItemForHistory(null);
   };
 
+  // Add this function to your component
+  const viewLatestUploads = () => {
+    if (Object.keys(lastUploadStatus).length > 0) {
+      setShowUploadStatusModal(true);
+    } else {
+      Swal.fire({
+        icon: "info",
+        title: "No Recent Uploads",
+        text: "You haven't uploaded any files in this session."
+      });
+    }
+  };
+
   useEffect(() => {
     setProgress(0);
   }, [refresh]);
 
-  useEffect(() => {
-    if (currentTeamId && currentPath === "") {
-      setCurrentPath(currentTeamId);
-      fetchFilesAndFolders(currentTeamId);
-    }
-    if (currentPath) {
-      fetchFilesAndFolders(currentPath);
-    }
-  }, [currentTeamId, currentPath, refresh]);
-
-  const getFolderSize = useCallback(async () => {
-    if (currentTeamId) {
-      const size = await fetchFolderConsume(currentTeamId);
-      setFolderConsume(size);
-    }
-  }, [currentTeamId, refresh]);
-
-  useEffect(() => {
-    getFolderSize();
-  }, [getFolderSize]);
 
   const fetchFolderConsume = useCallback(
     async (path) => {
@@ -169,8 +168,18 @@ const FileUpload = () => {
 
   const fetchFilesAndFolders = useCallback(async (path = "") => {
     try {
+      if (currentTeamId === null) {
+        return;
+      }
       setSelectedItems([]);
       setIsFileFetching(true);
+      
+      // Add a timeout to prevent UI from being permanently stuck
+      const timeoutId = setTimeout(() => {
+        console.log("Fetch operation timed out");
+        setIsFileFetching(false);
+      }, 15000); // 15 seconds timeout
+      
       const response = await axios.get(
         `${
           import.meta.env.VITE_API
@@ -178,6 +187,9 @@ const FileUpload = () => {
           path
         )}`
       );
+      
+      // Clear timeout since request completed
+      clearTimeout(timeoutId);
 
       console.log("Files and folders:", response.data);
       const sortedFiles = response.data.files.sort((a, b) => {
@@ -188,12 +200,14 @@ const FileUpload = () => {
 
       setFolders(sortedFiles.filter((file) => file.type === "folder"));
       setFiles(sortedFiles.filter((file) => file.type === "file"));
+      setIsFileFetching(false);
     } catch (error) {
       console.error("Error fetching files and folders:", error);
-    } finally {
+      // Important: Make sure we exit loading state even on error
       setIsFileFetching(false);
+      errMsg("Failed to load files. Please try again.");
     }
-  }, []);
+  }, [currentTeamId]); // Add currentTeamId as a dependency
 
   const toggleShowStorage = () => {
     setShowStorage((prev) => !prev);
@@ -299,7 +313,7 @@ const FileUpload = () => {
   const handleDelete = useCallback(async (fileId, fileName, type) => {
     Swal.fire({
       title: `Move this ${type === "folder" ? "Folder" : "File"} to Trash?`,
-      text: `Are you sure you want to move "${fileName} to trash"?`,
+      text: `Are you sure you want to move "${fileName}" to trash?`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes, move it!",
@@ -319,9 +333,14 @@ const FileUpload = () => {
           succesMsg(
             `${
               type === "folder" ? "Folder" : "File"
-            } move to trash successfully!`
+            } moved to trash successfully!`
           );
-          setRefresh((prev) => !prev);
+          
+          // Force refresh of data
+          setTimeout(() => {
+            setRefresh(prev => !prev);
+            fetchFilesAndFolders(currentPath); // Explicitly call fetch again
+          }, 300);
         } catch (error) {
           console.error("Delete error:", error);
           errMsg(
@@ -330,7 +349,7 @@ const FileUpload = () => {
         }
       }
     });
-  }, []);
+  }, [token, fetchFilesAndFolders, currentPath]);
 
   const toggleSelection = useCallback((id) => {
     setSelectedItems((prevSelectedItems) =>
@@ -358,18 +377,21 @@ const FileUpload = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          // Use forEach to delete each selected item
-          selectedItems.forEach(async (itemId) => {
-            await axios.delete(
-              `${import.meta.env.VITE_API}/soft-delete/${itemId}`, {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
-          });
+          // Use Promise.all to wait for all deletions to complete
+          await Promise.all(
+            selectedItems.map(itemId => 
+              axios.delete(
+                `${import.meta.env.VITE_API}/soft-delete/${itemId}`, {
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
+              )
+            )
+          );
+          
           succesMsg("Selected items moved to trash successfully!");
-          setRefresh((prev) => !prev); // Refresh the list
+          setRefresh(prev => !prev); // Now refresh will work after all operations complete
           setSelectedItems([]); // Clear selected items
         } catch (error) {
           console.error("Delete error:", error);
@@ -377,16 +399,68 @@ const FileUpload = () => {
         }
       }
     });
-  }, [selectedItems]);
+  }, [selectedItems, token]);
 
-  const sortedFolders = useMemo(
-    () => [...folders].sort((a, b) => a.name.localeCompare(b.name)),
-    [folders]
-  );
-  const sortedFiles = useMemo(
-    () => [...files].sort((a, b) => a.name.localeCompare(b.name)),
-    [files]
-  );
+  const [sortField, setSortField] = useState('name');
+  const [sortDirection, setSortDirection] = useState('asc');
+  
+  const handleSort = useCallback((field) => {
+    if (sortField === field) {
+      // Toggle direction if clicking the same field
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Default to ascending when changing sort field
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  }, [sortField, sortDirection]);
+
+  // Update the sortedFolders and sortedFiles to use our sorting logic
+  const sortedFolders = useMemo(() => {
+    const sorted = [...folders];
+    if (sortField === 'name') {
+      sorted.sort((a, b) => {
+        const comparison = a.name.localeCompare(b.name);
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    } else if (sortField === 'size') {
+      sorted.sort((a, b) => {
+        const comparison = a.size - b.size;
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    } else if (sortField === 'date') {
+      sorted.sort((a, b) => {
+        const dateA = new Date(a.history?.length ? a.history[a.history.length-1].timestamp : a.createdAt);
+        const dateB = new Date(b.history?.length ? b.history[b.history.length-1].timestamp : b.createdAt);
+        const comparison = dateA - dateB;
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
+    return sorted;
+  }, [folders, sortField, sortDirection]);
+
+  const sortedFiles = useMemo(() => {
+    const sorted = [...files];
+    if (sortField === 'name') {
+      sorted.sort((a, b) => {
+        const comparison = a.name.localeCompare(b.name);
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    } else if (sortField === 'size') {
+      sorted.sort((a, b) => {
+        const comparison = a.size - b.size;
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    } else if (sortField === 'date') {
+      sorted.sort((a, b) => {
+        const dateA = new Date(a.history?.length ? a.history[a.history.length-1].timestamp : a.createdAt);
+        const dateB = new Date(b.history?.length ? b.history[b.history.length-1].timestamp : b.createdAt);
+        const comparison = dateA - dateB;
+        return sortDirection === 'asc' ? comparison : -comparison;
+      });
+    }
+    return sorted;
+  }, [files, sortField, sortDirection]);
 
   useEffect(() => {
     if (folderConsume !== null && nextcloudConfig) {
@@ -403,13 +477,12 @@ const FileUpload = () => {
   const handleDownload = async (filePath, isFolder) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API}/downloadFileOrFolder`,
+        `${import.meta.env.VITE_API}/downloadFileOrFolder`, 
         {
           params: { filePath, isFolder },
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-
       if (response.data.success) {
         window.open(response.data.downloadUrl, "_blank"); // Open download link in new tab
         succesMsg("Download link opened successfully.");
@@ -428,12 +501,52 @@ const FileUpload = () => {
       case 'created': return 'Created';
       case 'renamed': return 'Renamed';
       case 'moved': return 'Moved';
-      case 'edited': return 'Edited';
       case 'deleted': return 'Moved to trash';
+      case 'edited': return 'Edited';
       case 'restored': return 'Restored';
       default: return action;
     }
   }, []);
+
+  useEffect(() => {
+    // Reset path when team changes
+    if (currentTeamId) {
+      setPathHistory([]);
+      setCurrentPath(currentTeamId);
+    }
+  }, [currentTeamId]);
+
+  useEffect(() => {
+    // Initial data fetch when component mounts or when path/team/refresh changes
+    if (currentPath) {
+      fetchFilesAndFolders(currentPath);
+      
+      // Also fetch folder size if we're in a folder
+      try {
+        axios.get(
+          `${import.meta.env.VITE_API}/getFolderSize/?path=${encodeURIComponent(
+            currentTeamId
+          )}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        ).then(response => {
+          if (response.data && response.data.size !== undefined) {
+            setFolderConsume(response.data.size);
+          }
+        }).catch(error => {
+          console.error("Error fetching folder size:", error);
+          // Don't block UI on folder size fetch errors
+          setIsFileFetching(false);
+        });
+      } catch (error) {
+        console.error("Error setting up folder size fetch:", error);
+        setIsFileFetching(false);
+      }
+    }
+  }, [currentPath, currentTeamId, token, fetchFilesAndFolders, refresh]); // Add refresh as dependency
 
   return (
     <div className="file-sharing">
@@ -448,7 +561,7 @@ const FileUpload = () => {
                 <div className="refresh" onClick={() => setRefresh(!refresh)}>
                   <i className="fa-solid fa-rotate-right"></i>
                 </div>
-                <button
+                <button 
                   className="main-button"
                   onClick={() => setShowFileButtons(!showFileButtons)}
                 >
@@ -463,7 +576,6 @@ const FileUpload = () => {
                   className="fa-solid fa-bars show-storage"
                   onClick={toggleShowStorage}
                 ></i>
-
                 {showFileButtons && (
                   <div className="hidden-buttons">
                     <CreateNewFolder
@@ -478,7 +590,13 @@ const FileUpload = () => {
                       parentFolder={currentFolderId}
                       setProgress={setProgress}
                       availableUploadSize={availableUploadSize}
+                      setLastUploadStatus={setLastUploadStatus}
+                      setLastUploadSummary={setLastUploadSummary}
                     />
+                    <button onClick={viewLatestUploads} className="view-latest-uploads">
+                      <i className="fa-solid fa-list-check"></i>
+                      <span>Recent Uploads</span>
+                    </button>
                   </div>
                 )}
               </div>
@@ -530,6 +648,8 @@ const FileUpload = () => {
                         parentFolder={currentFolderId}
                         setProgress={setProgress}
                         availableUploadSize={availableUploadSize}
+                        setLastUploadStatus={setLastUploadStatus}  // Add this prop
+                        setLastUploadSummary={setLastUploadSummary}  // Add this prop
                       />
                       <UploadFolder
                         currentPath={currentPath}
@@ -537,7 +657,13 @@ const FileUpload = () => {
                         parentFolder={currentFolderId}
                         setProgress={setProgress}
                         availableUploadSize={availableUploadSize}
+                        setLastUploadStatus={setLastUploadStatus}  // Add this prop
+                        setLastUploadSummary={setLastUploadSummary}  // Add this prop
                       />
+                      <button onClick={viewLatestUploads} className="view-latest-uploads">
+                        <i className="fa-solid fa-list-check"></i>
+                        <span>Recent Uploads</span>
+                      </button>
                     </div>
                   )}
                 </div>
@@ -547,9 +673,24 @@ const FileUpload = () => {
         </div>
         <div className={`fs-content ${showStorage ? "half-border" : ""}`}>
           <div className="fs-content-header">
-            <div className="name">Name</div>
-            <div className="filesize">Size</div>
-            <div className="modification-delete">Date</div>
+            <div className="name sortable" onClick={() => handleSort('name')}>
+              Name
+              {sortField === 'name' && (
+                <i className={`fa-solid fa-sort-${sortDirection === 'asc' ? 'up' : 'down'} ms-1`}></i>
+              )}
+            </div>
+            <div className="filesize sortable" onClick={() => handleSort('size')}>
+              Size
+              {sortField === 'size' && (
+                <i className={`fa-solid fa-sort-${sortDirection === 'asc' ? 'up' : 'down'} ms-1`}></i>
+              )}
+            </div>
+            <div className="modification-delete sortable" onClick={() => handleSort('date')}>
+              Date
+              {sortField === 'date' && (
+                <i className={`fa-solid fa-sort-${sortDirection === 'asc' ? 'up' : 'down'} ms-1`}></i>
+              )}
+            </div>
             <div className="action">
               <button
                 className="bulk-delete-button"
@@ -561,7 +702,6 @@ const FileUpload = () => {
               </button>
             </div>
           </div>
-
           {isFileFetching ? (
             <div className="loader text-center p-2"></div>
           ) : (
@@ -779,7 +919,23 @@ const FileUpload = () => {
                   {progress === 100 ? "Finishing" : "Uploading"}
                 </span>
               </div>
+              <button 
+                className="view-status-btn"
+                onClick={() => setShowUploadStatusModal(true)}
+              >
+                <i className="fa-solid fa-list-check"></i>
+                <span>View Upload Status</span>
+              </button>
             </>
+          )}
+          {progress === 0 && Object.keys(lastUploadStatus).length > 0 && (
+            <button 
+              className="view-status-btn last-upload"
+              onClick={() => setShowUploadStatusModal(true)}
+            >
+              <i className="fa-solid fa-list-check"></i>
+              <span>View Last Upload</span>
+            </button>
           )}
         </div>
       </div>
@@ -831,9 +987,7 @@ const FileUpload = () => {
       {/* Rename Modal */}
       <Modal show={showRenameModal} onHide={handleRenameModalClose} className="rename-modal">
         <Modal.Header closeButton>
-          <Modal.Title>
-            Rename {itemToRename?.type === "folder" ? "Folder" : "File"}
-          </Modal.Title>
+          <Modal.Title>Rename</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           <Form>
@@ -857,8 +1011,16 @@ const FileUpload = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+      <UploadStatusModal
+        show={showUploadStatusModal}
+        onHide={() => setShowUploadStatusModal(false)}
+        uploadStatus={lastUploadStatus}
+        summary={lastUploadSummary}
+      />
     </div>
   );
 };
+
+
 
 export default FileUpload;

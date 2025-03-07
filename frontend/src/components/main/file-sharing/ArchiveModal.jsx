@@ -106,7 +106,11 @@ const ArchiveModal = ({ isOpen, onClose, teamId, setRefresh }) => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
-          await axios.delete(`${import.meta.env.VITE_API}/delete/${fileId}`);
+          await axios.delete(`${import.meta.env.VITE_API}/delete/${fileId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
           fetchDeletedFiles();
           Swal.fire(
             "Deleted!",
@@ -159,7 +163,11 @@ const ArchiveModal = ({ isOpen, onClose, teamId, setRefresh }) => {
       if (result.isConfirmed) {
         try {
           for (const fileId of selectedFiles) {
-            await axios.delete(`${import.meta.env.VITE_API}/delete/${fileId}`);
+            await axios.delete(`${import.meta.env.VITE_API}/delete/${fileId}`, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            });
           }
           setSelectedFiles(new Set());
           fetchDeletedFiles();

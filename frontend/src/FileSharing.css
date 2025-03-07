@@ -145,6 +145,12 @@
 .fs-content-header .name {
   flex: 2;
 }
+.fs-content-header .sortable {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
 .fs-content-header .filesize {
   flex: 1;
 }
@@ -266,7 +272,7 @@
 .fs-content {
   background-color: var(--tertiary-color);
   padding: 0.7rem 0.7rem;
-  min-height: 20vh;
+  min-height: 40vh;
   max-height: 60vh;
   overflow-y: auto;
   border-bottom-right-radius: 8px;
@@ -428,7 +434,19 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortable:hover {
+  text-decoration: underline;
+}
+
 .fs-content .folder input,.fs-content .file input {
   width: 0.9rem;
   height: 0.9rem;

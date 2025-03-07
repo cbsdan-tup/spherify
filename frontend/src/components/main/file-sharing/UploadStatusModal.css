@@ -1,0 +1,265 @@
+.upload-status-modal .modal-content {
+  border-radius: 8px;
+}
+
+.upload-status-modal .modal-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  border-radius: 8px 8px 0 0;
+}
+
+.upload-status-summary {
+  margin-bottom: 20px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+}
+
+.upload-progress-wrapper {
+  margin-bottom: 15px;
+}
+
+.main-progress-bar {
+  height: 15px;
+  border-radius: 10px;
+}
+
+.upload-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.stat-item {
+  padding: 5px 10px;
+  background-color: #ffffff;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.stat-label {
+  font-weight: 500;
+  color: #6c757d;
+  margin-right: 5px;
+}
+
+.stat-value {
+  font-weight: 600;
+}
+
+.stat-value.completed {
+  color: #28a745;
+}
+
+.stat-value.in-progress {
+  color: #007bff;
+}
+
+.stat-value.failed {
+  color: #dc3545;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.file-status-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+}
+
+.file-status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 15px;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.file-status-item:last-child {
+  border-bottom: none;
+}
+
+.file-status-item.complete {
+  background-color: #f8fff8;
+  transition: background-color 0.3s ease;
+}
+
+.file-status-item.error {
+  background-color: #fff8f8;
+}
+
+.file-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.file-name {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 400px;
+}
+
+.file-details {
+  display: flex;
+  gap: 10px;
+  color: #6c757d;
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+.file-progress {
+  width: 100px;
+  text-align: right;
+}
+
+.file-status-badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.file-status-badge.complete {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.file-status-badge.uploading {
+  background-color: #cce5ff;
+  color: #004085;
+}
+
+.file-status-badge.error {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.complete-indicator {
+  color: #28a745;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.error-indicator {
+  color: #dc3545;
+  font-size: 1.5rem;
+  font-weight: bold;
+  cursor: help;
+}
+
+.no-files-message {
+  padding: 20px;
+  text-align: center;
+  color: #6c757d;
+}
+
+.upload-complete-summary {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f0f8ff;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.view-status-btn {
+  margin-left: 15px;
+  padding: 8px 15px;
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.view-status-btn:hover {
+  background-color: #e9ecef;
+}
+
+.view-status-btn.last-upload {
+  background-color: #e9ecef;
+  margin-left: auto;
+}
+
+.view-status-btn.last-upload:focus {
+  outline: none;
+  border: none;
+}
+.fs-footer {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+}
+
+.upload-status-modal .animated-progress .progress-bar {
+  animation: progress-bar-stripes 1s linear infinite;
+}
+
+.recently-completed {
+  margin-top: 15px;
+  padding: 10px 15px;
+  background-color: #f0fff0;
+  border-radius: 6px;
+  border-left: 4px solid #28a745;
+}
+
+.recent-uploads-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 10px 0 0;
+}
+
+.recent-uploads-list li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+  padding: 5px 0;
+  border-bottom: 1px dashed #ddecdd;
+}
+
+.recent-uploads-list li:last-child {
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.recent-uploads-list i {
+  margin-right: 8px;
+}
+
+.recent-filename {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.recent-time {
+  font-size: 0.8rem;
+  color: #6c757d;
+  margin-left: 10px;
+}
+
+.completed-time {
+  font-size: 0.75rem;
+  color: #6c757d;
+  font-style: italic;
+  margin-left: 8px;
+}
+
+.file-status-item.complete:nth-child(-n+5) {
+  animation: highlightNew 2s ease-out;
+}
+
+@keyframes highlightNew {
+  0% { background-color: #d4edda; }
+  100% { background-color: #f8fff8; }
+}
