@@ -14,7 +14,7 @@ exports.getTeamDetails = async (req, res) => {
     const team = await Team.findById(teamId)
       .populate({
         path: 'members.user',
-        select: 'firstName lastName email profilePicture lastActive'
+        select: 'firstName lastName email avatar statusUpdatedAt'
       })
       .populate('createdBy', 'firstName lastName email');
       
@@ -151,21 +151,34 @@ exports.getTeamMemberActivity = async (req, res) => {
     const activeCounts = [];
     const newCounts = [];
     
-    // Calculate daily activity
+    // Calculate daily activity using real data from activeDays
     for (let i = 29; i >= 0; i--) {
       const date = moment().subtract(i, 'days');
       const dateStr = date.format('MMM D');
       labels.push(dateStr);
       
-      // Active members each day - this is approximated since we might not have daily login data
-      // You could enhance this with actual login data if available
-      const dayActive = Math.floor(Math.random() * (team.members.length - 1) + 1); // Mock data
-      activeCounts.push(dayActive);
-      
-      // New members joined each day
+      // Get the start and end of the day
       const dayStart = date.startOf('day').toDate();
       const dayEnd = date.endOf('day').toDate();
       
+      // Count members who were active on this specific day
+      let activeCount = 0;
+      team.members.forEach(member => {
+        if (member.activeDays && member.activeDays.length > 0) {
+          const wasActive = member.activeDays.some(activeDate => {
+            const date = new Date(activeDate);
+            return date >= dayStart && date <= dayEnd;
+          });
+          
+          if (wasActive && member.leaveAt === null) {
+            activeCount++;
+          }
+        }
+      });
+      
+      activeCounts.push(activeCount);
+      
+      // New members joined each day (keep existing code)
       const newMembers = team.members.filter(member => {
         const joinDate = new Date(member.joinedAt);
         return joinDate >= dayStart && joinDate <= dayEnd;

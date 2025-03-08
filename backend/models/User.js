@@ -77,9 +77,30 @@ const userSchema = new mongoose.Schema(
 userSchema.pre("save", function (next) {
   if (this.isModified("status")) {
     this.statusUpdatedAt = new Date();
+    
+    // If status is active, update the user's active days in all teams
+    if (this.status === "active") {
+      this.updateActivityInTeams();
+    }
   }
   next();
 });
+
+userSchema.methods.updateActivityInTeams = async function() {
+  try {
+    const { Team } = require("./Team");
+    
+    const teams = await Team.find({ "members.user": this._id });
+    
+    const updatePromises = teams.map(team => 
+      Team.updateMemberActivity(team._id, this._id)
+    );
+    
+    await Promise.all(updatePromises);
+  } catch (error) {
+    console.error("Error updating team activity:", error);
+  }
+};
 
 userSchema.methods.getJwtToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
@@ -87,7 +108,6 @@ userSchema.methods.getJwtToken = function () {
   });
 };
 
-// Method to log user login
 userSchema.methods.logLogin = function (ipAddress, deviceInfo, location) {
   const loginEntry = {
     timestamp: new Date(),

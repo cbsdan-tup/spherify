@@ -588,7 +588,7 @@ const TeamReportModal = ({ show, onHide, team }) => {
                     <div className="meta-item">
                       <i className="fa-solid fa-users me-2"></i>
                       <span className="meta-label">Members:</span>
-                      <span className="meta-value">{team?.members?.length || 0}</span>
+                      <span className="meta-value">{team?.members?.filter(member => !member.leaveAt)?.length || 0}</span>
                     </div>
                   </div>
                 </div>
@@ -620,16 +620,32 @@ const TeamReportModal = ({ show, onHide, team }) => {
                     <div className="storage-usage-container">
                       <div className="usage-meter">
                         <div className="progress-ring-container">
-                          <div className="progress-ring">
-                            <div 
-                              className="progress-circle" 
-                              style={{ 
-                                clipPath: `polygon(50% 50%, 0 0, ${cloudUsage ? Math.min((cloudUsage.usedStorage / cloudUsage.totalStorage) * 100, 100) : 0}% 0)` 
-                              }}
-                            ></div>
-                            <div className="progress-center">
-                              {cloudUsage ? `${((cloudUsage.usedStorage / cloudUsage.totalStorage) * 100).toFixed(1)}%` : '0%'}
-                            </div>
+                          <svg className="progress-ring" width="120" height="120" viewBox="0 0 120 120">
+                            <circle
+                              className="progress-ring-circle-bg"
+                              stroke="#e6e6e6"
+                              strokeWidth="10"
+                              fill="transparent"
+                              r="50"
+                              cx="60"
+                              cy="60"
+                            />
+                            <circle
+                              className="progress-ring-circle"
+                              stroke="#3498db"
+                              strokeWidth="10"
+                              fill="transparent"
+                              r="50"
+                              cx="60"
+                              cy="60"
+                              strokeDasharray={`${2 * Math.PI * 50}`}
+                              strokeDashoffset={`${2 * Math.PI * 50 * (1 - (cloudUsage ? Math.min((cloudUsage.usedStorage / cloudUsage.totalStorage), 1) : 0))}`}
+                              strokeLinecap="round"
+                              transform="rotate(-90 60 60)"
+                            />
+                          </svg>
+                          <div className="progress-center">
+                            {cloudUsage ? `${((cloudUsage.usedStorage / cloudUsage.totalStorage) * 100).toFixed(1)}%` : '0%'}
                           </div>
                         </div>
                         <div className="usage-stats">
@@ -839,7 +855,7 @@ const TeamReportModal = ({ show, onHide, team }) => {
               <div className="card-header">
                 <h3>
                   <i className="fa-solid fa-address-card me-2"></i>
-                  Team Members
+                  Active Team Members
                 </h3>
               </div>
               <div className="card-body">
@@ -855,12 +871,12 @@ const TeamReportModal = ({ show, onHide, team }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {teamData?.members?.map((member) => (
+                      {teamData?.members?.filter(member => !member.leaveAt)?.map((member) => (
                         <tr key={member.user._id}>
                           <td className="member-name">
                             <div className="member-avatar">
-                              {member.user.profilePicture?.url ? (
-                                <img src={member.user.profilePicture.url} alt="Avatar" />
+                              {member.user.avatar?.url ? (
+                                <img src={member.user.avatar.url} alt="Avatar" />
                               ) : (
                                 <span>
                                   {`${member.user.firstName?.charAt(0)}${member.user.lastName?.charAt(0)}`}
@@ -872,15 +888,91 @@ const TeamReportModal = ({ show, onHide, team }) => {
                               {member.isAdmin && <span className="admin-badge">Admin</span>}
                             </div>
                           </td>
-                          <td>{member.nickname || member.role || 'Member'}</td>
+                          <td>{member.role || member.nickname || 'Member'}</td>
                           <td>{moment(member.joinedAt).format('MMM D, YYYY')}</td>
                           <td>{member.messageCount || 0}</td>
-                          <td>{member.lastActive ? moment(member.lastActive).format('MMM D, YYYY') : 'N/A'}</td>
+                          <td>{member.user.statusUpdatedAt ? moment(member.user?.statusUpdatedAt).format('MMM D, YYYY [at] h:mm A') : 'N/A'}</td>
                         </tr>
                       ))}
+                      {(!teamData?.members?.filter(member => !member.leaveAt)?.length) && (
+                        <tr>
+                          <td colSpan="5" className="text-center">No active members</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div className="data-card membership-history-section">
+              <div className="card-header">
+                <h3>
+                  <i className="fa-solid fa-clock-rotate-left me-2"></i>
+                  Membership History
+                </h3>
+              </div>
+              <div className="card-body">
+                <div className="table-responsive">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Joined</th>
+                        <th>Left</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {teamData?.members?.sort((a, b) => 
+                        new Date(b.joinedAt) - new Date(a.joinedAt)
+                      )?.map((member) => {
+                        // Calculate duration
+                        const joinDate = moment(member.joinedAt);
+                        const leaveDate = member.leaveAt ? moment(member.leaveAt) : moment();
+                        const duration = moment.duration(leaveDate.diff(joinDate));
+                        let durationText = '';
+                        
+                        if (duration.asMonths() >= 1) {
+                          durationText = `${Math.floor(duration.asMonths())} month${Math.floor(duration.asMonths()) !== 1 ? 's' : ''}`;
+                        } else if (duration.asDays() >= 1) {
+                          durationText = `${Math.floor(duration.asDays())} day${Math.floor(duration.asDays()) !== 1 ? 's' : ''}`;
+                        } else {
+                          durationText = `${Math.floor(duration.asHours())} hour${Math.floor(duration.asHours()) !== 1 ? 's' : ''}`;
+                        }
+                        
+                        return (
+                          <tr key={`history-${member.user._id}-${member.joinedAt}`}>
+                            <td className="member-name">
+                              <div className="member-avatar">
+                                {member.user.avatar?.url ? (
+                                  <img src={member.user.avatar.url} alt="Avatar" />
+                                ) : (
+                                  <span>
+                                    {`${member.user.firstName?.charAt(0)}${member.user.lastName?.charAt(0)}`}
+                                  </span>
+                                )}
+                              </div>
+                              <div>
+                                {member.user.firstName} {member.user.lastName}
+                                {member.isAdmin && <span className="admin-badge">Admin</span>}
+                              </div>
+                            </td>
+                            <td>{moment(member.joinedAt).format('MMM D, YYYY')}</td>
+                            <td>{member.leaveAt ? moment(member.leaveAt).format('MMM D, YYYY') : '—'}</td>
+                            <td>{durationText}</td>
+                            <td>
+                              <span className={`status-badge ${member.leaveAt ? 'inactive' : 'active'}`}>
+                                {member.leaveAt ? 'Left' : 'Active'}
+                              </span>
+                            </td>
+                          </tr>
+                        );
+                      })}
                       {(!teamData?.members || teamData.members.length === 0) && (
                         <tr>
-                          <td colSpan="5" className="text-center">No member data available</td>
+                          <td colSpan="5" className="text-center">No membership history available</td>
                         </tr>
                       )}
                     </tbody>
@@ -891,7 +983,7 @@ const TeamReportModal = ({ show, onHide, team }) => {
             
             <div className="report-footer">
               <div className="report-generated">
-                Report generated on {moment().format('MMMM D, YYYY [at] h:mm A')}
+                Report generated on {moment().format('MMMM D, YYYY [at] h:mm:ss A')}
               </div>
               <div className="report-logo">Spherify</div>
             </div>

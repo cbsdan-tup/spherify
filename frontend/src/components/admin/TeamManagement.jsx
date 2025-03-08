@@ -7,6 +7,7 @@ import Swal from "sweetalert2";
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import TeamReportModal from "./modals/TeamReportModal";
+import UserDetailsModal from "./UserDetailsModal";
 // Import FontAwesome if not already included in your main file
 import "@fortawesome/fontawesome-free/css/all.min.css";
 // Import the CSS module with scoped Bootstrap styles
@@ -20,6 +21,8 @@ const TeamManagement = () => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [isLoadingStorageData, setIsLoadingStorageData] = useState(false);
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
   
   const token = useSelector((state) => state.auth.token);
   const nextcloudConfig = useSelector((state) => state.configurations.nextcloud);
@@ -152,22 +155,32 @@ const TeamManagement = () => {
     },
     { name: "Name", selector: (row) => row.name, sortable: true },
     {
-      name: "Owner",
+      name: "Created By",
       selector: (row) =>
-        row.createdBy
-          ? `${row.createdBy.email}`
-          : "Unknown",
-      sortable: true,
-    },
-    {
-      name: "Members",
-      selector: (row) => row.members.length,
-      sortable: true,
-      center: true,
-    },
-    {
-      name: "Storage",
-      cell: (row) => "Click Report", // Just placeholder text
+        row.createdBy ? (
+          <span
+            style={{ cursor: "pointer", color: "#0d6efd", textDecoration: "underline" }}
+            onClick={() => {
+              setSelectedUserId(row.createdBy._id);
+                setShowUserModal(true);
+              }}
+              >
+              {row.createdBy.email}
+              </span>
+            ) : (
+              "Unknown"
+            ),
+            sortable: true,
+          },
+          {
+            name: "Members",
+            selector: (row) => row.members.filter(member => member.leaveAt === null).length,
+            sortable: true,
+            center: true,
+          },
+          {
+            name: "Storage",
+            cell: (row) => "Click Report", // Just placeholder text
       sortable: false,
     },
     {
@@ -299,6 +312,13 @@ const TeamManagement = () => {
         onHide={closeTeamReport}
         team={selectedTeam}
         isLoading={isLoadingStorageData}
+      />
+
+      <UserDetailsModal
+        show={showUserModal}
+        onHide={() => setShowUserModal(false)}
+        userId={selectedUserId}
+        refreshList={fetchTeams}
       />
     </div>
   );

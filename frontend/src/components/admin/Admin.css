@@ -621,3 +621,7 @@
   padding: 0.5rem;
   cursor: pointer;
 }
+
+.user-details-modal .badge{
+  color: var(--text-white)
+}

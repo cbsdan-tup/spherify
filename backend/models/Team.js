@@ -52,6 +52,7 @@ const TeamSchema = new mongoose.Schema(
         isAdmin: { type: Boolean, default: false },
         joinedAt: { type: Date, default: Date.now },
         leaveAt: { type: Date, default: null },
+        activeDays: [{ type: Date }] // Simplified to just store dates when user was active
       },
     ],
     messageGroups: [
@@ -69,30 +70,63 @@ const TeamSchema = new mongoose.Schema(
 );
 
 TeamSchema.pre('save', function(next) {
-  const userMap = new Map();
-  
+  const userIndicesMap = new Map(); 
   const filteredMembers = [];
   
   for (const member of this.members) {
     const userId = member.user.toString();
     
-    if (userMap.has(userId)) {
-      const existingIndex = userMap.get(userId);
-      const existingMember = filteredMembers[existingIndex];
+    if (userIndicesMap.has(userId)) {
+      const userIndices = userIndicesMap.get(userId);
+      const allPreviousLeft = userIndices.every(idx => 
+        filteredMembers[idx].leaveAt !== null
+      );
       
-      if (existingMember.leaveAt && !member.leaveAt) {
-        filteredMembers[existingIndex] = member;
+      if (allPreviousLeft) {
+        userIndicesMap.get(userId).push(filteredMembers.length);
+        filteredMembers.push(member);
       }
     } else {
-      userMap.set(userId, filteredMembers.length);
+      // First occurrence of this user, add them
+      userIndicesMap.set(userId, [filteredMembers.length]);
       filteredMembers.push(member);
     }
   }
   
   this.members = filteredMembers;
-  
   next();
 });
+
+// Static method to update a member's active days
+TeamSchema.statics.updateMemberActivity = async function(teamId, userId) {
+  // Get current date but remove time component to track by day only
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const team = await this.findById(teamId);
+  if (!team) return null;
+  
+  const memberIndex = team.members.findIndex(
+    (member) => member.user.toString() === userId.toString()
+  );
+  
+  if (memberIndex === -1) return null;
+  
+  // Check if today is already in the activeDays array
+  const hasActiveToday = team.members[memberIndex].activeDays.some(date => {
+    const existingDate = new Date(date);
+    existingDate.setHours(0, 0, 0, 0);
+    return existingDate.getTime() === today.getTime();
+  });
+  
+  // Only add the date if not already logged for today
+  if (!hasActiveToday) {
+    team.members[memberIndex].activeDays.push(today);
+    await team.save();
+  }
+  
+  return team;
+};
 
 const Team = mongoose.model("Team", TeamSchema);
 const MessageGroup = mongoose.model("MessageGroup", MessageGroupSchema);
