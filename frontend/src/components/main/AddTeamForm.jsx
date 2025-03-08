@@ -219,7 +219,7 @@ const PopupForm = ({ show, handleClose, handleSubmit, authState, isLoading }) =>
                         <ul className="list-group">
                           {values.membersEmail.length > 0 && (
                             <>
-                              {/* Owner (First Member) */}
+                              {/* Leader (First Member) */}
                               <li className="list-group-item member-info">
                                 <span>
                                   <img

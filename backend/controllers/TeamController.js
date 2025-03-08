@@ -56,7 +56,7 @@ exports.addTeam = async (req, res) => {
       {
         user: parsedMembers[0].user,
         nickname: parsedMembers[0].nickname || "",
-        role: "owner",
+        role: "leader",
         isAdmin: true,
         joinedAt: new Date(),
       },
@@ -101,7 +101,7 @@ exports.getTeamByUser = async (req, res) => {
       $or: [
         { members: { $elemMatch: { user: userId, leaveAt: null } } }, // Ensures leaveAt is null
       ],
-    }).populate("members.user", "fname lname email").populate("createdBy", "firstName lastName email avatar");
+    }).populate("members.user", "firstName lastName email").populate("createdBy", "firstName lastName email avatar");
 
     res.status(200).json(teams);
   } catch (error) {
@@ -204,8 +204,8 @@ exports.leaveTeam = async (req, res) => {
         .json({ message: "User is not a member of the team." });
     }
 
-    // Check if the user leaving is an owner
-    if (team.members[memberIndex].role === "owner") {
+    // Check if the user leaving is an leader
+    if (team.members[memberIndex].role === "leader") {
       // Find active members (excluding the leaving member)
       const activeMembers = team.members.filter(
         (m) => m.user.toString() !== userId && m.leaveAt === null
@@ -215,13 +215,13 @@ exports.leaveTeam = async (req, res) => {
         // Sort active members by joinedAt (earliest first) to get the most senior member
         activeMembers.sort((a, b) => a.joinedAt - b.joinedAt);
         
-        // Make the most senior member the new owner
-        const newOwnerIndex = team.members.findIndex(
+        // Make the most senior member the new leader
+        const newLeaderIndex = team.members.findIndex(
           (m) => m.user.toString() === activeMembers[0].user.toString()
         );
         
-        team.members[newOwnerIndex].role = "owner";
-        team.members[newOwnerIndex].isAdmin = true;
+        team.members[newLeaderIndex].role = "leader";
+        team.members[newLeaderIndex].isAdmin = true;
         
         // Make all other active members admins
         team.members.forEach((m, idx) => {
@@ -289,8 +289,8 @@ exports.updateTeamMember = async (req, res) => {
       return res.status(403).json({ message: "You are not a member of this team" });
     }
     
-    // Check if requesting user has permission (must be admin or owner)
-    if (!requestingUser.isAdmin && requestingUser.role !== "owner") {
+    // Check if requesting user has permission (must be admin or leader)
+    if (!requestingUser.isAdmin && requestingUser.role !== "leader") {
       return res.status(403).json({ message: "You don't have permission to update members" });
     }
     
@@ -303,21 +303,48 @@ exports.updateTeamMember = async (req, res) => {
       return res.status(404).json({ message: "Member not found in this team" });
     }
     
-    // Special restriction: Only owner can update another owner's role
+    // Special restriction: Only leader can update another leader's role
     if (
-      team.members[memberIndex].role === "owner" && 
-      requestingUser.role !== "owner"
+      team.members[memberIndex].role === "leader" && 
+      requestingUser.role !== "leader"
     ) {
-      return res.status(403).json({ message: "Only team owner can modify another owner's role" });
+      return res.status(403).json({ message: "Only team leader can modify another leader's role" });
     }
     
     // Update member info
     if (nickname !== undefined) team.members[memberIndex].nickname = nickname;
     
-    // Only update role and admin status if allowed (owner can change anything)
-    if (requestingUser.role === "owner" || team.members[memberIndex].role !== "owner") {
-      if (role !== undefined) team.members[memberIndex].role = role;
-      if (isAdmin !== undefined) team.members[memberIndex].isAdmin = isAdmin;
+    // Only update role and admin status if allowed (leader can change anything)
+    if (requestingUser.role === "leader" || team.members[memberIndex].role !== "leader") {
+      if (role !== undefined) {
+        // If setting this member as leader
+        if (role === "leader" && team.members[memberIndex].role !== "leader") {
+          // Find current leader and demote them
+          const currentLeaderIndex = team.members.findIndex(
+            member => member.role === "leader" && member.leaveAt === null && member.user.toString() !== userId
+          );
+          
+          if (currentLeaderIndex !== -1) {
+            // Demote current leader to moderator but keep them as admin
+            team.members[currentLeaderIndex].role = "moderator";
+            team.members[currentLeaderIndex].isAdmin = true;
+          }
+          
+          // Set new leader
+          team.members[memberIndex].role = "leader";
+          team.members[memberIndex].isAdmin = true;
+        } else {
+          team.members[memberIndex].role = role;
+          // If role is being set to "leader", ensure isAdmin is true
+          if (role === "leader") {
+            team.members[memberIndex].isAdmin = true;
+          } else if (isAdmin !== undefined) {
+            team.members[memberIndex].isAdmin = isAdmin;
+          }
+        }
+      } else if (isAdmin !== undefined) {
+        team.members[memberIndex].isAdmin = isAdmin;
+      }
     }
     
     await team.save();
@@ -354,8 +381,8 @@ exports.removeTeamMember = async (req, res) => {
       return res.status(403).json({ message: "You are not a member of this team" });
     }
     
-    // Check if requesting user has permission (must be admin or owner)
-    if (!requestingUser.isAdmin && requestingUser.role !== "owner") {
+    // Check if requesting user has permission (must be admin or leader)
+    if (!requestingUser.isAdmin && requestingUser.role !== "leader") {
       return res.status(403).json({ message: "You don't have permission to remove members" });
     }
     
@@ -368,9 +395,9 @@ exports.removeTeamMember = async (req, res) => {
       return res.status(404).json({ message: "Member not found in this team" });
     }
     
-    // Cannot remove an owner unless you are also an owner
-    if (team.members[memberIndex].role === "owner" && requestingUser.role !== "owner") {
-      return res.status(403).json({ message: "Only team owner can remove another owner" });
+    // Cannot remove an leader unless you are also an leader
+    if (team.members[memberIndex].role === "leader" && requestingUser.role !== "leader") {
+      return res.status(403).json({ message: "Only team leader can remove another leader" });
     }
     
     // Set leaveAt date rather than removing completely
@@ -499,7 +526,7 @@ exports.getRecentTeamAndUsers = async (req, res) => {
     const recentTeams = await Team.find()
       .sort({ createdAt: -1 }) 
       .limit(10)
-      .select("logo name members isActive createdAt");
+      .select("logo name members isActive createdAt createdBy").populate("createdBy");
 
     return res.status(200).json({
       success: true,
@@ -704,7 +731,7 @@ exports.updateTeam = async (req, res) => {
         member.leaveAt === null
     );
     
-    // Check if user has permission (owner, admin or moderator)
+    // Check if user has permission (leader, admin or moderator)
     if (!requestingUser) {
       return res.status(403).json({ 
         success: false, 
@@ -713,7 +740,7 @@ exports.updateTeam = async (req, res) => {
     }
     
     if (!requestingUser.isAdmin && 
-        requestingUser.role !== "owner" && 
+        requestingUser.role !== "leader" && 
         requestingUser.role !== "moderator") {
       return res.status(403).json({ 
         success: false, 

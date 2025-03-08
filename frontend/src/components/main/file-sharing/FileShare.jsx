@@ -568,7 +568,7 @@ const FileUpload = () => {
 
   useEffect(() => {
     // Initial data fetch when component mounts or when path/team/refresh changes
-    if (currentPath) {
+    if (currentPath && currentTeamId) {
       fetchFilesAndFolders(currentPath);
       
       // Also fetch folder size if we're in a folder
@@ -742,14 +742,18 @@ const FileUpload = () => {
               )}
             </div>
             <div className="action">
-              <button
-                className="bulk-delete-button"
-                onClick={handleDeleteSelected}
-                disabled={!(selectedItems.length > 0)}
-              >
-                <i className="fa-solid fa-trash"></i>
-                <span>Delete</span>
-              </button>
+              {
+                selectedItems.length > 0 && (
+                <button
+                  className="bulk-delete-button"
+                  onClick={handleDeleteSelected}
+                  disabled={!(selectedItems.length > 0)}
+                >
+                  <i className="fa-solid fa-trash"></i>
+                  <span>Delete</span>
+                </button>
+                )
+              }
             </div>
           </div>
           {isFileFetching ? (

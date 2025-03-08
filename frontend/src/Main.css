@@ -608,7 +608,7 @@ body {
   gap: 0.5rem;
   position: absolute;
   top: 52px;
-  z-index: 100;
+  z-index: 1000;
   background-color: var(--light-yellow-bg);
   padding: 0.3rem 0.7rem;
   border-radius: 5px;

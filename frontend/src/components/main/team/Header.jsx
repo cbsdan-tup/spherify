@@ -32,7 +32,7 @@ function Header({
       
       setCanEdit(
         userMember && 
-        (userMember.isAdmin || userMember.role === "owner" || userMember.role === "moderator")
+        (userMember.isAdmin || userMember.role === "leader" || userMember.role === "moderator")
       );
     }
   }, [teamInfo.members, currentUser]);

@@ -305,9 +305,15 @@ function Home({
                         </div>
                         <div className="team-detail">
                           <i className="fa-solid fa-user-tie"></i>{" "}
-                          {team?.createdBy?.firstName +
-                            " " +
-                            team?.createdBy?.lastName}
+                          {(() => {
+                            const leader = team?.members?.find(member => member.role === "leader" && !member.leaveAt);
+                            console.log("Leader:", leader);
+                            if (leader) {
+                              return `${leader.user?.firstName} ${leader.user?.lastName}`;
+                            } else {
+                              return `${team?.createdBy?.firstName} ${team?.createdBy?.lastName}`;
+                            }
+                          })()}
                         </div>
                       </>
                     )}

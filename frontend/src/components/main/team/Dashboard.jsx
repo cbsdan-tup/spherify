@@ -67,7 +67,7 @@ const EditMemberModal = ({
 
   const getRoleBadgeClass = (role) => {
     switch (role) {
-      case "owner":
+      case "leader":
         return "bg-danger";
       case "moderator":
         return "bg-warning";
@@ -114,7 +114,7 @@ const EditMemberModal = ({
                 >
                   {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
                 </span>
-                {member.isAdmin && member.role !== "owner" && (
+                {member.isAdmin && member.role !== "leader" && (
                   <span className="badge text-white bg-info">Admin</span>
                 )}
               </div>
@@ -158,15 +158,15 @@ const EditMemberModal = ({
                   <Form.Select
                     value={role}
                     onChange={(e) => setRole(e.target.value)}
-                    disabled={member.role === "owner" || !isCurrentUserAdmin}
+                    disabled={member.role === "leader" || !isCurrentUserAdmin}
                     className="border-0 bg-light"
                   >
                     <option value="member">Member</option>
                     <option value="moderator">Moderator</option>
-                    {isCurrentUserAdmin && <option value="owner">Owner</option>}
+                    {isCurrentUserAdmin && <option value="leader">Leader</option>}
                   </Form.Select>
                   <Form.Text className="text-muted">
-                    Only team owners can change roles to owner
+                    Only team leaders can change roles to leader
                   </Form.Text>
                 </Form.Group>
 
@@ -177,7 +177,7 @@ const EditMemberModal = ({
                     label="Grant admin privileges"
                     checked={isAdmin}
                     onChange={(e) => setIsAdmin(e.target.checked)}
-                    disabled={member.role === "owner"}
+                    disabled={member.role === "leader"}
                     className="admin-toggle"
                   />
                 </Form.Group>
@@ -187,7 +187,7 @@ const EditMemberModal = ({
         )}
       </Modal.Body>
       <Modal.Footer className="border-0">
-        {isCurrentUserAdmin && member?.role !== "owner" && (
+        {isCurrentUserAdmin && member?.role !== "leader" && (
           <Button
             variant="outline-danger"
             onClick={() => onRemoveMember(member.user._id)}
@@ -524,7 +524,7 @@ const Dashboard = () => {
         (member) => member.user._id === authState.user._id
       );
       setIsCurrentUserAdmin(
-        currentUserMember?.isAdmin || currentUserMember?.role === "owner"
+        currentUserMember?.isAdmin || currentUserMember?.role === "leader"
       );
     }
   }, [members, authState.user]);
@@ -949,8 +949,8 @@ const Dashboard = () => {
                             className="mb-0 fw-semibold role d-flex align-items-center"
                             style={{ gap: "5px" }}
                           >
-                            {member.isAdmin && member.role !== "owner" && (
-                              <span className="badge w-auto bg-info ms-1">
+                            {(member.isAdmin || member.role === "leader") && (
+                              <span className="badge w-auto bg-info ms-1 d-flex align-items-center justify-content-center" style={{fontSize: "0.8rem"}}>
                                 Admin
                               </span>
                             )}

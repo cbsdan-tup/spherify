@@ -51,6 +51,7 @@ const RecentUsersAndTeams = ({ recentUsers, recentTeams }) => {
                 <th>ID</th>
                 <th>Name</th>
                 <th>Members</th>
+                <th>Created By</th>
                 <th>Created</th>
               </tr>
             </thead>
@@ -73,6 +74,7 @@ const RecentUsersAndTeams = ({ recentUsers, recentTeams }) => {
                   <td>{team._id}</td>
                   <td>{team.name}</td>
                   <td className="text-center">{team.members.length}</td>
+                  <td >{team.createdBy?.firstName} {team.createdBy?.lastName}</td>
                   <td>{new Date(team.createdAt).toLocaleDateString()}</td>
                 </tr>
               ))}
