@@ -581,3 +581,38 @@ exports.enableUser = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+exports.logUserLogin = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { deviceInfo, location } = req.body;
+    
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "User not found" 
+      });
+    }
+    
+    // Get IP address from request
+    const ipAddress = req.headers['x-forwarded-for'] || 
+                     req.connection.remoteAddress || 
+                     req.socket.remoteAddress || 
+                     req.connection.socket.remoteAddress;
+    
+    await user.logLogin(ipAddress, deviceInfo, location);
+    
+    return res.status(200).json({
+      success: true,
+      message: "Login recorded successfully"
+    });
+  } catch (error) {
+    console.error("Error recording login:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error"
+    });
+  }
+};

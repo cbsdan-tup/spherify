@@ -62,6 +62,14 @@ const userSchema = new mongoose.Schema(
     permissionToken: {
       type: String,
     },
+    loginHistory: [
+      {
+        timestamp: { type: Date, default: Date.now },
+        ipAddress: { type: String, default: "unknown" },
+        deviceInfo: { type: String, default: "unknown" },
+        location: { type: String },
+      }
+    ],
   },
   { timestamps: true }
 );
@@ -77,6 +85,19 @@ userSchema.methods.getJwtToken = function () {
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_TIME,
   });
+};
+
+// Method to log user login
+userSchema.methods.logLogin = function (ipAddress, deviceInfo, location) {
+  const loginEntry = {
+    timestamp: new Date(),
+    ipAddress: ipAddress || "unknown",
+    deviceInfo: deviceInfo || "unknown",
+    location: location || null,
+  };
+  
+  this.loginHistory.push(loginEntry);
+  return this.save();
 };
 
 const User = mongoose.model("User", userSchema);

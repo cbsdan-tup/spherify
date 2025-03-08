@@ -54,6 +54,20 @@ const Login = () => {
           user: response.user,
         };
         
+        // Log the login activity
+        try {
+          await axios.post(
+            `${import.meta.env.VITE_API}/logLogin/${response.user._id}`,
+            {
+              deviceInfo: navigator.userAgent,
+              location: Intl.DateTimeFormat().resolvedOptions().timeZone
+            },
+            config
+          );
+        } catch (logError) {
+          console.error("Error logging login:", logError);
+        }
+        
         // Emit login event to update user status 
         // socket.emit("login", response.user._id);
         

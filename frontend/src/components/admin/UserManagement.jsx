@@ -85,7 +85,7 @@ const UserManagement = () => {
         const chartData = chatStatsRes.data.chartData || [];
         const days = chartData.map((item) => item.date);
         const messageCounts = chartData.map((item) => item.count);
-
+        
         setUserActivity({
           days,
           messageCounts,
@@ -93,10 +93,27 @@ const UserManagement = () => {
         });
       }
 
+      const userDetailsRes = await axios.get(
+        `${import.meta.env.VITE_API}/user/${userId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      if (userDetailsRes.data.success) {
+        setSelectedUser(prev => ({
+          ...prev,
+          loginHistory: userDetailsRes.data.user.loginHistory || []
+        }));
+      }
+
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching user data:", error);
       setIsLoading(false);
+      
+      // Show a more specific error
+      if (error.response && error.response.status === 404) {
+        console.error("User endpoint not found. Please check API configuration.");
+      }
 
       // Fallback to empty arrays if API fails
       setUserActivity({
@@ -463,7 +480,7 @@ const UserManagement = () => {
                                     selectedUser.isDisable
                                       ? "danger"
                                       : "success"
-                                  }
+                                }
                                 >
                                   {selectedUser.isDisable
                                     ? "Disabled"
@@ -653,6 +670,146 @@ const UserManagement = () => {
                 title="Activity"
                 style={{ maxHeight: "60vh", overflowY: "auto" }}
               >
+                                <div className="card mb-4">
+                  <div className="card-header d-flex justify-content-between align-items-center">
+                    <span>Login History</span>
+                    <span className="badge bg-info">
+                      Total Logins: {selectedUser.loginHistory?.length || 0}
+                    </span>
+                  </div>
+                  <div className="card-body">
+                    {selectedUser.loginHistory?.length > 0 ? (
+                      <div className="table-responsive">
+                        <table className="table table-hover">
+                          <thead className="table-light">
+                            <tr>
+                              <th>Date & Time</th>
+                              <th>IP Address</th>
+                              <th>Device Info</th>
+                              <th>Location</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedUser.loginHistory
+                              .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                              .slice(0, 10) // Show only the most recent 10 logins
+                              .map((login, index) => (
+                                <tr key={index}>
+                                  <td>
+                                    {new Date(login.timestamp).toLocaleString()}
+                                    {index === 0 && (
+                                      <span className="ms-2 badge bg-success">Latest</span>
+                                    )}
+                                  </td>
+                                  <td>{login.ipAddress}</td>
+                                  <td>
+                                    <span className="text-truncate d-inline-block" 
+                                          style={{maxWidth: "200px"}} 
+                                          title={login.deviceInfo}>
+                                      {login.deviceInfo}
+                                    </span>
+                                  </td>
+                                  <td>{login.location || "Unknown"}</td>
+                                </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="alert alert-info text-center">
+                        No login history available for this user.
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+
+                {/* Login Activity Map - NEW ADDITION */}
+                {selectedUser.loginHistory?.length > 0 && (
+                  <div className="card mb-4">
+                    <div className="card-header bg-light">
+                      <h5 className="mb-0">
+                        <i className="fas fa-map-marker-alt me-2 text-danger"></i>
+                        Login Activity Analysis
+                      </h5>
+                    </div>
+                    <div className="card-body">
+                      <div className="row">
+                        {/* Most Recent Login */}
+                        <div className="col-md-6 col-lg-4 mb-3">
+                          <div className="p-3 bg-light rounded-3 border h-100">
+                            <div className="d-flex align-items-center mb-2">
+                              <div className="rounded-circle bg-success p-2 me-2">
+                                <i className="fas fa-clock text-white"></i>
+                              </div>
+                              <h6 className="mb-0">Last Login</h6>
+                            </div>
+                            {selectedUser.loginHistory.length > 0 && (
+                              <>
+                                <h3 className="mb-1">
+                                  {new Date(
+                                    selectedUser.loginHistory
+                                      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]?.timestamp
+                                  ).toLocaleDateString()}
+                                </h3>
+                                <p className="text-muted small mb-0">
+                                  {new Date(
+                                    selectedUser.loginHistory
+                                      .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]?.timestamp
+                                  ).toLocaleTimeString()}
+                                </p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {/* Device Diversity */}
+                        <div className="col-md-6 col-lg-4 mb-3">
+                          <div className="p-3 bg-light rounded-3 border h-100">
+                            <div className="d-flex align-items-center mb-2">
+                              <div className="rounded-circle bg-primary p-2 me-2">
+                                <i className="fas fa-laptop text-white"></i>
+                              </div>
+                              <h6 className="mb-0">Different Devices</h6>
+                            </div>
+                            <h3 className="mb-1">
+                              {new Set(selectedUser.loginHistory.map(login => 
+                                login.deviceInfo?.includes('Mobile') ? 'Mobile' : 'Desktop'
+                              )).size}
+                            </h3>
+                            <p className="text-muted small mb-0">
+                              device types detected
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Login Frequency */}
+                        <div className="col-md-6 col-lg-4 mb-3">
+                          <div className="p-3 bg-light rounded-3 border h-100">
+                            <div className="d-flex align-items-center mb-2">
+                              <div className="rounded-circle bg-warning p-2 me-2">
+                                <i className="fas fa-chart-line text-white"></i>
+                              </div>
+                              <h6 className="mb-0">Login Frequency</h6>
+                            </div>
+                            <h3 className="mb-1">
+                              {selectedUser.loginHistory.length > 0 
+                                ? (selectedUser.loginHistory.length / 
+                                  (Math.max(1, 
+                                    Math.ceil((new Date() - new Date(selectedUser.createdAt)) / (1000 * 60 * 60 * 24 * 30))
+                                  ))).toFixed(1)
+                                : '0'}
+                            </h3>
+                            <p className="text-muted small mb-0">
+                              logins per month
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 <div className="card mb-4">
                   <div className="card-header d-flex justify-content-between align-items-center">
                     <span>User Chat Activity (Last 30 Days)</span>
@@ -709,7 +866,7 @@ const UserManagement = () => {
                     )}
                   </div>
                 </div>
-                
+
                 {userActivity.days?.length > 0 && (
                   <div className="card mb-4">
                     <div className="card-header bg-light">

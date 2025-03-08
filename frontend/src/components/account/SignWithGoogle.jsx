@@ -39,6 +39,20 @@ function SignWithGoogle({ method }) {
                 user: response.user,
               };
 
+              // Log the login activity
+              try {
+                await axios.post(
+                  `${import.meta.env.VITE_API}/logLogin/${response.user._id}`,
+                  {
+                    deviceInfo: navigator.userAgent,
+                    location: Intl.DateTimeFormat().resolvedOptions().timeZone
+                  },
+                  config
+                );
+              } catch (logError) {
+                console.error("Error logging login:", logError);
+              }
+
               // socket.emit("login", response.user._id)
 
               succesMsg("Login Successfully!");

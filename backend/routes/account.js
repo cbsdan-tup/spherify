@@ -14,7 +14,9 @@ const {
     isAdminExists,
     disableUser,
     enableUser,
-    getAllUsers
+    getAllUsers,
+    logUserLogin,
+    getUserDetails
 } = require('../controllers/UserController');
 
 router.get('/getUserByEmail/:email', getUserByEmail);
@@ -29,5 +31,10 @@ router.put('/disableUser/:id', isAdmin, disableUser);
 router.put('/enableUser/:id', isAdmin, enableUser);
 router.get('/users', isAdmin, getAllUsers);
 
-router.get('/isAdminExists', isAdminExists);;
+router.get('/isAdminExists', isAdminExists);
+router.post('/logLogin/:userId', logUserLogin);
+
+// Add this new route for getting user by ID
+router.get('/user/:id', isAuthenticatedUser, getUserDetails);
+
 module.exports = router
