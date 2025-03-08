@@ -347,7 +347,7 @@ body {
 }
 .main-container .header .team-name {
   font-size: 1.2rem;
-  color: var(--header-text-color);
+  color: var (--header-text-color);
 }
 
 .main-container .team-container.zero-teams {
@@ -1145,7 +1145,7 @@ body {
   gap: 0.7rem;
   border: none;
   padding: 1.2rem 1rem;
-  color: var(--text-white) !important;
+  color: var (--text-white) !important;
   font-size: 1.2rem;
 }
 .calendar-main .card  .card-body {
@@ -1169,4 +1169,351 @@ body {
 }
 .edit-member-modal .modal-content .modal-body form .header {
   gap: 0.5rem;
+}
+
+/* Add these styles for the tabs */
+.tab-link {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: #fff;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.tab-link:hover {
+  color: #fff;
+  opacity: 0.8;
+}
+
+.tab-link.active {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
+/* Add these styles for the tabs */
+.tab-link {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: #fff;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+}
+
+.tab-link:hover {
+  color: #fff;
+  opacity: 0.8;
+}
+
+.tab-link.active {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
+.completion-stats {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  overflow: hidden;
+}
+
+.completion-stats .chart-container {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Remove member-stats related styles from completion-stats section */
+
+.completion-stats {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  overflow: hidden; /* Prevent overall container scroll */
+}
+
+.completion-stats .chart-container {
+  flex: 0 0 300px; /* Fixed height to match pie chart */
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.completion-stats .member-stats {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.member-stats-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.member-stat-card {
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.completion-stats {
+  height: 550px; /* Match height of other containers */
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.chart-container {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.member-stats {
+  width: 100%;
+}
+
+.member-stats-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.completion-stats::-webkit-scrollbar {
+  width: 8px;
+}
+
+.completion-stats::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.completion-stats::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.completion-stats::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.completion-stats {
+  height: 100%;
+  overflow-y: hidden;
+}
+
+.completion-charts {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 1rem;
+}
+
+.overall-completion {
+  flex: 0 0 auto;
+}
+
+.scrollable-stats {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.member-stat-card {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.member-stat-card .progress {
+  background-color: #e9ecef;
+}
+
+.member-stats::-webkit-scrollbar {
+  width: 8px;
+}
+
+.member-stats::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.member-stats::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.member-stats::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.chart-container {
+  height: 300px;
+  width: 100%;
+}
+
+.member-stats-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.member-stat-card {
+  transition: background-color 0.2s;
+}
+
+.member-stat-card:hover {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.completion-stats {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.completion-charts {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Styles for member distribution tab */
+.member-distribution {
+  height: 550px;  /* Match height of other tab contents */
+  padding: 1rem;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.member-distribution .member-stats-list {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.member-distribution .member-stats-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.member-distribution .member-stats-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.member-distribution .member-stats-list::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+.member-distribution .member-stats-list::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Styles for member distribution tab */
+.member-distribution {
+  height: 100%;
+  padding: 1rem;
+  overflow-y: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.member-distribution .member-stats-list {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+}
+
+.member-distribution .member-stats-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.member-distribution .member-stats-list::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+  border-radius: 4px;
+}
+
+.member-distribution .member-stats-list::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 4px;
+}
+
+.member-distribution .member-stats-list::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+.member-distribution .member-stat-card {
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  background-color: var(--tertiary-color);
+  border-radius: 5px;
+  transition: background-color 0.2s;
+}
+
+.member-distribution .member-stat-card:hover {
+  background-color: #dbdbdb;
+}
+
+.kanban-board .card-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-white);
+  overflow: visible;
+  padding-bottom: 0; /* Remove extra padding */
+}
+
+.kanban-board .card-header .d-flex {
+  width: calc(100% - 40px);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  padding-bottom: 0; /* Remove padding to position scrollbar at bottom */
+  margin-bottom: 0; /* Remove negative margin */
+}
+
+.kanban-board .card-header .d-flex::-webkit-scrollbar {
+  height: 4px; /* Full height scrollbar */
+  background: transparent;
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
+
+.kanban-board .card-header .d-flex::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.kanban-board .card-header .d-flex::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 1px;
+}
+
+.kanban-board .card-header .d-flex::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.kanban-board .card-header .gantt-link {
+  margin-left: 10px;
+  min-width: 30px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.kanban-board .card-header .gantt-link i {
+  font-size: 1.2rem;
 }
