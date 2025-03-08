@@ -210,16 +210,51 @@ const EditMemberModal = ({
 };
 
 const Dashboard = () => {
+  // Update state for tab control to include distribution
+  const [activeTab, setActiveTab] = useState('priorities');
+  
+  // Add state for card completion data
+  const [completionData, setCompletionData] = useState({
+    completed: 0,
+    inProgress: 0,
+    noProgress: 0  // Add this new state
+  });
+
   // Kanban Pie Chart Data
+  const [priorityData, setPriorityData] = useState({
+    low: 0,
+    medium: 0,
+    high: 0
+  });
+
+  // Replace the existing kanbanData with priority-based data
   const kanbanData = {
-    labels: ["Finished", "To do"],
+    labels: ['Low Priority', 'Medium Priority', 'High Priority'],
     datasets: [
       {
-        data: [2, 3],
-        backgroundColor: ["#0B9C37", "#B74714"],
+        data: [priorityData.low, priorityData.medium, priorityData.high],
+        backgroundColor: ['#61bd4f', '#f2d600', '#eb5a46'], // Green, Yellow, Red
       },
     ],
   };
+
+  // Add completion data chart configuration
+  const completionChartData = {
+    labels: ['Completed', 'In Progress', 'No Progress'],
+    datasets: [{
+      data: [completionData.completed, completionData.inProgress, completionData.noProgress],
+      backgroundColor: ['#36A2EB', '#FFCE56', '#FF6384']  // Blue, Yellow, Red
+    }]
+  };
+
+  // Add member assignment state
+  const [assignmentData, setAssignmentData] = useState({
+    assigned: 0,
+    unassigned: 0
+  });
+
+  // Add new state for member task data
+  const [memberTaskData, setMemberTaskData] = useState([]);
 
   // Bar Chart Data (Working Hours)
   const barData = {
@@ -783,6 +818,119 @@ const Dashboard = () => {
     };
   }, [members, updateMemberStatus]);
 
+  const fetchKanbanPriorityData = async () => {
+    try {
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${getToken(authState)}`,
+        },
+      };
+
+      // Fetch all lists for the team
+      const listsResponse = await axios.get(
+        `${import.meta.env.VITE_API}/getLists/${currentTeamId}`,
+        config
+      );
+
+      // Fetch cards for each list
+      const promises = listsResponse.data.map(list => 
+        axios.get(`${import.meta.env.VITE_API}/getCards/${currentTeamId}/${list._id}`, config)
+      );
+
+      const cardsResponses = await Promise.all(promises);
+      
+      // Count priorities and completion status
+      const priorityCounts = { low: 0, medium: 0, high: 0 };
+      const completionCounts = { completed: 0, inProgress: 0, noProgress: 0 };
+      const assignmentCounts = { assigned: 0, unassigned: 0 };
+
+      // Track tasks per member
+      const memberTaskCounts = {};
+
+      cardsResponses.forEach(response => {
+        response.data.forEach(card => {
+          priorityCounts[card.priority]++;
+          
+          // Calculate completion based on checklist
+          if (card.checklist && card.checklist.length > 0) {
+            const completed = card.checklist.every(item => item.isCompleted);
+            const hasProgress = card.checklist.some(item => item.isCompleted);
+            
+            if (completed) {
+              completionCounts.completed++;
+            } else if (hasProgress) {
+              completionCounts.inProgress++;
+            } else {
+              completionCounts.noProgress++;
+            }
+          } else {
+            completionCounts.noProgress++;  // If no checklist, count as no progress
+          }
+
+          // Handle assignments
+          if (card.assignedTo && card.assignedTo.length > 0) {
+            assignmentCounts.assigned++;
+
+            // Count tasks for each member
+            card.assignedTo.forEach(member => {
+              const memberId = member._id;
+              if (!memberTaskCounts[memberId]) {
+                memberTaskCounts[memberId] = {
+                  name: `${member.firstName} ${member.lastName}`,
+                  total: 0,
+                  completed: 0,
+                  inProgress: 0,
+                  notStarted: 0
+                };
+              }
+
+              memberTaskCounts[memberId].total++;
+
+              // Calculate completion status
+              if (card.checklist && card.checklist.length > 0) {
+                const completed = card.checklist.every(item => item.isCompleted);
+                const hasProgress = card.checklist.some(item => item.isCompleted);
+                
+                if (completed) {
+                  memberTaskCounts[memberId].completed++;
+                } else if (hasProgress) {
+                  memberTaskCounts[memberId].inProgress++;
+                } else {
+                  memberTaskCounts[memberId].notStarted++;
+                }
+              } else {
+                memberTaskCounts[memberId].notStarted++;
+              }
+            });
+          } else {
+            assignmentCounts.unassigned++;
+          }
+        });
+      });
+
+      // Convert memberTaskCounts object to array and sort by total tasks
+      const memberTaskStats = Object.values(memberTaskCounts)
+        .sort((a, b) => b.total - a.total);
+
+      setMemberTaskData(memberTaskStats);
+
+      setPriorityData(priorityCounts);
+      setCompletionData(completionCounts);
+      setAssignmentData(assignmentCounts);
+    } catch (error) {
+      console.error("Error fetching kanban data:", error);
+      errMsg("Error fetching kanban data");
+    }
+  };
+
+  useEffect(() => {
+    if (currentTeamId) {
+      fetchKanbanPriorityData();
+      // ...existing fetch calls...
+    }
+  }, [currentTeamId]);
+
   return (
     <div className="team-content container">
       <FileShare />
@@ -791,18 +939,105 @@ const Dashboard = () => {
         {/* Kanban Board */}
         <div className="kanban-gantt-live-editing">
           <div className="kanban-gantt">
-            <div className="card kanban-board">
-              <div className="card-header fw-semibold">
-                <span>Kanban Board</span>
-                <Link
-                  to={`/main/${currentTeamId}/kanban`}
-                  className="gantt-link"
-                >
-                  <i className="fa-solid fa-right-from-bracket"></i>
-                </Link>
+            <div className="card chart-bg kanban-board">
+              <div className="card-header">
+                <div className="d-flex justify-content-between align-items-center">
+                  <div className="d-flex">
+                    <div 
+                      className={`tab-link ${activeTab === 'priorities' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('priorities')}
+                    >
+                      Task Priorities
+                    </div>
+                    <div 
+                      className={`tab-link ${activeTab === 'completion' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('completion')}
+                    >
+                      Task Completion
+                    </div>
+                    <div 
+                      className={`tab-link ${activeTab === 'distribution' ? 'active' : ''}`}
+                      onClick={() => setActiveTab('distribution')}
+                    >
+                      Member Tasks
+                    </div>
+                  </div>
+                  <Link
+                    to={`/main/${currentTeamId}/kanban`}
+                    className="gantt-link"
+                  >
+                    <i className="fa-solid fa-right-from-bracket"></i>
+                  </Link>
+                </div>
               </div>
               <div className="card-body">
-                <Pie data={kanbanData} />
+                {activeTab === 'priorities' ? (
+                  Object.values(priorityData).every(count => count === 0) ? (
+                    <p className="text-center text-muted">No tasks available</p>
+                  ) : (
+                    <div className="chart-container d-flex justify-content-center align-items-center">
+                      <Pie 
+                        data={kanbanData}
+                        options={{
+                          maintainAspectRatio: false,
+                          plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                              callbacks: {
+                                label: (context) => {
+                                  const total = Object.values(priorityData).reduce((a, b) => a + b, 0);
+                                  const percentage = ((context.raw / total) * 100).toFixed(1);
+                                  return `${context.label}: ${context.raw} (${percentage}%)`;
+                                }
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  )
+                ) : activeTab === 'completion' ? (
+                  <div className="completion-stats">
+                    <div className="chart-container d-flex justify-content-center">
+                      <Pie 
+                        data={completionChartData}
+                        options={{
+                          maintainAspectRatio: false,
+                          plugins: {
+                            legend: { position: 'bottom' },
+                            tooltip: {
+                              callbacks: {
+                                label: (context) => {
+                                  const total = Object.values(completionData).reduce((a, b) => a + b, 0);
+                                  const percentage = ((context.raw / total) * 100).toFixed(1);
+                                  let status = context.label === 'Completed' ? 'Finished' : 
+                                              context.label === 'In Progress' ? 'Ongoing' : 'Not Started';
+                                  return `${status}: ${context.raw} (${percentage}%)`;
+                                }
+                              }
+                            }
+                          }
+                        }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="member-distribution">
+                    <div className="member-stats-list">
+                      {memberTaskData.map((member, index) => (
+                        <div key={index} className="member-stat-card mb-2 p-2 bg-light rounded">
+                          <div className="d-flex justify-content-between align-items-center">
+                            <span className="fw-bold">{member.name}</span>
+                            <div className="d-flex gap-2">
+                              <span className="badge bg-primary">{member.total} tasks</span>
+                              <span className="badge bg-success">{member.completed} completed</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             <div className="card chart-bg gantt-chart">
