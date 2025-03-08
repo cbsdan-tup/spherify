@@ -155,9 +155,6 @@ const getDocumentsByTeamId = async (req, res) => {
 // };
 
 
-// Soft delete a document
-
-
 
 // Soft delete a document
 const softDeleteDocument = async (req, res) => {
