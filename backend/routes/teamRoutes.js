@@ -20,7 +20,8 @@ const {
     fetchTeamsByName,
     updateTeamMember,
     removeTeamMember,
-    getUserChatStatistics 
+    getUserChatStatistics,
+    updateTeam 
 } = require('../controllers/TeamController');
 
 router.post('/addTeam', upload.single('logo'), addTeam);
@@ -44,5 +45,8 @@ router.delete('/removeTeamMember/:teamId/:userId', isAuthenticatedUser, removeTe
 
 // Add new route for user chat statistics
 router.get('/getUserChatStatistics/:userId', isAuthenticatedUser, getUserChatStatistics);
+
+// Add new route for updating team information (logo or name)
+router.put('/updateTeam/:teamId', isAuthenticatedUser, upload.single('logo'), updateTeam);
 
 module.exports = router

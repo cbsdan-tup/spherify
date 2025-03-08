@@ -17,6 +17,7 @@ function Team({showRightPanel, setShowRightPanel, showChats, handleToggleChats})
   const { teamId } = useParams();
   const [teamInfo, setTeamInfo] = useState({});
   const [loading, setLoading] = useState(true);
+  const [refresh, setRefresh] = useState(false);
 
   const fetchTeamInfo = async () => {
     try {
@@ -37,12 +38,12 @@ function Team({showRightPanel, setShowRightPanel, showChats, handleToggleChats})
 
   useEffect(() => {
     fetchTeamInfo();
-  }, [teamId, currentFileId]);
+  }, [teamId, currentFileId, refresh]);
   return (
     <>
       {teamInfo && teamInfo.name ? (
         <div className="team-container">
-          <Header showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} showChats={showChats} handleToggleChats={handleToggleChats} {...teamInfo} />
+          <Header setRefresh={setRefresh} showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} showChats={showChats} handleToggleChats={handleToggleChats} {...teamInfo} />
           <Outlet />
           <Routes>
             <Route index element={<Dashboard />} />

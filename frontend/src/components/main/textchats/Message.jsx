@@ -13,7 +13,7 @@ const Message = ({ msg, user, index }) => {
         {msg.sender._id !== user._id && msg.sender !== user._id ? (
           <div className="avatar">
             <img src={msg.sender?.avatar?.url ? msg.sender?.avatar?.url : "/images/account.png"} alt="User" />
-            <div className={`status ${msg.sender?.status && msg.sender.status}`}></div>
+            <div className={`status member-status-dot ${msg.sender?.status && msg.sender.status}`}></div>
           </div>
         ) : (
           <></>

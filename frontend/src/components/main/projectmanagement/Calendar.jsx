@@ -307,7 +307,7 @@ function Calendar({setRefresh = ()=>{}}) {
           eventContent={(eventInfo) => {
             return (
               <div className="event-content">
-                <div className="event-title">{eventInfo.event.title}</div>
+                <div className="event-title" style={{overflowX: "hidden", textOverflow: "ellipsis"}}>{eventInfo.event.title}</div>
                 {eventInfo.event.extendedProps.location && (
                   <div className="event-location">📍 {eventInfo.event.extendedProps.location}</div>
                 )}

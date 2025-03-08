@@ -239,7 +239,7 @@ const Dashboard = () => {
   const [members, setMembers] = useState([]);
   // Add this new state to track status notifications
   const [statusNotifications, setStatusNotifications] = useState({});
-  
+
   // Keep track of if component is mounted
   const isMounted = useRef(true);
 
@@ -530,206 +530,258 @@ const Dashboard = () => {
   }, [members, authState.user]);
 
   // Create a utility function for logging status changes
-const logStatusChange = (user, prevStatus, newStatus) => {
-  console.log(
-    `%c[STATUS CHANGE] ${user.firstName} ${user.lastName}: ${prevStatus || 'unknown'} → ${newStatus}`,
-    `color: ${newStatus === 'active' ? 'green' : newStatus === 'inactive' ? 'orange' : 'gray'}`
-  );
-};
-
-// Remove the debounce as it can cause delays in UI updates
-const updateMemberStatus = useCallback((userId, status, statusUpdatedAt) => {
-  if (!isMounted.current) return;
-  
-  setMembers(currentMembers => {
-    // Check if we need to update anything
-    const needsUpdate = currentMembers.some(member => 
-      member.user._id === userId && member.user.status !== status
+  const logStatusChange = (user, prevStatus, newStatus) => {
+    console.log(
+      `%c[STATUS CHANGE] ${user.firstName} ${user.lastName}: ${
+        prevStatus || "unknown"
+      } → ${newStatus}`,
+      `color: ${
+        newStatus === "active"
+          ? "green"
+          : newStatus === "inactive"
+          ? "orange"
+          : "gray"
+      }`
     );
-    
-    if (!needsUpdate) return currentMembers; // No changes needed
-    
-    // Update the status
-    const updatedMembers = currentMembers.map(member => {
-      if (member.user._id === userId) {
-        const prevStatus = member.user.status;
-        
-        // Log the status change with detailed info
-        logStatusChange(member.user, prevStatus, status);
-        
-        // Create a deep copy to ensure the component re-renders
-        return {
-          ...member,
-          user: {
-            ...member.user,
-            status,
-            statusUpdatedAt: statusUpdatedAt || new Date()
-          }
-        };
-      }
-      return member;
-    });
-    
-    return updatedMembers;
-  });
-}, []);
+  };
 
-// Setup socket listeners for team status updates with enhanced logging
-const pendingStatusChanges = useRef({});
-useEffect(() => {
-  // Ensure socket is connected
-  if (!socket.connected) {
-    console.log("%c[SOCKET] Reconnecting socket in Dashboard...", "color: blue; font-weight: bold");
-    socket.connect();
-  }
-  
-  // Listen for user status changes
-  const handleStatusChange = (data) => {
-    try {
-      console.log("[STATUS EVENT]", data); // Log the raw event data
-      
-      // Check if this user is in our team members
-      const teamMember = members.find(m => m.user._id === data.userId);
-      
-      if (teamMember) {
-        console.log(`[TEAM MEMBER] Found team member for status update: ${data.firstName} ${data.lastName}`);
-        
-        const userId = data.userId;
-        const currentStatus = data.currentStatus;
-        const previousStatus = data.previousStatus;
-        
-        // Function to be executed after the delay to apply the status change
-        const applyStatusChange = () => {
-          console.log(`[STATUS APPLYING] Applying delayed status change for ${data.firstName}: ${previousStatus} → ${currentStatus}`);
-          updateMemberStatus(userId, currentStatus, data.statusUpdatedAt);
-          
-          // Force refresh for React to detect the change
-          setRefresh(prev => !prev);
-          
-          // Clear from pending changes
-          delete pendingStatusChanges.current[userId];
-        };
-        
-        // Cancel any pending status change for this user
-        if (pendingStatusChanges.current[userId]) {
-          console.log(`[STATUS CANCEL] Cancelling pending status change for ${data.firstName}`);
-          clearTimeout(pendingStatusChanges.current[userId].timeoutId);
-          delete pendingStatusChanges.current[userId];
+  // Remove the debounce as it can cause delays in UI updates
+  const updateMemberStatus = useCallback((userId, status, statusUpdatedAt) => {
+    if (!isMounted.current) return;
+
+    setMembers((currentMembers) => {
+      // Check if we need to update anything
+      const needsUpdate = currentMembers.some(
+        (member) => member.user._id === userId && member.user.status !== status
+      );
+
+      if (!needsUpdate) return currentMembers; // No changes needed
+
+      // Update the status
+      const updatedMembers = currentMembers.map((member) => {
+        if (member.user._id === userId) {
+          const prevStatus = member.user.status;
+
+          // Log the status change with detailed info
+          logStatusChange(member.user, prevStatus, status);
+
+          // Create a deep copy to ensure the component re-renders
+          return {
+            ...member,
+            user: {
+              ...member.user,
+              status,
+              statusUpdatedAt: statusUpdatedAt || new Date(),
+            },
+          };
         }
-        
-        // Determine if this is likely a page reload sequence
-        const isPossibleReload = 
-          (previousStatus === 'active' && currentStatus === 'offline') || 
-          (previousStatus === 'offline' && currentStatus === 'active');
-          
-        // Use a longer delay for possible reload sequences
-        const delayTime = isPossibleReload ? 3000 : 500;
-        
-        console.log(`[STATUS DELAY] ${isPossibleReload ? 'Possible reload detected' : 'Normal status change'}, delaying by ${delayTime}ms`);
-        
-        // Schedule the status change with appropriate delay
-        pendingStatusChanges.current[userId] = {
-          timeoutId: setTimeout(applyStatusChange, delayTime),
-          status: currentStatus
-        };
-        
-        // Only show notification for significant stable changes
-        const isSignificantChange = 
-          (previousStatus === 'offline' && currentStatus === 'active') || 
-          (previousStatus === 'active' && currentStatus === 'offline');
-        
-        // Only show notifications for significant changes after a delay to avoid reload flashes
-        if (isSignificantChange) {
-          // Wait a bit longer to show notifications to filter out temporary status changes
-          setTimeout(() => {
-            // Check if the status is still the same after the delay
-            if (pendingStatusChanges.current[userId]?.status === currentStatus) {
-              const statusText = currentStatus === "active" ? "online" : 
-                              currentStatus === "inactive" ? "away" : "offline";
-              
-              console.log(`[NOTIFICATION] Showing notification for ${data.firstName} ${data.lastName} (${statusText})`);
-              
-              // Don't show duplicate notifications within 30 seconds
-              const lastNotification = statusNotifications[userId];
-              const now = new Date();
-              
-              if (!lastNotification || 
-                  (now - new Date(lastNotification.time) > 5000) || 
-                  lastNotification.status !== currentStatus) {
-                
-                // Use a more visible toast with higher z-index and prominent styling
-                toast.info(
-                  <div className="status-notification-content">
-                    <div className="d-flex align-items-center gap-2">
-                      <div className="member-avatar-container position-relative">
-                        <img
-                          src={data.avatar?.url ? data.avatar.url : "/images/account.png"}
-                          alt={`${data.firstName} ${data.lastName}`}
-                          className="rounded-circle"
-                          width="30"
-                          height="30"
-                        />
-                        <span className={`status-indicator-dot position-absolute ${currentStatus}`}></span>
-                      </div>
-                      <span className="fw-bold">{data.firstName} {data.lastName}</span>
-                    </div>
-                    <div className="mt-2">
-                      <span className={`status-badge ${currentStatus}`}>
-                        {statusText.toUpperCase()}
-                      </span>
-                    </div>
-                  </div>,
-                  {
-                    position: "bottom-right",
-                    autoClose: 1000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    closeButton: true,
-                    className: `status-toast status-toast-${currentStatus}`,
-                    style: { zIndex: 9999, minWidth: "300px" },
-                    progressStyle: { 
-                      background: currentStatus === "active" ? "#28a745" : 
-                                  currentStatus === "inactive" ? "#ffc107" : "#6c757d" 
-                    }
-                  }
-                );
-                
-                // Update notifications tracking
-                setStatusNotifications(prev => ({
-                  ...prev,
-                  [userId]: {
-                    status: currentStatus,
-                    time: now
-                  }
-                }));
-              }
-            } else {
-              console.log(`[NOTIFICATION SKIPPED] Status changed again for ${data.firstName}, skipping notification`);
-            }
-          }, 2500); // Slightly longer than the status change delay
-        }
-      }
-    } catch (error) {
-      console.error("[STATUS CHANGE ERROR]", error);
+        return member;
+      });
+
+      return updatedMembers;
+    });
+  }, []);
+
+  // Setup socket listeners for team status updates with enhanced logging
+  const pendingStatusChanges = useRef({});
+  useEffect(() => {
+    // Ensure socket is connected
+    if (!socket.connected) {
+      console.log(
+        "%c[SOCKET] Reconnecting socket in Dashboard...",
+        "color: blue; font-weight: bold"
+      );
+      socket.connect();
     }
-  };
-  
-  console.log("%c[STATUS TRACKING] Setting up user status tracking...", "color: blue; font-weight: bold");
-  socket.on("userStatusChanged", handleStatusChange);
 
-  return () => {
-    console.log("%c[STATUS TRACKING] Cleaning up status tracking...", "color: blue; font-weight: bold");
-    isMounted.current = false;
-    socket.off("userStatusChanged", handleStatusChange);
-    
-    // Clear any pending timeouts
-    Object.values(pendingStatusChanges.current).forEach(item => {
-      if (item.timeoutId) clearTimeout(item.timeoutId);
-    });
-  };
-}, [members, updateMemberStatus]);
+    // Listen for user status changes
+    const handleStatusChange = (data) => {
+      try {
+        console.log("[STATUS EVENT]", data); // Log the raw event data
+
+        // Check if this user is in our team members
+        const teamMember = members.find((m) => m.user._id === data.userId);
+
+        if (teamMember) {
+          console.log(
+            `[TEAM MEMBER] Found team member for status update: ${data.firstName} ${data.lastName}`
+          );
+
+          const userId = data.userId;
+          const currentStatus = data.currentStatus;
+          const previousStatus = data.previousStatus;
+
+          // Function to be executed after the delay to apply the status change
+          const applyStatusChange = () => {
+            console.log(
+              `[STATUS APPLYING] Applying delayed status change for ${data.firstName}: ${previousStatus} → ${currentStatus}`
+            );
+            updateMemberStatus(userId, currentStatus, data.statusUpdatedAt);
+
+            // Force refresh for React to detect the change
+            setRefresh((prev) => !prev);
+
+            // Clear from pending changes
+            delete pendingStatusChanges.current[userId];
+          };
+
+          // Cancel any pending status change for this user
+          if (pendingStatusChanges.current[userId]) {
+            console.log(
+              `[STATUS CANCEL] Cancelling pending status change for ${data.firstName}`
+            );
+            clearTimeout(pendingStatusChanges.current[userId].timeoutId);
+            delete pendingStatusChanges.current[userId];
+          }
+
+          // Determine if this is likely a page reload sequence
+          const isPossibleReload =
+            (previousStatus === "active" && currentStatus === "offline") ||
+            (previousStatus === "offline" && currentStatus === "active");
+
+          // Use a longer delay for possible reload sequences
+          const delayTime = isPossibleReload ? 3000 : 500;
+
+          console.log(
+            `[STATUS DELAY] ${
+              isPossibleReload
+                ? "Possible reload detected"
+                : "Normal status change"
+            }, delaying by ${delayTime}ms`
+          );
+
+          // Schedule the status change with appropriate delay
+          pendingStatusChanges.current[userId] = {
+            timeoutId: setTimeout(applyStatusChange, delayTime),
+            status: currentStatus,
+          };
+
+          // Only show notification for significant stable changes
+          const isSignificantChange =
+            (previousStatus === "offline" && currentStatus === "active") ||
+            (previousStatus === "active" && currentStatus === "offline");
+
+          // Only show notifications for significant changes after a delay to avoid reload flashes
+          if (isSignificantChange) {
+            // Wait a bit longer to show notifications to filter out temporary status changes
+            setTimeout(() => {
+              // Check if the status is still the same after the delay
+              if (
+                pendingStatusChanges.current[userId]?.status === currentStatus
+              ) {
+                const statusText =
+                  currentStatus === "active"
+                    ? "online"
+                    : currentStatus === "inactive"
+                    ? "away"
+                    : "offline";
+
+                console.log(
+                  `[NOTIFICATION] Showing notification for ${data.firstName} ${data.lastName} (${statusText})`
+                );
+
+                // Don't show duplicate notifications within 30 seconds
+                const lastNotification = statusNotifications[userId];
+                const now = new Date();
+
+                if (
+                  !lastNotification ||
+                  now - new Date(lastNotification.time) > 5000 ||
+                  lastNotification.status !== currentStatus
+                ) {
+                  // Use a more visible toast with higher z-index and prominent styling
+                  toast.info(
+                    <div className="status-notification-content">
+                      <div className="d-flex align-items-center gap-2">
+                        <div className="member-avatar-container position-relative">
+                          <img
+                            src={
+                              data.avatar?.url
+                                ? data.avatar.url
+                                : "/images/account.png"
+                            }
+                            alt={`${data.firstName} ${data.lastName}`}
+                            className="rounded-circle"
+                            width="30"
+                            height="30"
+                          />
+                          <span
+                            className={`status-indicator-dot position-absolute ${currentStatus}`}
+                          ></span>
+                        </div>
+                        <span className="fw-bold">
+                          {data.firstName} {data.lastName}
+                        </span>
+                      </div>
+                      <div className="mt-2">
+                        <span className={`status-badge ${currentStatus}`}>
+                          {statusText.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>,
+                    {
+                      position: "bottom-right",
+                      autoClose: 1000,
+                      hideProgressBar: false,
+                      closeOnClick: true,
+                      pauseOnHover: true,
+                      draggable: true,
+                      closeButton: true,
+                      className: `status-toast status-toast-${currentStatus}`,
+                      style: { zIndex: 9999, minWidth: "300px" },
+                      progressStyle: {
+                        background:
+                          currentStatus === "active"
+                            ? "#28a745"
+                            : currentStatus === "inactive"
+                            ? "#ffc107"
+                            : "#6c757d",
+                      },
+                    }
+                  );
+
+                  // Update notifications tracking
+                  setStatusNotifications((prev) => ({
+                    ...prev,
+                    [userId]: {
+                      status: currentStatus,
+                      time: now,
+                    },
+                  }));
+                }
+              } else {
+                console.log(
+                  `[NOTIFICATION SKIPPED] Status changed again for ${data.firstName}, skipping notification`
+                );
+              }
+            }, 2500); // Slightly longer than the status change delay
+          }
+        }
+      } catch (error) {
+        console.error("[STATUS CHANGE ERROR]", error);
+      }
+    };
+
+    console.log(
+      "%c[STATUS TRACKING] Setting up user status tracking...",
+      "color: blue; font-weight: bold"
+    );
+    socket.on("userStatusChanged", handleStatusChange);
+
+    return () => {
+      console.log(
+        "%c[STATUS TRACKING] Cleaning up status tracking...",
+        "color: blue; font-weight: bold"
+      );
+      isMounted.current = false;
+      socket.off("userStatusChanged", handleStatusChange);
+
+      // Clear any pending timeouts
+      Object.values(pendingStatusChanges.current).forEach((item) => {
+        if (item.timeoutId) clearTimeout(item.timeoutId);
+      });
+    };
+  }, [members, updateMemberStatus]);
 
   return (
     <div className="team-content container">
@@ -808,7 +860,6 @@ useEffect(() => {
                     >
                       <i className="fa-solid fa-file"></i>
                       <span>{file.fileName}</span>
-                      <i className="fa-solid fa-chevron-right text-primary"></i>
                     </Link>
                   ))}
               </div>
@@ -846,13 +897,13 @@ useEffect(() => {
                     const statusPriority = {
                       active: 1,
                       inactive: 2,
-                      offline: 3
+                      offline: 3,
                     };
-                    
+
                     // Get the priority values (defaulting to lowest priority if undefined)
                     const priorityA = statusPriority[a.user?.status] || 3;
                     const priorityB = statusPriority[b.user?.status] || 3;
-                    
+
                     // Sort by priority
                     return priorityA - priorityB;
                   })
@@ -877,11 +928,11 @@ useEffect(() => {
                           />
                           <span
                             className={`member-status-dot ${
-                              member.user?.status === "active" 
-                                ? "active" 
-                                : member.user?.status === "inactive" 
-                                  ? "inactive" 
-                                  : "offline"
+                              member.user?.status === "active"
+                                ? "active"
+                                : member.user?.status === "inactive"
+                                ? "inactive"
+                                : "offline"
                             }`}
                           ></span>
                         </div>
@@ -913,22 +964,22 @@ useEffect(() => {
                               member.user?.status === "active"
                                 ? "text-success"
                                 : member.user?.status === "inactive"
-                                  ? "text-warning"
-                                  : "text-muted"
+                                ? "text-warning"
+                                : "text-muted"
                             }`}
                           >
                             {member.user?.status === "active"
                               ? "Active now"
                               : member.user?.status === "inactive"
-                                ? "Inactive" 
-                                : `Last seen ${moment(
-                                    member.user.statusUpdatedAt
-                                  ).fromNow()}`}
+                              ? "Inactive"
+                              : `Last seen ${moment(
+                                  member.user.statusUpdatedAt
+                                ).fromNow()}`}
                           </p>
                         </div>
                       </div>
                       <div className="view-member-btn">
-                        <i className="fa-solid fa-chevron-right text-primary"></i>
+                        <i className="fa-solid fa-chevron-right" style={{color: "#1d559e", marginRight: "1rem"}}></i>
                       </div>
                     </div>
                   ))
@@ -982,17 +1033,24 @@ useEffect(() => {
                     }}
                   >
                     <div className="accordion-header bg-light p-2 mb-2 rounded">
-                      <p className="mb-0 fw-medium">
+                      <div className="mb-0 fw-medium d-flex align-items-center" style={{gap: "5px", cursor: "pointer"}}>
                         <i className="fa-solid fa-calendar-days mx-2"></i>
-                        {new Date(event.startDate).toLocaleString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "numeric",
-                          hour12: true,
-                        })}{" "}
-                        - {event.name}
-                      </p>
+                        <div
+                          className="d-flex align-start flex-column"
+                          style={{ gadiv: "5px" }}
+                        >
+                        <span style={{fontWeight: "600"}}>
+                          {new Date(event.startDate).toLocaleString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "numeric",
+                            hour12: true,
+                          })}{" "}
+                        </span>
+                        <span>{event.name}</span>
+                        </div>
+                      </div>
                       {isExpanded && eventId === event._id && (
                         <div className="accordion-body p-2 bg-white rounded border mt-2">
                           {event.description && (

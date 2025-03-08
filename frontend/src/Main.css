@@ -307,6 +307,12 @@ body {
 .main-container .header.full {
   right: 0;
 }
+.main-container .header .back-button {
+  color: var(--team-card-bg);
+}
+.main-container .header .back-button:hover {
+  text-decoration: none;
+}
 .main-container .header .logo-name {
   display: flex;
   align-items: center;

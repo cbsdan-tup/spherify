@@ -46,23 +46,6 @@ function Main() {
     }
   }, [user]);
 
-  // Refresh Firebase token periodically
-  useEffect(() => {
-    const refreshToken = async () => {
-      try {
-        const token = await refreshFirebaseToken();
-        if (token) {
-          dispatch(updateToken(token));
-        }
-      } catch (error) {
-        console.error("Error refreshing token:", error);
-        errMsg("Error refreshing token", error);
-      }
-    };
-
-    refreshToken();
-  }, []);
-
   // Fetch group chat info when meeting room changes
   useEffect(() => {
     if (currentMeetingRoomName) {
@@ -154,7 +137,6 @@ function Main() {
               />
             </Route>
             <Route path=":teamId/*" element={<Team />} />
-            <Route path=":teamId" element={<Team />} />
           </Routes>
         </div>
       </div>

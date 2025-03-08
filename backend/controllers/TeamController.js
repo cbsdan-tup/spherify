@@ -599,11 +599,9 @@ exports.getUserChatStatistics = async (req, res) => {
       });
     }
     
-    // Check if any message groups exist for validation
     const messageGroupCount = await MessageGroup.countDocuments();
     console.log("Total message groups in system:", messageGroupCount);
     
-    // Aggregate to count messages by day
     const result = await MessageGroup.aggregate([
       // Unwind messages array to work with individual messages
       { $unwind: "$messages" },
@@ -677,6 +675,109 @@ exports.getUserChatStatistics = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching user chat statistics:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error", 
+      error: error.message 
+    });
+  }
+};
+
+exports.updateTeam = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { name } = req.body;
+    
+    // Find the team
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Team not found" 
+      });
+    }
+    
+    // Find the requesting user in team members
+    const requestingUser = team.members.find(
+      member => 
+        member.user.toString() === req.user._id.toString() && 
+        member.leaveAt === null
+    );
+    
+    // Check if user has permission (owner, admin or moderator)
+    if (!requestingUser) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "You are not a member of this team" 
+      });
+    }
+    
+    if (!requestingUser.isAdmin && 
+        requestingUser.role !== "owner" && 
+        requestingUser.role !== "moderator") {
+      return res.status(403).json({ 
+        success: false, 
+        message: "You don't have permission to update this team" 
+      });
+    }
+    
+    const updateData = {};
+    
+    // Handle team name update if provided
+    if (name && name.trim() !== '') {
+      updateData.name = name.trim();
+    }
+    
+    // Handle logo upload if file is provided
+    if (req.file) {
+      try {
+        const fileTypes = ["image/jpeg", "image/jpg", "image/png"];
+        if (!fileTypes.includes(req.file.mimetype)) {
+          return res.status(400).json({ 
+            success: false, 
+            message: "Unsupported file type! Please use JPEG, JPG, or PNG." 
+          });
+        }
+        
+        // Delete old logo if exists
+        if (team.logo.publicId) {
+          await cloudinary.uploader.destroy(team.logo.publicId);
+        }
+        
+        // Upload new logo
+        const uploadResponse = await cloudinary.uploader.upload(req.file.path, {
+          folder: "team_logos"
+        });
+        
+        updateData.logo = {
+          publicId: uploadResponse.public_id,
+          url: uploadResponse.secure_url
+        };
+      } catch (error) {
+        console.error("Error uploading logo:", error);
+        return res.status(500).json({ 
+          success: false, 
+          message: "Error uploading logo",
+          error: error.message 
+        });
+      }
+    }
+    
+    // Update team with new data
+    const updatedTeam = await Team.findByIdAndUpdate(
+      teamId,
+      { $set: updateData },
+      { new: true }
+    );
+    
+    res.status(200).json({
+      success: true,
+      message: "Team updated successfully",
+      team: updatedTeam
+    });
+    
+  } catch (error) {
+    console.error("Error updating team:", error);
     res.status(500).json({ 
       success: false, 
       message: "Server error", 
