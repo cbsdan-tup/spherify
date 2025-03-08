@@ -334,3 +334,40 @@ body {
 .ql-redo::before {
   content: '⮫'; /* Redo Icon */
 }
+
+/* Optimized cursor styles */
+.ql-cursor {
+  position: absolute !important;
+  pointer-events: none !important;
+  z-index: 999 !important;
+  opacity: 1 !important;
+  will-change: transform;
+}
+
+.ql-cursor .ql-cursor-caret {
+  position: absolute !important;
+  margin-left: -1px !important;
+  width: 2px !important;
+  border-left-width: 2px !important;
+  border-left-style: solid !important;
+  height: 20px !important;
+  opacity: 1 !important;
+  will-change: transform;
+}
+
+.ql-cursor .ql-cursor-flag {
+  position: absolute !important;
+  transform: translate(0, -100%) !important;
+  margin-left: 0 !important;
+  margin-top: -4px !important;
+  padding: 2px 6px !important;
+  border-radius: 4px !important;
+  color: white !important;
+  font-size: 12px !important;
+  font-weight: bold !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+  pointer-events: none !important;
+  will-change: transform;
+}

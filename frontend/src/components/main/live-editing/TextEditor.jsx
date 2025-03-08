@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo, memo } from 'react';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
 import { jsPDF } from 'jspdf';
@@ -28,367 +28,11 @@ const TOOLBAR_OPTIONS = [
 ];
 
 const SAVE_INTERVAL_MS = 2000;
-const PAGE_HEIGHT = 850; // Arbitrary page height in pixels (adjust as needed)
+const PAGE_HEIGHT = 850;
 
-export default function TextEditor() {
-  const { documentId } = useParams(); 
-  const [socket, setSocket] = useState(null);
-  const [quill, setQuill] = useState(null);
-  const [lastFormat, setLastFormat] = useState({});
-  const [currentUser, setCurrentUser] = useState(null);
-  const [editingUsers, setEditingUsers] = useState([]);
-  const currentUserRef = useRef(currentUser);
-  const [cursors, setCursors] = useState(null);
-  const user = useSelector((state) => state.auth.user);
-  
-
-  useEffect(() => {
-    currentUserRef.current = currentUser;
-  }, [currentUser]);
-
-  const getUniqueColor = useMemo(() => {
-    return (userId) => {
-      if (!userId) return "#ccc";
-      const colors = [
-        "#FF6633", "#FFB399", "#FF33FF", "#FFFF99", "#00B3E6",
-        "#E6B333", "#3366E6", "#999966", "#99FF99", "#B34D4D",
-        "#80B300", "#809900", "#E6B3B3", "#6680B3", "#66991A",
-        "#FF99E6", "#CCFF1A", "#FF1A66", "#E6331A", "#33FFCC",
-        "#66994D", "#B366CC", "#4D8000", "#B33300", "#CC80CC",
-        "#66664D", "#991AFF", "#E666FF", "#4DB3FF", "#1AB399",
-        "#E666B3", "#33991A", "#CC9999", "#B3B31A", "#00E680",
-        "#4D8066", "#809980", "#E6FF80", "#1AFF33", "#999933",
-        "#FF3380", "#CCCC00", "#66E64D", "#4D80CC", "#9900B3",
-        "#E64D66", "#4DB380", "#FF4D4D", "#99E6E6", "#6666FF"
-      ];
-      let hash = 5381;
-      for (let i = 0; i < userId.length; i++) {
-        hash = (hash * 33) ^ userId.charCodeAt(i);
-      }
-      const index = Math.abs(hash) % colors.length;
-      return colors[index];
-    };
-  }, []);
-
-  useEffect(() => {
-    const s = io(`${import.meta.env.VITE_SOCKET_API}`);
-    s.removeAllListeners();
-    console.log("[SOCKET] Connecting to server at:", import.meta.env.VITE_SOCKET_API);
-    setSocket(s);
-    
-    // Add generic error handler
-    s.on("connect_error", (err) => {
-      console.error("[SOCKET] Connection error:", err);
-    });
-    
-    s.on("connect", () => {
-      console.log("[SOCKET] Connected with ID:", s.id);
-    });
-    
-    return () => {
-      console.log("[SOCKET] Disconnecting socket");
-      s.disconnect();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (socket == null || quill == null) return;
-
-    const textHandler = (delta) => {
-      if (!quill || !delta || typeof delta !== "object" || !delta.ops) return;
-      quill.updateContents(delta, "silent");
-    };
-
-    socket.off("receive-changes", textHandler);
-    socket.on("receive-changes", textHandler);
-
-    return () => socket.off("receive-changes", textHandler);
-  }, [socket, quill]);
-
-  useEffect(() => {
-    if (socket == null || quill == null) return;
-
-    const loadDocumentHandler = (document) => {
-      quill.setContents(document);
-      quill.enable();
-    };
-
-    socket.off("load-document", loadDocumentHandler);
-    socket.once("load-document", loadDocumentHandler);
-    socket.emit("get-document", documentId);
-
-    return () => socket.off("load-document", loadDocumentHandler);
-  }, [socket, quill, documentId]);
-
-  useEffect(() => {
-    if (socket == null || quill == null) return;
-
-    const interval = setInterval(() => {
-      socket.emit('save-document', quill.getContents());
-    }, SAVE_INTERVAL_MS);
-
-    return () => clearInterval(interval);
-  }, [socket, quill]);
-
-  useEffect(() => {
-    if (socket == null || quill == null) return;
-
-    const textChangeHandler = (delta, oldDelta, source) => {
-      if (source !== 'user') return;
-      socket.emit('send-changes', delta);
-    };
-
-    const formatChangeHandler = (range, oldRange, source) => {
-      if (source !== 'user' || range == null) return;
-      const format = quill.getFormat(range.index);
-      if (format) {
-        setLastFormat(format);
-        socket.emit('send-format', { format, range });
-      }
-    };
-
-    quill.on('text-change', textChangeHandler);
-    quill.on('selection-change', formatChangeHandler);
-
-    return () => {
-      quill.off('text-change', textChangeHandler);
-      quill.off('selection-change', formatChangeHandler);
-    };
-  }, [socket, quill]);
-
-  useEffect(() => {
-    if (quill == null) return;
-
-    quill.keyboard.addBinding({ key: 13 }, {
-      handler: function(range, context) {
-        setTimeout(() => {
-          const format = quill.getFormat(range.index - 1);
-          if (format) {
-            Object.keys(format).forEach((key) => {
-              quill.format(key, format[key], 'silent');
-            });
-          }
-        }, 0);
-      }
-    });
-  }, [quill, lastFormat]);
-
-  // IMPROVED cursor initialization and tracking
-  const wrapperRef = useCallback((wrapper) => {
-    if (wrapper == null) return;
-    console.log("[QUILL] Initializing editor");
-    wrapper.innerHTML = '';
-    const editor = document.createElement('div');
-    wrapper.append(editor);
-    
-    try {
-      const q = new Quill(editor, {
-        theme: 'snow',
-        modules: {
-          toolbar: TOOLBAR_OPTIONS,
-          history: { delay: 1000, maxStack: 500, userOnly: true },
-          cursors: { 
-            transformOnTextChange: true,
-            hideDelayMs: 15000, // Increased to 15 seconds for better visibility
-            hideSpeedMs: 500,   // Slower fade for better visibility
-            selectionChangeSource: null 
-          },
-        },
-        placeholder: 'Start typing...',
-      });
-      
-      q.disable();
-      q.setText('Loading...');
-      setQuill(q);
-      
-      // Initialize the cursors module
-      const cursorsModule = q.getModule('cursors');
-      if (!cursorsModule) {
-        console.error("[CURSORS] Failed to get cursors module!");
-      } else {
-        console.log("[CURSORS] Cursors module initialized:", cursorsModule);
-        setCursors(cursorsModule);
-      }
-    } catch (error) {
-      console.error("[QUILL] Error initializing Quill:", error);
-    }
-  }, []);
-
-  // SIMPLIFIED cursor update handler - for better reliability
-  useEffect(() => {
-    if (!socket || !quill || !cursors || !user) return;
-  
-    console.log("[CURSORS+SELECTION] Setting up simplified handlers");
-    
-    // Single handler for cursor updates
-    const handleCursorUpdate = (data) => {
-      try {
-        console.log("[CURSORS] Received cursor update:", data);
-        const { userId, range, name, color } = data;
-        
-        // Skip if missing data or own cursor
-        if (!userId || !range) return;
-        if (userId === user._id || userId === user.id) return;
-        
-        // Create cursor if needed
-        const userCursors = cursors.cursors();
-        if (!userCursors.find(c => c.id === userId)) {
-          const userName = name || 'Anonymous';
-          const userColor = color || getUniqueColor(userId);
-          console.log(`[CURSORS] Creating new cursor: ${userName} (${userId}) with color ${userColor}`);
-          cursors.createCursor(userId, userName, userColor);
-        }
-        
-        // Move the cursor
-        console.log(`[CURSORS] Moving cursor for user ${userId}`);
-        cursors.moveCursor(userId, range);
-        
-        // Force visibility refresh (workaround for QuillCursors bug)
-        setTimeout(() => {
-          const cursor = document.querySelector(`[data-user-id="${userId}"]`);
-          if (cursor) {
-            cursor.style.opacity = "1";
-            cursor.style.transition = "opacity 0.5s ease";
-            // Re-hide after delay if needed
-            setTimeout(() => {
-              cursor.style.opacity = "0.5"; 
-            }, 5000);
-          }
-        }, 50);
-      } catch (error) {
-        console.error("[CURSORS] Error in handleCursorUpdate:", error);
-      }
-    };
-    
-    // Simplified selection change handler
-    const handleSelectionChange = throttle((range) => {
-      if (!range) return;
-      
-      const userId = user._id || user.id;
-      if (!userId) return;
-      
-      console.log(`[CURSOR] Sending my cursor position:`, range);
-      socket.emit('update-cursor-position', {
-        documentId,
-        userId,
-        cursorPosition: range
-      });
-    }, 100);
-    
-    // Set up event listeners
-    socket.on('cursor-position-updated', handleCursorUpdate);
-    quill.on('selection-change', handleSelectionChange);
-    
-    // Force initial cursor broadcast
-    setTimeout(() => {
-      const range = quill.getSelection() || { index: 0, length: 0 };
-      socket.emit('update-cursor-position', {
-        documentId,
-        userId: user._id || user.id,
-        cursorPosition: range
-      });
-    }, 1000);
-    
-    return () => {
-      socket.off('cursor-position-updated', handleCursorUpdate);
-      quill.off('selection-change', handleSelectionChange);
-      handleSelectionChange.cancel();
-    };
-  }, [socket, quill, cursors, user, documentId, getUniqueColor]);
-
-  // IMPROVED user editing status handler with debug
-  useEffect(() => {
-    if (!socket || !documentId) return;
-  
-    const userStatusHandler = (data) => {
-      console.log("[USERS] Received user-editing data:", data);
-      const { documentId: receivedDocumentId, users } = data;
-      
-      if (!users || receivedDocumentId !== documentId) {
-        console.log("[USERS] Ignored user-editing data - document ID mismatch or no users");
-        return;
-      }
-  
-      console.log("[USERS] Processing users:", users);
-      console.log("[USERS] Current user:", user);
-      
-      // Ensure we're getting an array
-      const userArray = Array.isArray(users) ? users : Object.values(users);
-      
-      // Map users to consistent format
-      const normalizedUsers = userArray.map((u) => ({
-        _id: u._id || u.id,
-        id: u._id || u.id,
-        firstName: u.firstName || '',
-        lastName: u.lastName || '',
-        avatar: u.avatar || null,
-        color: u.color || getUniqueColor(u._id || u.id)
-      }));
-      
-      console.log("[USERS] Normalized users:", normalizedUsers);
-      setEditingUsers(normalizedUsers);
-    };
-  
-    // Listen for user editing updates
-    socket.off('user-editing');
-    socket.on('user-editing', userStatusHandler);
-    
-    return () => {
-      socket.off('user-editing', userStatusHandler);
-    };
-  }, [socket, documentId, getUniqueColor, user]);
-  
-  // IMPROVED document joining
-  useEffect(() => {
-    if (!socket || !documentId || !user) return;
-
-    console.log("[JOIN] Joining document with user:", user);
-    
-    // Create a complete user object with all required fields
-    const userToSend = {
-      id: user._id || user.id,
-      _id: user._id || user.id,
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
-      avatar: user.avatar || {},
-      color: getUniqueColor(user._id || user.id)
-    };
-    
-    // Join the document with this user info
-    socket.emit('join-document', documentId, userToSend);
-    
-    // Force updates after short delay
-    setTimeout(() => {
-      console.log("[JOIN] Sending refresh signals");
-      
-      // 1. Update user status
-      socket.emit('update-user-status', { documentId, user: userToSend });
-      
-      // 2. Send cursor position
-      const range = quill?.getSelection() || { index: 0, length: 0 };
-      socket.emit('update-cursor-position', {
-        documentId,
-        userId: userToSend.id,
-        cursorPosition: range
-      });
-    }, 1000);
-    
-    // Set up debug ping to keep user in the editing list
-    const pingInterval = setInterval(() => {
-      socket.emit('update-user-status', { documentId, user: userToSend });
-    }, 10000);
-    
-    return () => {
-      clearInterval(pingInterval);
-      console.log("[JOIN] Leaving document:", documentId);
-      socket.emit('leave-document', documentId, userToSend);
-    };
-  }, [socket, documentId, user, getUniqueColor, quill]);
-  
-  // Improved rendering of editing users
-  const renderEditingUsers = () => {
-    console.log("[RENDER] Rendering editing users:", editingUsers);
-    
+// Extract editing users component to prevent parent rerenders
+const EditingUsers = memo(({ editingUsers, currentUser, getUniqueColor }) => {
+  const renderUsers = () => {
     if (!editingUsers || editingUsers.length === 0) {
       return (
         <li className="no-users-editing">
@@ -420,7 +64,6 @@ export default function TextEditor() {
     return editingUsers.map((user) => {
       const userId = user.id || user._id;
       const userColor = user.color || getUniqueColor(userId);
-      console.log(`[RENDER] Rendering user: ${user.firstName} ${user.lastName} (${userId}) with color ${userColor}`);
       
       return (
         <li key={userId} className="editing-user">
@@ -436,7 +79,6 @@ export default function TextEditor() {
                 className="editing-user-avatar"
                 style={{width: "36px", height: "36px", borderRadius: "50%"}}
                 onError={(e) => {
-                  console.log("[IMAGE] Avatar loading error");
                   e.target.onerror = null; 
                   e.target.style.display = 'none';
                   e.target.nextSibling.style.display = 'block';
@@ -451,76 +93,410 @@ export default function TextEditor() {
       );
     });
   };
+  
+  return (
+    <div className="editing-users d-flex align-items-center justify-content-between">
+      <h4 className='m-0'>Editing Users: ({editingUsers.length})</h4>
+      <ul>{renderUsers()}</ul>
+    </div>
+  );
+});
 
+// Extract header buttons to prevent parent rerenders
+const EditorControls = memo(({ onGeneratePDF, onInsertTable }) => {
+  return (
+    <div className="header-menu">
+      <button onClick={onGeneratePDF} className="download-btn">
+        <i className="fa fa-download"></i> Download
+      </button>
+      <button onClick={onInsertTable} className="download-btn">
+        <i className="fa fa-table"></i> Table
+      </button>
+    </div>
+  );
+});
+
+export default function TextEditor() {
+  const { documentId } = useParams();
+  // Use refs for values that don't need to trigger rerenders
+  const socketRef = useRef(null);
+  const quillRef = useRef(null);
+  const cursorsRef = useRef(null);
+  const lastFormatRef = useRef({});
+  const userRef = useRef(null);
+  
+  // Keep minimal state that requires rerenders
+  const [editingUsers, setEditingUsers] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  
+  // Use Redux selector for user data
+  const user = useSelector((state) => state.auth.user);
+  
+  // Memoize color generator function
+  const getUniqueColor = useMemo(() => {
+    return (userId) => {
+      if (!userId) return "#ccc";
+      const colors = [
+        "#FF6633", "#FFB399", "#FF33FF", "#FFFF99", "#00B3E6",
+        "#E6B333", "#3366E6", "#999966", "#99FF99", "#B34D4D",
+        "#80B300", "#809900", "#E6B3B3", "#6680B3", "#66991A",
+        "#FF99E6", "#CCFF1A", "#FF1A66", "#E6331A", "#33FFCC",
+        "#66994D", "#B366CC", "#4D8000", "#B33300", "#CC80CC",
+        "#66664D", "#991AFF", "#E666FF", "#4DB3FF", "#1AB399",
+        "#E666B3", "#33991A", "#CC9999", "#B3B31A", "#00E680",
+        "#4D8066", "#809980", "#E6FF80", "#1AFF33", "#999933",
+        "#FF3380", "#CCCC00", "#66E64D", "#4D80CC", "#9900B3",
+        "#E64D66", "#4DB380", "#FF4D4D", "#99E6E6", "#6666FF"
+      ];
+      let hash = 5381;
+      for (let i = 0; i < userId.length; i++) {
+        hash = (hash * 33) ^ userId.charCodeAt(i);
+      }
+      const index = Math.abs(hash) % colors.length;
+      return colors[index];
+    };
+  }, []);
+
+  // Keep reference to user updated
   useEffect(() => {
     if (user) {
-      console.log("[USER] Setting current user from Redux:", user);
+      userRef.current = user;
       setCurrentUser(user);
-      currentUserRef.current = user;
     }
   }, [user]);
 
-  const handleGeneratePDFHtml2Pdf = () => {
+  // Initialize socket once
+  useEffect(() => {
+    const s = io(`${import.meta.env.VITE_SOCKET_API}`);
+    s.removeAllListeners();
+    
+    s.on("connect_error", (err) => {
+      console.error("[SOCKET] Connection error:", err);
+    });
+    
+    s.on("connect", () => {
+      console.log("[SOCKET] Connected with ID:", s.id);
+    });
+    
+    socketRef.current = s;
+    
+    return () => {
+      console.log("[SOCKET] Disconnecting socket");
+      s.disconnect();
+    };
+  }, []);
+
+  // Combine socket event handlers to reduce effect dependencies
+  useEffect(() => {
+    const socket = socketRef.current;
+    const quill = quillRef.current;
+    
+    if (!socket || !quill || !documentId) return;
+
+    // Document loading handler
+    const loadDocumentHandler = (document) => {
+      quill.setContents(document);
+      quill.enable();
+    };
+
+    // Text change handlers
+    const receiveChangesHandler = (delta) => {
+      if (!delta || typeof delta !== "object" || !delta.ops) return;
+      quill.updateContents(delta, "silent");
+    };
+
+    const sendChangesHandler = (delta, oldDelta, source) => {
+      if (source !== 'user') return;
+      socket.emit('send-changes', delta);
+    };
+
+    // Format change handler
+    const formatChangeHandler = (range, oldRange, source) => {
+      if (source !== 'user' || range == null) return;
+      const format = quill.getFormat(range.index);
+      if (format) {
+        lastFormatRef.current = format;
+        socket.emit('send-format', { format, range });
+      }
+    };
+
+    // Set up event listeners
+    socket.once("load-document", loadDocumentHandler);
+    socket.on("receive-changes", receiveChangesHandler);
+    quill.on('text-change', sendChangesHandler);
+    quill.on('selection-change', formatChangeHandler);
+
+    // Request document data
+    socket.emit("get-document", documentId);
+
+    // Auto-save document
+    const saveInterval = setInterval(() => {
+      socket.emit('save-document', quill.getContents());
+    }, SAVE_INTERVAL_MS);
+
+    return () => {
+      socket.off("load-document", loadDocumentHandler);
+      socket.off("receive-changes", receiveChangesHandler);
+      quill.off('text-change', sendChangesHandler);
+      quill.off('selection-change', formatChangeHandler);
+      clearInterval(saveInterval);
+    };
+  }, [documentId]);
+
+  // Setup format preservation on enter
+  useEffect(() => {
+    const quill = quillRef.current;
     if (!quill) return;
+
+    quill.keyboard.addBinding({ key: 13 }, {
+      handler: function(range, context) {
+        setTimeout(() => {
+          const format = quill.getFormat(range.index - 1);
+          if (format) {
+            Object.keys(format).forEach((key) => {
+              quill.format(key, format[key], 'silent');
+            });
+          }
+        }, 0);
+      }
+    });
+  }, []);
+
+  // Optimize Quill editor initialization
+  const wrapperRef = useCallback((wrapper) => {
+    if (wrapper == null) return;
+    
+    wrapper.innerHTML = '';
+    const editor = document.createElement('div');
+    wrapper.append(editor);
+    
+    try {
+      const q = new Quill(editor, {
+        theme: 'snow',
+        modules: {
+          toolbar: TOOLBAR_OPTIONS,
+          history: { delay: 1000, maxStack: 500, userOnly: true },
+          cursors: { 
+            transformOnTextChange: true,
+            hideDelayMs: 15000,
+            hideSpeedMs: 500,
+            selectionChangeSource: null 
+          },
+        },
+        placeholder: 'Start typing...',
+      });
+      
+      q.disable();
+      q.setText('Loading...');
+      
+      // Store references to avoid state updates
+      quillRef.current = q;
+      cursorsRef.current = q.getModule('cursors');
+      
+    } catch (error) {
+      console.error("[QUILL] Error initializing Quill:", error);
+    }
+  }, []);
+
+  // Optimize cursor management
+  useEffect(() => {
+    const socket = socketRef.current;
+    const quill = quillRef.current;
+    const cursors = cursorsRef.current;
+    const user = userRef.current;
+    
+    if (!socket || !quill || !cursors || !user || !documentId) return;
+    
+    // Throttled selection change handler
+    const handleSelectionChange = throttle((range) => {
+      if (!range || !socket.connected) return;
+      
+      const userId = user._id || user.id;
+      if (!userId) return;
+      
+      socket.emit('update-cursor-position', {
+        documentId,
+        userId,
+        cursorPosition: range
+      });
+    }, 100);
+    
+    // Cursor update handler
+    const handleCursorUpdate = (data) => {
+      try {
+        const { userId, range, name, color } = data;
+        
+        // Skip if missing data or own cursor
+        if (!userId || !range || userId === (user._id || user.id)) return;
+        
+        // Create cursor if needed
+        const userCursors = cursors.cursors();
+        if (!userCursors.find(c => c.id === userId)) {
+          const userName = name || 'Anonymous';
+          const userColor = color || getUniqueColor(userId);
+          cursors.createCursor(userId, userName, userColor);
+        }
+        
+        // Move the cursor
+        cursors.moveCursor(userId, range);
+        
+        // Force visibility refresh
+        setTimeout(() => {
+          const cursor = document.querySelector(`[data-user-id="${userId}"]`);
+          if (cursor) {
+            cursor.style.opacity = "1";
+            cursor.style.transition = "opacity 0.5s ease";
+            setTimeout(() => {
+              cursor.style.opacity = "0.5"; 
+            }, 5000);
+          }
+        }, 50);
+      } catch (error) {
+        console.error("[CURSORS] Error:", error);
+      }
+    };
+    
+    // Set up event listeners
+    socket.on('cursor-position-updated', handleCursorUpdate);
+    quill.on('selection-change', handleSelectionChange);
+    
+    // Initial cursor position
+    setTimeout(() => {
+      const range = quill.getSelection() || { index: 0, length: 0 };
+      socket.emit('update-cursor-position', {
+        documentId,
+        userId: user._id || user.id,
+        cursorPosition: range
+      });
+    }, 1000);
+    
+    return () => {
+      socket.off('cursor-position-updated', handleCursorUpdate);
+      quill.off('selection-change', handleSelectionChange);
+      handleSelectionChange.cancel();
+    };
+  }, [documentId, getUniqueColor]);
+
+  // User status updates
+  useEffect(() => {
+    const socket = socketRef.current;
+    const user = userRef.current;
+    
+    if (!socket || !documentId || !user) return;
+    
+    // User status handler
+    const userStatusHandler = (data) => {
+      const { documentId: receivedDocumentId, users } = data;
+      
+      if (!users || receivedDocumentId !== documentId) return;
+      
+      // Ensure we're getting an array
+      const userArray = Array.isArray(users) ? users : Object.values(users);
+      
+      // Map users to consistent format
+      const normalizedUsers = userArray.map((u) => ({
+        _id: u._id || u.id,
+        id: u._id || u.id,
+        firstName: u.firstName || '',
+        lastName: u.lastName || '',
+        avatar: u.avatar || null,
+        color: u.color || getUniqueColor(u._id || u.id)
+      }));
+      
+      setEditingUsers(normalizedUsers);
+    };
+    
+    // Join document
+    const userToSend = {
+      id: user._id || user.id,
+      _id: user._id || user.id,
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      avatar: user.avatar || {},
+      color: getUniqueColor(user._id || user.id)
+    };
+    
+    socket.on('user-editing', userStatusHandler);
+    socket.emit('join-document', documentId, userToSend);
+    
+    // Presence ping interval
+    const pingInterval = setInterval(() => {
+      if (socket.connected) {
+        socket.emit('update-user-status', { documentId, user: userToSend });
+      }
+    }, 10000);
+    
+    return () => {
+      socket.off('user-editing', userStatusHandler);
+      clearInterval(pingInterval);
+      socket.emit('leave-document', documentId, userToSend);
+    };
+  }, [documentId, getUniqueColor]);
+
+  // Memoize action handlers
+  const handleGeneratePDF = useCallback(() => {
+    const quill = quillRef.current;
+    if (!quill) return;
+    
     let editorContent = quill.root.innerHTML;
     editorContent = editorContent.replace(/font-size:\s*\d+px/g, 'font-size: 12px');
     editorContent = `<style>body { font-size: 12px; }</style>${editorContent}`;
+    
     const options = {
       margin: [20, 20, 20, 20],
       filename: 'document.pdf',
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
     };
+    
     html2pdf().from(editorContent).set(options).save();
-  };
+  }, []);
 
-  const insertDynamicTable = () => {
-    if (quill) {
-      const rows = prompt('Enter number of rows:');
-      const columns = prompt('Enter number of columns:');
-      if (rows && columns) {
-        const rowCount = parseInt(rows, 10);
-        const colCount = parseInt(columns, 10);
-        if (isNaN(rowCount) || isNaN(colCount)) {
-          alert('Please enter valid numbers for rows and columns.');
-          return;
+  const insertTable = useCallback(() => {
+    const quill = quillRef.current;
+    if (!quill) return;
+    
+    const rows = prompt('Enter number of rows:');
+    const columns = prompt('Enter number of columns:');
+    
+    if (rows && columns) {
+      const rowCount = parseInt(rows, 10);
+      const colCount = parseInt(columns, 10);
+      
+      if (isNaN(rowCount) || isNaN(colCount)) {
+        alert('Please enter valid numbers for rows and columns.');
+        return;
+      }
+      
+      let tableHTML = `<table border="1" cellpadding="5" cellspacing="0">`;
+      for (let i = 0; i < rowCount; i++) {
+        tableHTML += `<tr>`;
+        for (let j = 0; j < colCount; j++) {
+          tableHTML += `<td> </td>`;
         }
-        let tableHTML = `<table border="1" cellpadding="5" cellspacing="0">`;
-        for (let i = 0; i < rowCount; i++) {
-          tableHTML += `<tr>`;
-          for (let j = 0; j < colCount; j++) {
-            tableHTML += `<td> </td>`;
-          }
-          tableHTML += `</tr>`;
-        }
-        tableHTML += `</table>`;
-        const range = quill.getSelection();
-        if (range) {
-          quill.clipboard.dangerouslyPasteHTML(range.index, tableHTML);
-        }
+        tableHTML += `</tr>`;
+      }
+      tableHTML += `</table>`;
+      
+      const range = quill.getSelection();
+      if (range) {
+        quill.clipboard.dangerouslyPasteHTML(range.index, tableHTML);
       }
     }
-  };
+  }, []);
 
-  // Updated render with debugging info
   return (
     <div className="container live-editting">
       <div className="editor-header">
-        <div className="editing-users d-flex align-items-center justify-content-between">
-          <h4 className='m-0'>Editing Users: ({editingUsers.length})</h4>
-          <ul>
-            {renderEditingUsers()}
-          </ul>
-        </div>
-
-        <div className="header-menu">
-          <button onClick={handleGeneratePDFHtml2Pdf} className="download-btn">
-            <i className="fa fa-download"></i> Download
-          </button>
-          <button onClick={insertDynamicTable} className="download-btn">
-            <i className="fa fa-table"></i> Table
-          </button>
-        </div>
+        <EditingUsers 
+          editingUsers={editingUsers} 
+          currentUser={currentUser} 
+          getUniqueColor={getUniqueColor} 
+        />
+        <EditorControls 
+          onGeneratePDF={handleGeneratePDF} 
+          onInsertTable={insertTable} 
+        />
       </div>
       <div className="wrapper" ref={wrapperRef}></div>
     </div>
