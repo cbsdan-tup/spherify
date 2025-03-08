@@ -73,8 +73,22 @@ export default function TextEditor() {
   useEffect(() => {
     const s = io(`${import.meta.env.VITE_SOCKET_API}`);
     s.removeAllListeners();
+    console.log("[SOCKET] Connecting to server at:", import.meta.env.VITE_SOCKET_API);
     setSocket(s);
-    return () => s.disconnect();
+    
+    // Add generic error handler
+    s.on("connect_error", (err) => {
+      console.error("[SOCKET] Connection error:", err);
+    });
+    
+    s.on("connect", () => {
+      console.log("[SOCKET] Connected with ID:", s.id);
+    });
+    
+    return () => {
+      console.log("[SOCKET] Disconnecting socket");
+      s.disconnect();
+    };
   }, []);
 
   useEffect(() => {
@@ -159,124 +173,292 @@ export default function TextEditor() {
     });
   }, [quill, lastFormat]);
 
+  // IMPROVED cursor initialization and tracking
   const wrapperRef = useCallback((wrapper) => {
     if (wrapper == null) return;
+    console.log("[QUILL] Initializing editor");
     wrapper.innerHTML = '';
     const editor = document.createElement('div');
     wrapper.append(editor);
-    const q = new Quill(editor, {
-      theme: 'snow',
-      modules: {
-        toolbar: TOOLBAR_OPTIONS,
-        history: { delay: 1000, maxStack: 500, userOnly: true },
-        cursors: { transformOnTextChange: true },
-      },
-    });
-    q.disable();
-    q.setText('Loading...');
-    setQuill(q);
-    const cursorsModule = q.getModule('cursors');
-    setCursors(cursorsModule);
+    
+    try {
+      const q = new Quill(editor, {
+        theme: 'snow',
+        modules: {
+          toolbar: TOOLBAR_OPTIONS,
+          history: { delay: 1000, maxStack: 500, userOnly: true },
+          cursors: { 
+            transformOnTextChange: true,
+            hideDelayMs: 15000, // Increased to 15 seconds for better visibility
+            hideSpeedMs: 500,   // Slower fade for better visibility
+            selectionChangeSource: null 
+          },
+        },
+        placeholder: 'Start typing...',
+      });
+      
+      q.disable();
+      q.setText('Loading...');
+      setQuill(q);
+      
+      // Initialize the cursors module
+      const cursorsModule = q.getModule('cursors');
+      if (!cursorsModule) {
+        console.error("[CURSORS] Failed to get cursors module!");
+      } else {
+        console.log("[CURSORS] Cursors module initialized:", cursorsModule);
+        setCursors(cursorsModule);
+      }
+    } catch (error) {
+      console.error("[QUILL] Error initializing Quill:", error);
+    }
   }, []);
 
+  // SIMPLIFIED cursor update handler - for better reliability
   useEffect(() => {
-    if (!socket || !cursors) return;
+    if (!socket || !quill || !cursors || !user) return;
   
+    console.log("[CURSORS+SELECTION] Setting up simplified handlers");
+    
+    // Single handler for cursor updates
     const handleCursorUpdate = (data) => {
-      const { userId, range, name, color } = data;
-      if (!cursors.cursors().find((cursor) => cursor.id === userId)) {
-        cursors.createCursor(userId, name, color);
+      try {
+        console.log("[CURSORS] Received cursor update:", data);
+        const { userId, range, name, color } = data;
+        
+        // Skip if missing data or own cursor
+        if (!userId || !range) return;
+        if (userId === user._id || userId === user.id) return;
+        
+        // Create cursor if needed
+        const userCursors = cursors.cursors();
+        if (!userCursors.find(c => c.id === userId)) {
+          const userName = name || 'Anonymous';
+          const userColor = color || getUniqueColor(userId);
+          console.log(`[CURSORS] Creating new cursor: ${userName} (${userId}) with color ${userColor}`);
+          cursors.createCursor(userId, userName, userColor);
+        }
+        
+        // Move the cursor
+        console.log(`[CURSORS] Moving cursor for user ${userId}`);
+        cursors.moveCursor(userId, range);
+        
+        // Force visibility refresh (workaround for QuillCursors bug)
+        setTimeout(() => {
+          const cursor = document.querySelector(`[data-user-id="${userId}"]`);
+          if (cursor) {
+            cursor.style.opacity = "1";
+            cursor.style.transition = "opacity 0.5s ease";
+            // Re-hide after delay if needed
+            setTimeout(() => {
+              cursor.style.opacity = "0.5"; 
+            }, 5000);
+          }
+        }, 50);
+      } catch (error) {
+        console.error("[CURSORS] Error in handleCursorUpdate:", error);
       }
-      cursors.moveCursor(userId, range);
     };
-  
-    socket.on('cursor-position-updated', handleCursorUpdate);
-    return () => socket.off('cursor-position-updated', handleCursorUpdate);
-  }, [socket, cursors]);
-
-  useEffect(() => {
-    if (!socket || !quill || !currentUserRef.current) return;
-
+    
+    // Simplified selection change handler
     const handleSelectionChange = throttle((range) => {
-      if (range) {
-        const { id, firstName, lastName } = currentUserRef.current;
-        const color = getUniqueColor(id);
-        socket.emit('update-cursor-position', {
-          documentId,
-          userId: id,
-          cursorPosition: { index: range.index, length: range.length },
-        });
-      }
+      if (!range) return;
+      
+      const userId = user._id || user.id;
+      if (!userId) return;
+      
+      console.log(`[CURSOR] Sending my cursor position:`, range);
+      socket.emit('update-cursor-position', {
+        documentId,
+        userId,
+        cursorPosition: range
+      });
     }, 100);
-
+    
+    // Set up event listeners
+    socket.on('cursor-position-updated', handleCursorUpdate);
     quill.on('selection-change', handleSelectionChange);
+    
+    // Force initial cursor broadcast
+    setTimeout(() => {
+      const range = quill.getSelection() || { index: 0, length: 0 };
+      socket.emit('update-cursor-position', {
+        documentId,
+        userId: user._id || user.id,
+        cursorPosition: range
+      });
+    }, 1000);
+    
     return () => {
+      socket.off('cursor-position-updated', handleCursorUpdate);
       quill.off('selection-change', handleSelectionChange);
       handleSelectionChange.cancel();
     };
-  }, [socket, quill, documentId, currentUserRef, getUniqueColor]);
+  }, [socket, quill, cursors, user, documentId, getUniqueColor]);
 
+  // IMPROVED user editing status handler with debug
   useEffect(() => {
-    if (!socket || !cursors) return;
-  
-    const handleUserDisconnected = (userId) => {
-      cursors.removeCursor(userId);
-    };
-  
-    socket.on('user-disconnected', handleUserDisconnected);
-    return () => socket.off('user-disconnected', handleUserDisconnected);
-  }, [socket, cursors]);
-
-  useEffect(() => {
-    if (user && user !== currentUser) {
-      setCurrentUser(user);
-    }
-  }, [user, currentUser]);
-
-  useEffect(() => {
-    if (!socket || !documentId || !currentUser) return;
-
-    socket.emit('join-document', documentId, currentUser);
-    return () => socket.emit('leave-document', documentId, currentUser);
-  }, [socket, documentId, currentUser]);
-
-  useEffect(() => {
-    if (!socket || !quill || !currentUser) return;
+    if (!socket || !documentId) return;
   
     const userStatusHandler = (data) => {
-      console.log("Received data from backend:", data); // Log the entire data object
+      console.log("[USERS] Received user-editing data:", data);
       const { documentId: receivedDocumentId, users } = data;
-      if (!users || receivedDocumentId !== documentId) return;
+      
+      if (!users || receivedDocumentId !== documentId) {
+        console.log("[USERS] Ignored user-editing data - document ID mismatch or no users");
+        return;
+      }
   
-      console.log("Received users:", users); // Log received data
-  
-      // Use a Map to ensure unique users
-      const uniqueUsersMap = new Map();
-      users.forEach((user) => {
-        if (!uniqueUsersMap.has(user.id)) {
-          user.color = getUniqueColor(user.id); // Assign a unique color to each user
-          uniqueUsersMap.set(user.id, user);
-        }
-      });
-  
-      // Update the state with the list of unique users
-      setEditingUsers(Array.from(uniqueUsersMap.values()));
-      console.log("Updated editingUsers:", Array.from(uniqueUsersMap.values())); // Log updated state
+      console.log("[USERS] Processing users:", users);
+      console.log("[USERS] Current user:", user);
+      
+      // Ensure we're getting an array
+      const userArray = Array.isArray(users) ? users : Object.values(users);
+      
+      // Map users to consistent format
+      const normalizedUsers = userArray.map((u) => ({
+        _id: u._id || u.id,
+        id: u._id || u.id,
+        firstName: u.firstName || '',
+        lastName: u.lastName || '',
+        avatar: u.avatar || null,
+        color: u.color || getUniqueColor(u._id || u.id)
+      }));
+      
+      console.log("[USERS] Normalized users:", normalizedUsers);
+      setEditingUsers(normalizedUsers);
     };
-  
-    const updateUserStatus = throttle(() => {
-      socket.emit('update-user-status', { documentId, user: currentUser });
-    }, 1000);
   
     // Listen for user editing updates
+    socket.off('user-editing');
     socket.on('user-editing', userStatusHandler);
-    quill.on('text-change', updateUserStatus);
-  
+    
     return () => {
       socket.off('user-editing', userStatusHandler);
-      quill.off('text-change', updateUserStatus);
     };
-  }, [socket, quill, currentUser, documentId, getUniqueColor]);
+  }, [socket, documentId, getUniqueColor, user]);
+  
+  // IMPROVED document joining
+  useEffect(() => {
+    if (!socket || !documentId || !user) return;
+
+    console.log("[JOIN] Joining document with user:", user);
+    
+    // Create a complete user object with all required fields
+    const userToSend = {
+      id: user._id || user.id,
+      _id: user._id || user.id,
+      firstName: user.firstName || '',
+      lastName: user.lastName || '',
+      avatar: user.avatar || {},
+      color: getUniqueColor(user._id || user.id)
+    };
+    
+    // Join the document with this user info
+    socket.emit('join-document', documentId, userToSend);
+    
+    // Force updates after short delay
+    setTimeout(() => {
+      console.log("[JOIN] Sending refresh signals");
+      
+      // 1. Update user status
+      socket.emit('update-user-status', { documentId, user: userToSend });
+      
+      // 2. Send cursor position
+      const range = quill?.getSelection() || { index: 0, length: 0 };
+      socket.emit('update-cursor-position', {
+        documentId,
+        userId: userToSend.id,
+        cursorPosition: range
+      });
+    }, 1000);
+    
+    // Set up debug ping to keep user in the editing list
+    const pingInterval = setInterval(() => {
+      socket.emit('update-user-status', { documentId, user: userToSend });
+    }, 10000);
+    
+    return () => {
+      clearInterval(pingInterval);
+      console.log("[JOIN] Leaving document:", documentId);
+      socket.emit('leave-document', documentId, userToSend);
+    };
+  }, [socket, documentId, user, getUniqueColor, quill]);
+  
+  // Improved rendering of editing users
+  const renderEditingUsers = () => {
+    console.log("[RENDER] Rendering editing users:", editingUsers);
+    
+    if (!editingUsers || editingUsers.length === 0) {
+      return (
+        <li className="no-users-editing">
+          {currentUser ? (
+            <div className="avatar-container" style={{ borderColor: getUniqueColor(currentUser.id || currentUser._id) }}>
+              {currentUser.avatar && currentUser.avatar.url ? (
+                <img 
+                  src={currentUser.avatar.url} 
+                  alt={`${currentUser.firstName} ${currentUser.lastName}`} 
+                  className="editing-user-avatar"
+                  style={{width: "36px", height: "36px"}}
+                  onError={(e) => {
+                    e.target.onerror = null; 
+                    e.target.style.display = 'none';
+                  }}
+                />
+              ) : (
+                <i className="fa-solid fa-user default-avatar"></i>
+              )}
+              <span className="user-name-tooltip">{currentUser.firstName} {currentUser.lastName} is editing</span>
+            </div>
+          ) : (
+            "No users editing"
+          )}
+        </li>
+      );
+    }
+    
+    return editingUsers.map((user) => {
+      const userId = user.id || user._id;
+      const userColor = user.color || getUniqueColor(userId);
+      console.log(`[RENDER] Rendering user: ${user.firstName} ${user.lastName} (${userId}) with color ${userColor}`);
+      
+      return (
+        <li key={userId} className="editing-user">
+          <div 
+            className="avatar-container" 
+            style={{ borderColor: userColor }}
+            title={`${user.firstName} ${user.lastName}`}
+          >
+            {user.avatar && user.avatar.url ? (
+              <img 
+                src={user.avatar.url} 
+                alt={`${user.firstName} ${user.lastName}`} 
+                className="editing-user-avatar"
+                style={{width: "36px", height: "36px", borderRadius: "50%"}}
+                onError={(e) => {
+                  console.log("[IMAGE] Avatar loading error");
+                  e.target.onerror = null; 
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
+              />
+            ) : (
+              <i className="fa-solid fa-user default-avatar"></i>
+            )}
+            <span className="user-name-tooltip">{user.firstName} {user.lastName}</span>
+          </div>
+        </li>
+      );
+    });
+  };
+
+  useEffect(() => {
+    if (user) {
+      console.log("[USER] Setting current user from Redux:", user);
+      setCurrentUser(user);
+      currentUserRef.current = user;
+    }
+  }, [user]);
 
   const handleGeneratePDFHtml2Pdf = () => {
     if (!quill) return;
@@ -320,43 +502,16 @@ export default function TextEditor() {
     }
   };
 
+  // Updated render with debugging info
   return (
     <div className="container live-editting">
       <div className="editor-header">
-      <div className="editing-users">
-  <h4>Editing Users:</h4>
-  <ul>
-    {editingUsers.length > 0 ? (
-      editingUsers.map((user) => (
-        <li key={user._id} className="editing-user">
-          <div className="avatar-container" style={{ borderColor: user.color || "#ccc" }}>
-            {user.avatar ? (
-              <img src={user.avatar.url} alt={`${user.firstName} ${user.lastName}`} className="user-avatar" />
-            ) : (
-              <i className="fa-solid fa-user default-avatar"></i>
-            )}
-            <span className="user-name-tooltip">{user.firstName} {user.lastName}</span>
-          </div>
-        </li>
-      ))
-    ) : (
-      <li className="no-users-editing">
-        {currentUser ? (
-          <div className="avatar-container" style={{ borderColor: getUniqueColor(currentUser._id) || "#3f5585" }}>
-            {currentUser.avatar ? (
-              <img src={currentUser.avatar.url} alt={`${currentUser.firstName} ${currentUser.lastName}`} className="user-avatar" />
-            ) : (
-              <i className="fa-solid fa-user default-avatar"></i>
-            )}
-            <span className="user-name-tooltip">{currentUser.firstName} {currentUser.lastName} is editing</span>
-          </div>
-        ) : (
-          "No users editing"
-        )}
-      </li>
-    )}
-  </ul>
-</div>  
+        <div className="editing-users d-flex align-items-center justify-content-between">
+          <h4 className='m-0'>Editing Users: ({editingUsers.length})</h4>
+          <ul>
+            {renderEditingUsers()}
+          </ul>
+        </div>
 
         <div className="header-menu">
           <button onClick={handleGeneratePDFHtml2Pdf} className="download-btn">
