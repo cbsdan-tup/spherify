@@ -217,7 +217,7 @@ const UserDetailsModal = ({ show, onHide, userId, refreshList = () => {} }) => {
         style={{
           flexDirection: "column",
           maxHeight: "unset",
-          alignItems: "unset",
+          alignItems: "unset"
         }}
       >
         {isLoading ? (
@@ -256,14 +256,14 @@ const UserDetailsModal = ({ show, onHide, userId, refreshList = () => {} }) => {
                       <table className="table table-borderless">
                         <tbody>
                           <tr>
-                            <th scope="row" width="30%">
+                            <th scope="row" className="py-1" width="30%">
                               User ID
                             </th>
-                            <td>{selectedUser._id}</td>
+                            <td className="py-1">{selectedUser._id}</td>
                           </tr>
                           <tr>
-                            <th scope="row">Status</th>
-                            <td>
+                            <th scope="row" className="py-1">Status</th>
+                            <td className="py-1">
                               <Badge
                                 bg={
                                   selectedUser.isDisable ? "danger" : "success"
@@ -274,30 +274,30 @@ const UserDetailsModal = ({ show, onHide, userId, refreshList = () => {} }) => {
                             </td>
                           </tr>
                           <tr>
-                            <th scope="row">Account Created</th>
-                            <td>
+                            <th scope="row" className="py-1">Account Created</th>
+                            <td className="py-1">
                               {new Date(
                                 selectedUser.createdAt
                               ).toLocaleString()}
                             </td>
                           </tr>
                           <tr>
-                            <th scope="row">Last Updated</th>
-                            <td>
+                            <th scope="row" className="py-1">Last Updated</th>
+                            <td className="py-1">
                               {new Date(
                                 selectedUser.updatedAt
                               ).toLocaleString()}
                             </td>
                           </tr>
                           <tr>
-                            <th scope="row">Disable Count</th>
-                            <td>{selectedUser.disableCount || 0}</td>
+                            <th scope="row" className="py-1">Disable Count</th>
+                            <td className="py-1">{selectedUser.disableCount || 0}</td>
                           </tr>
                           {selectedUser.isDisable && (
                             <>
                               <tr>
-                                <th scope="row">Disabled From</th>
-                                <td>
+                                <th scope="row" className="py-1">Disabled From</th>
+                                <td className="py-1">
                                   {selectedUser.disableStartTime
                                     ? new Date(
                                         selectedUser.disableStartTime
@@ -306,8 +306,8 @@ const UserDetailsModal = ({ show, onHide, userId, refreshList = () => {} }) => {
                                 </td>
                               </tr>
                               <tr>
-                                <th scope="row">Disabled Until</th>
-                                <td>
+                                <th scope="row" className="py-1">Disabled Until</th>
+                                <td className="py-1">
                                   {selectedUser.disableEndTime
                                     ? new Date(
                                         selectedUser.disableEndTime
@@ -317,8 +317,8 @@ const UserDetailsModal = ({ show, onHide, userId, refreshList = () => {} }) => {
                               </tr>
                               {selectedUser.disableReason && (
                                 <tr>
-                                  <th scope="row">Reason</th>
-                                  <td>{selectedUser.disableReason}</td>
+                                  <th scope="row" className="py-1">Reason</th>
+                                  <td className="py-1">{selectedUser.disableReason}</td>
                                 </tr>
                               )}
                             </>

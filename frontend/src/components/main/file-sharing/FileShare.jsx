@@ -30,6 +30,7 @@ const FileUpload = () => {
   const [showMenu, setShowMenu] = useState(false);
   const [fileSelected, setFileSelected] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Rename modal state
   const [showRenameModal, setShowRenameModal] = useState(false);
@@ -467,7 +468,11 @@ const FileUpload = () => {
 
   // Update the sortedFolders and sortedFiles to use our sorting logic
   const sortedFolders = useMemo(() => {
-    const sorted = [...folders];
+    const filtered = [...folders].filter(folder => 
+      searchTerm ? folder.name.toLowerCase().includes(searchTerm.toLowerCase()) : true
+    );
+    
+    const sorted = filtered;
     if (sortField === 'name') {
       sorted.sort((a, b) => {
         const comparison = a.name.localeCompare(b.name);
@@ -487,10 +492,14 @@ const FileUpload = () => {
       });
     }
     return sorted;
-  }, [folders, sortField, sortDirection]);
+  }, [folders, sortField, sortDirection, searchTerm]);
 
   const sortedFiles = useMemo(() => {
-    const sorted = [...files];
+    const filtered = [...files].filter(file =>
+      searchTerm ? file.name.toLowerCase().includes(searchTerm.toLowerCase()) : true
+    );
+    
+    const sorted = filtered;
     if (sortField === 'name') {
       sorted.sort((a, b) => {
         const comparison = a.name.localeCompare(b.name);
@@ -510,7 +519,7 @@ const FileUpload = () => {
       });
     }
     return sorted;
-  }, [files, sortField, sortDirection]);
+  }, [files, sortField, sortDirection, searchTerm]);
 
   useEffect(() => {
     if (folderConsume !== null && nextcloudConfig) {
@@ -722,6 +731,26 @@ const FileUpload = () => {
           )}
         </div>
         <div className={`fs-content ${showStorage ? "half-border" : ""}`}>
+          <div className="search-container mb-3">
+            <div className="input-group">
+              <input 
+                type="text" 
+                className="form-control search-input" 
+                placeholder="Search files and folders..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button 
+                  className="btn btn-outline-secondary" 
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                >
+                  <i className="fa-solid fa-xmark"></i>
+                </button>
+              )}
+            </div>
+          </div>
           <div className="fs-content-header">
             <div className="name sortable" onClick={() => handleSort('name')}>
               Name

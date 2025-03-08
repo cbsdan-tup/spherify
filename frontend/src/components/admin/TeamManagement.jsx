@@ -8,6 +8,7 @@ import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import TeamReportModal from "./modals/TeamReportModal";
 import UserDetailsModal from "./UserDetailsModal";
+import TeamStorageModal from "./modals/TeamStorageModal";
 // Import FontAwesome if not already included in your main file
 import "@fortawesome/fontawesome-free/css/all.min.css";
 // Import the CSS module with scoped Bootstrap styles
@@ -23,9 +24,13 @@ const TeamManagement = () => {
   const [isLoadingStorageData, setIsLoadingStorageData] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState(null);
-  
+  const [showStorageModal, setShowStorageModal] = useState(false);
+  const [selectedTeamForStorage, setSelectedTeamForStorage] = useState(null);
+
   const token = useSelector((state) => state.auth.token);
-  const nextcloudConfig = useSelector((state) => state.configurations.nextcloud);
+  const nextcloudConfig = useSelector(
+    (state) => state.configurations.nextcloud
+  );
 
   const fetchTeams = async () => {
     try {
@@ -42,12 +47,14 @@ const TeamManagement = () => {
       errMsg(`Error fetching teams: ${error.message}`);
     }
   };
-  
+
   const fetchTeamStorageUsage = async (teamId) => {
     try {
       setIsLoadingStorageData(true);
       const response = await axios.get(
-        `${import.meta.env.VITE_API}/getFolderSize/?path=${encodeURIComponent(teamId)}`,
+        `${import.meta.env.VITE_API}/getFolderSize/?path=${encodeURIComponent(
+          teamId
+        )}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -100,23 +107,33 @@ const TeamManagement = () => {
       ...team,
       storageUsage: null, // Will be populated after API call
       storageLimit: nextcloudConfig?.maxSizePerTeam || 0,
-      storageType: nextcloudConfig?.storageTypePerTeam || "standard"
+      storageType: nextcloudConfig?.storageTypePerTeam || "standard",
     });
     setShowReportModal(true);
-    
+
     // Then fetch storage data only for this specific team
     const storageUsage = await fetchTeamStorageUsage(team._id);
-    
+
     // Update the team data with storage information
-    setSelectedTeam(prev => ({
+    setSelectedTeam((prev) => ({
       ...prev,
-      storageUsage: storageUsage
+      storageUsage: storageUsage,
     }));
   };
 
   const closeTeamReport = () => {
     setShowReportModal(false);
     setSelectedTeam(null);
+  };
+
+  const openTeamStorage = (team) => {
+    setSelectedTeamForStorage(team);
+    setShowStorageModal(true);
+  };
+
+  const closeTeamStorage = () => {
+    setShowStorageModal(false);
+    setSelectedTeamForStorage(null);
   };
 
   useEffect(() => {
@@ -151,7 +168,7 @@ const TeamManagement = () => {
             {row.name.charAt(0).toUpperCase()}
           </div>
         ),
-      // center: true,
+      center: true,
     },
     { name: "Name", selector: (row) => row.name, sortable: true },
     {
@@ -159,28 +176,42 @@ const TeamManagement = () => {
       selector: (row) =>
         row.createdBy ? (
           <span
-            style={{ cursor: "pointer", color: "#0d6efd", textDecoration: "underline" }}
+            style={{
+              cursor: "pointer",
+              color: "#0d6efd",
+              textDecoration: "underline",
+            }}
             onClick={() => {
               setSelectedUserId(row.createdBy._id);
-                setShowUserModal(true);
-              }}
-              >
-              {row.createdBy.email}
-              </span>
-            ) : (
-              "Unknown"
-            ),
-            sortable: true,
-          },
-          {
-            name: "Members",
-            selector: (row) => row.members.filter(member => member.leaveAt === null).length,
-            sortable: true,
-            center: true,
-          },
-          {
-            name: "Storage",
-            cell: (row) => "Click Report", // Just placeholder text
+              setShowUserModal(true);
+            }}
+          >
+            {row.createdBy.email}
+          </span>
+        ) : (
+          "Unknown"
+        ),
+      sortable: true,
+    },
+    {
+      name: "Members",
+      selector: (row) =>
+        row.members.filter((member) => member.leaveAt === null).length,
+      sortable: true,
+      center: true,
+    },
+    {
+      name: "Storage",
+      cell: (row) => (
+        <button
+          className="btn btn-outline-info btn-sm d-flex align-items-center"
+          style={{gap: "0.3rem"}}
+          onClick={() => openTeamStorage(row)}
+        >
+          <i className="fa-solid fa-folder-open me-1"></i>
+          <span>View</span>
+        </button>
+      ),
       sortable: false,
     },
     {
@@ -206,17 +237,24 @@ const TeamManagement = () => {
           <button
             className={`btn ${row.isDisabled ? "btn-success" : "btn-danger"}`}
             onClick={() => toggleStatus(row._id, row.isDisabled)}
-            style={{fontSize: "0.8rem"}}
+            style={{ fontSize: "0.8rem" }}
           >
-            <i className={`fa-solid fa-${row.isDisabled ? "check" : "times"}`} style={{width: "1rem", height: "1rem"}}></i>
+            <i
+              className={`fa-solid fa-${row.isDisabled ? "check" : "times"}`}
+              style={{ width: "1rem", height: "1rem" }}
+            ></i>
             {row.isDisabled ? "Enable" : "Disable"}
           </button>
           <button
             className="btn btn-primary d-flex align-items-center"
             onClick={() => openTeamReport(row)}
-            style={{fontSize: "0.8rem"}}
+            style={{ fontSize: "0.8rem" }}
           >
-            <i className="fa-solid fa-chart-line" style={{width: "1rem", height: "1rem"}}></i> REPORT
+            <i
+              className="fa-solid fa-chart-line"
+              style={{ width: "1rem", height: "1rem" }}
+            ></i>{" "}
+            REPORT
           </button>
         </div>
       ),
@@ -319,6 +357,13 @@ const TeamManagement = () => {
         onHide={() => setShowUserModal(false)}
         userId={selectedUserId}
         refreshList={fetchTeams}
+      />
+
+      <TeamStorageModal
+        show={showStorageModal}
+        onHide={closeTeamStorage}
+        team={selectedTeamForStorage}
+        token={token}
       />
     </div>
   );

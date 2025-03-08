@@ -183,7 +183,7 @@ const TeamReportModal = ({ show, onHide, team }) => {
       pdf.setFillColor(52, 152, 219);
       pdf.rect(margin, 90, contentWidth, 5, 'F');
       
-      pdf.addImage(team?.logo?.url || '', 'PNG', (pageWidth/2) - 25, 120, 50, 50);
+      pdf.addImage(team?.logo?.url || '/images/white-logo.png', 'PNG', (pageWidth/2) - 25, 120, 50, 50);
       
       pdf.addPage();
       
@@ -198,8 +198,8 @@ const TeamReportModal = ({ show, onHide, team }) => {
           imgHeight
         );
         
-        heightLeft -= (pageHeight - 2 * margin);
-        position += (pageHeight - 2 * margin);
+        heightLeft -= (pageHeight - 4 * margin);
+        position += (pageHeight - 4 * margin);
         
         if (heightLeft > 0) {
           pdf.addPage();
@@ -215,7 +215,7 @@ const TeamReportModal = ({ show, onHide, team }) => {
         pdf.text(`Spherify - Page ${i} of ${pageCount + 1}`, pageWidth/2, pageHeight - 10, { align: 'center' });
       }
       
-      pdf.save(`${team?.name}_Team_Report_${moment().format('YYYY-MM-DD')}.pdf`);
+      pdf.save(`${team?.name}_Team_Report_${moment().format('YYYY-MM-DD-HH-SS')}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
       errMsg("Failed to generate PDF report. Please try again.");
@@ -688,7 +688,7 @@ const TeamReportModal = ({ show, onHide, team }) => {
                           ></div>
                         </div>
                         <div className="storage-labels">
-                          <span>0</span>
+                          <span>{cloudUsage ? formatStorageSize(cloudUsage.usedStorage) : 'N/A'}</span>
                           <span>{cloudUsage ? formatStorageSize(cloudUsage.totalStorage) : 'N/A'}</span>
                         </div>
                       </div>
