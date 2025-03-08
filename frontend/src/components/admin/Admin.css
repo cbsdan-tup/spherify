@@ -469,7 +469,7 @@
   overflow: auto;
 }
 
-.admin-page-content .team-management-container .title, .admin-page-content .user-management-container .title {
+.admin-page-content .team-management-container .title, .admin-page-content .user-management-container .title, .admin-page-content .file-management-container .title  {
   font-size: 2.5rem;
   font-weight: 600;
   color: var(--header-text-color);

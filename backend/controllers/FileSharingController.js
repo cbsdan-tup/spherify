@@ -1287,9 +1287,6 @@ exports.getStorageInfo = async (req, res) => {
 exports.getFolderSize = async (req, res) => {
   try {
     const folderPath = req.query.path;
-    if (!folderPath) {
-      return res.status(400).json({ error: "Folder path is required" });
-    }
 
     const { NEXTCLOUD_URL, NEXTCLOUD_USER, NEXTCLOUD_PASSWORD } =
       await createWebDAVClient();

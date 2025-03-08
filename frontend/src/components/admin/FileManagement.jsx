@@ -4,6 +4,7 @@ import axios from 'axios';
 import { Card, Table, Form, InputGroup, Button, Badge, Spinner, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { bytesToSize, formatDate, errMsg, succesMsg } from '../../utils/helper';
 import styles from './FileManagement.module.css';
+import { Link } from 'react-router-dom';  // Using the correct import for React Router
 
 const FileManagement = () => {
   const [files, setFiles] = useState([]);
@@ -25,21 +26,53 @@ const FileManagement = () => {
 
   const token = useSelector((state) => state.auth.token);
 
+  // Add base path constant for Nextcloud
+  const BASE_PATH = 'https://spherify-cloud.mooo.com/remote.php/dav/files/spherify/Spherify_Data';
+  
+  // Utility function to extract relative path from full Nextcloud URL
+  const extractRelativePath = useCallback((fullUrl) => {
+    if (!fullUrl || !fullUrl.startsWith(BASE_PATH)) return '';
+    return fullUrl.substring(BASE_PATH.length + 1); // +1 for the trailing slash
+  }, []);
+
+  
+  const getDisplayName = useCallback((file) => {
+    // Extract just the filename from the full path
+    if (!file || !file.name) return '';
+    
+    // If it's a team root folder, use team name instead
+    if (file.teamName && !currentPath) {
+      return file.teamName;
+    }
+    
+    const nameParts = file.name.split('/');
+    return nameParts[nameParts.length - 1];
+  }, [currentPath]);
+  
   // Fetch files from current path
   const fetchFiles = useCallback(async (path = '') => {
     try {
       setIsLoading(true);
       console.log('Fetching files for path:', path);
       
-      // If at root, get all files across teams
+      // If at root, get team folders only
       if (!path) {
         const response = await axios.get(`${import.meta.env.VITE_API}/admin/getAllFiles`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        setFiles(response.data.files || []);
-        setBreadcrumbs([{ name: 'All Files', path: '' }]);
+        
+        // Process files to extract proper paths
+        const processedFiles = response.data.files.map(file => ({
+          ...file,
+          relativePath: extractRelativePath(file.url),
+          // Use team name as the display name for team root folders
+          displayName: file.teamName || file.name
+        }));
+        
+        setFiles(processedFiles || []);
+        setBreadcrumbs([{ name: 'All Teams', path: '' }]);
       } else {
         // Get files from specific path
         const response = await axios.get(
@@ -52,7 +85,15 @@ const FileManagement = () => {
         );
         
         console.log('API Response:', response.data);
-        setFiles(response.data.files || []);
+        
+        // Process files to extract proper paths
+        const processedFiles = response.data.files.map(file => ({
+          ...file,
+          relativePath: extractRelativePath(file.url),
+          displayName: file.displayName || getDisplayName(file)
+        }));
+        
+        setFiles(processedFiles || []);
         
         // Update breadcrumbs based on path
         updateBreadcrumbs(path);
@@ -63,7 +104,7 @@ const FileManagement = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [token]);
+  }, [token, extractRelativePath, getDisplayName]);
 
   const updateBreadcrumbs = (path) => {
     if (!path) {
@@ -107,7 +148,7 @@ const FileManagement = () => {
     setCurrentFolderId(folderId);
     setPathHistory((prev) => [...prev, currentPath]);
     
-    // Build path string exactly like FileShare does
+    // Build path string for navigation
     const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
     console.log('New path:', newPath);
     setCurrentPath(newPath);
@@ -165,6 +206,7 @@ const FileManagement = () => {
     setCurrentPath(path);
   };
 
+
   // File type icons
   const getFileIcon = (name) => {
     const ext = name.split('.').pop().toLowerCase();
@@ -206,7 +248,18 @@ const FileManagement = () => {
   // Filter and sort files
   const filteredFiles = files
     .filter((file) => {
-      const matchesSearch = file.name.toLowerCase().includes(searchTerm.toLowerCase());
+      // Get team name for this file for searching
+      const teamName = file.teamName || teams.find(t => t._id === file.teamId)?.name || '';
+      // Display name is either the custom display name or the last part of the path
+      const displayName = file.displayName || getDisplayName(file) || '';
+      
+      // Search in filename, displayName, and team name
+      const matchesSearch = searchTerm ? 
+        (file.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+         teamName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+         displayName.toLowerCase().includes(searchTerm.toLowerCase()))
+        : true;
+        
       const matchesTeam = filterTeam ? file.teamId === filterTeam : true;
       const matchesType = filterType ? file.type === filterType : true;
       return matchesSearch && matchesTeam && matchesType;
@@ -265,6 +318,83 @@ const FileManagement = () => {
     }
   };
 
+  // Function to get file/folder display name (strips path)
+
+  // Add state for total storage size with proper default values
+  const [totalStorageSize, setTotalStorageSize] = useState(0);
+  const [isLoadingStorage, setIsLoadingStorage] = useState(false);
+  const [overallStorageInfo, setOverallStorageInfo] = useState({ freeStorage: 0, totalStorage: 1, usedStorage: 0 });
+
+  // Get the nextcloud configuration from Redux store
+  const nextcloudConfig = useSelector((state) => state.configurations.nextcloud);
+
+  // Utility function to convert MB to GB with 2 decimal places
+  const mbToGB = useCallback((mb) => {
+    const gb = mb / 1024;
+    return `${gb.toFixed(2)} GB`;
+  }, []);
+
+  // Function to fetch overall storage info (for root level)
+  const fetchOverallStorageInfo = useCallback(async () => {
+    try {
+      setIsLoadingStorage(true);
+      const response = await axios.get(`${import.meta.env.VITE_API}/getStorageInfo`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      console.log("Storage info response:", response.data);
+      
+      if (response.data && response.data.storageInfo) {
+        const storageInfo = response.data.storageInfo;
+        // Values from API are in MB, store as is
+        setOverallStorageInfo({
+          freeStorage: Number(storageInfo.freeStorage) || 0,
+          totalStorage: Number(storageInfo.totalStorage) || 1, // Avoid division by zero
+          usedStorage: Number(storageInfo.usedStorage) || 0
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching overall storage info:', error);
+      // Set fallback values in case of error
+      setOverallStorageInfo({ freeStorage: 0, totalStorage: 1, usedStorage: 0 });
+    } finally {
+      setIsLoadingStorage(false);
+    }
+  }, [token]);
+
+  // Function to fetch the folder size for the current path
+  const fetchFolderSize = useCallback(async (path = '') => {
+    try {
+      setIsLoadingStorage(true);
+      
+      if (!path) {
+        // If path is empty, use the overall storage info instead
+        return fetchOverallStorageInfo();
+      }
+      
+      const response = await axios.get(
+        `${import.meta.env.VITE_API}/getFolderSize/?path=${encodeURIComponent(path)}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      
+      console.log("Folder size response:", response.data);
+      if (response.data && response.data.size !== undefined) {
+        setTotalStorageSize(Number(response.data.size) || 0);
+      } else {
+        setTotalStorageSize(0); // Set a default value if size is undefined
+      }
+    } catch (error) {
+      console.error('Error fetching folder size:', error);
+      setTotalStorageSize(0); // Set a default value in case of error
+    } finally {
+      setIsLoadingStorage(false);
+    }
+  }, [token, fetchOverallStorageInfo]);
+
   // Update breadcrumbs when folder information is available
   useEffect(() => {
     if (currentPath && files.length > 0) {
@@ -284,14 +414,29 @@ const FileManagement = () => {
     }
   }, [currentPath, files, currentFolderId]);
 
+  // Update useEffect to fetch the appropriate storage info when path changes
+  useEffect(() => {
+    fetchFiles(currentPath);
+    fetchAllTeams();
+    
+    // Fetch appropriate storage information based on path
+    if (currentPath) {
+      // If in a specific path, fetch that folder's size
+      fetchFolderSize(currentPath);
+    } else {
+      // If at root, fetch overall cloud storage info
+      fetchOverallStorageInfo();
+    }
+  }, [fetchFiles, fetchAllTeams, fetchFolderSize, fetchOverallStorageInfo, currentPath]);
+
   return (
-    <div className={styles.fileManagement}>
-      <h2 className="mb-4">File Management</h2>
+    <div className="file-management-container">
+      <h2 className="mb-4 title">File Management</h2>
       
       <Card className="mb-4">
         <Card.Body>
           <div className="d-flex flex-wrap justify-content-between align-items-center mb-3">
-            <h5 className="mb-0">Team Files</h5>
+            <h5 className="mb-0">{!currentPath ? 'Team Files' : 'Files & Folders'}</h5>
             <div className="d-flex">
               <Button 
                 variant="outline-primary" 
@@ -344,7 +489,7 @@ const FileManagement = () => {
                 <i className="fa-solid fa-search"></i>
               </InputGroup.Text>
               <Form.Control
-                placeholder="Search files..."
+                placeholder="Search by filename or team..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -384,7 +529,7 @@ const FileManagement = () => {
                   <thead>
                     <tr>
                       <th onClick={() => handleSort('name')} style={{ cursor: 'pointer' }}>
-                        Name {sortField === 'name' && <i className={`fa-solid fa-sort-${sortDirection === 'asc' ? 'up' : 'down'}`}></i>}
+                        {!currentPath ? 'Team' : 'Name'} {sortField === 'name' && <i className={`fa-solid fa-sort-${sortDirection === 'asc' ? 'up' : 'down'}`}></i>}
                       </th>
                       <th>Team</th>
                       <th onClick={() => handleSort('size')} style={{ cursor: 'pointer' }}>
@@ -401,7 +546,9 @@ const FileManagement = () => {
                   <tbody>
                     {currentFiles.length > 0 ? (
                       currentFiles.map((file) => {
-                        const teamName = teams.find(t => t._id === file.teamId)?.name || 'Unknown';
+                        const teamName = file.teamName || teams.find(t => t._id === file.teamId)?.name || 'Unknown';
+                        // Get display name for the file or folder
+                        const displayName = file.displayName || getDisplayName(file);
                         
                         return (
                           <tr key={file._id}>
@@ -423,10 +570,10 @@ const FileManagement = () => {
                                 </span>
                                 <OverlayTrigger
                                   placement="top"
-                                  overlay={<Tooltip>{file.name}</Tooltip>}
+                                  overlay={<Tooltip>{displayName}</Tooltip>}
                                 >
                                   <span className="text-truncate d-inline-block" style={{ maxWidth: '200px' }}>
-                                    {file.name}
+                                    {displayName}
                                   </span>
                                 </OverlayTrigger>
                               </div>
@@ -526,27 +673,139 @@ const FileManagement = () => {
 
       <Card>
         <Card.Body>
-          <h5>Storage Statistics</h5>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h5>Storage Statistics</h5>
+            <Link 
+              variant="outline-primary"
+              size="sm" 
+              as="a" 
+              to="/admin/configurations"
+            >
+              <i className="fa-solid fa-gear me-1"></i> Configure Storage Settings
+            </Link>
+          </div>
           <div className="row mt-3">
-            <div className="col-md-4">
-              <Card className="text-center p-3">
+            <div className="col-md-3">
+              <Card className="text-center p-3 h-100">
                 <h6>Total Files</h6>
                 <h3>{files.filter(f => f.type === 'file').length}</h3>
               </Card>
             </div>
-            <div className="col-md-4">
-              <Card className="text-center p-3">
+            <div className="col-md-3">
+              <Card className="text-center p-3 h-100">
                 <h6>Total Folders</h6>
                 <h3>{files.filter(f => f.type === 'folder').length}</h3>
               </Card>
             </div>
-            <div className="col-md-4">
-              <Card className="text-center p-3">
+            <div className="col-md-3">
+              <Card className="text-center p-3 h-100">
                 <h6>Total Storage Used</h6>
-                <h3>{bytesToSize(files.reduce((sum, file) => sum + (file.size || 0), 0))}</h3>
+                {isLoadingStorage ? (
+                  <Spinner animation="border" size="sm" className="me-2" />
+                ) : (
+                  // For path-specific storage (bytes from getFolderSize) use bytesToSize
+                  // For overall storage (MB from getStorageInfo) use mbToGB
+                  <h3>{currentPath ? bytesToSize(totalStorageSize || 0) : mbToGB(overallStorageInfo.usedStorage || 0)}</h3>
+                )}
+                <small className="text-muted">
+                  {currentPath ? `in current folder` : 'across all teams'}
+                </small>
+              </Card>
+            </div>
+            <div className="col-md-3">
+              <Card className="text-center p-3 h-100">
+                <h6>Max Size Per Team</h6>
+                {nextcloudConfig ? (
+                  <h3>
+                    {nextcloudConfig.storageTypePerTeam === "infinity" 
+                      ? "∞ (Unlimited)" 
+                      : `${nextcloudConfig.maxSizePerTeam} GB`}
+                  </h3>
+                ) : (
+                  <Spinner animation="border" size="sm" />
+                )}
+                <small className="text-muted">
+                  <a href="/admin/configuration" className="text-decoration-none">
+                    <i className="fa-solid fa-edit me-1"></i>
+                    Adjust in settings
+                  </a>
+                </small>
               </Card>
             </div>
           </div>
+
+          {/* Conditionally show either cloud storage overview or team storage limit */}
+          {!currentPath ? (
+            // Show overall cloud storage when at root
+            <div className="mt-3">
+              <Card className="p-3">
+                <h6>Overall Cloud Storage Usage</h6>
+                {isLoadingStorage ? (
+                  <div className="text-center py-3">
+                    <Spinner animation="border" variant="primary" />
+                  </div>
+                ) : (
+                  <>
+                    <div className="progress" style={{ height: '25px' }}>
+                      <div 
+                        className={`progress-bar ${(overallStorageInfo.freeStorage || 0) < (overallStorageInfo.totalStorage || 1) * 0.1 ? 'bg-danger' : 'bg-success'}`}
+                        role="progressbar" 
+                        style={{ 
+                          width: `${Math.min(((overallStorageInfo.usedStorage || 0) / (overallStorageInfo.totalStorage || 1)) * 100, 100)}%`,
+                          minWidth: '5%',
+                          padding: '10px'
+                        }}
+                      >
+                        {Math.round(((overallStorageInfo.usedStorage || 0) / (overallStorageInfo.totalStorage || 1)) * 100)}%
+                      </div>
+                    </div>
+                    <div className="d-flex justify-content-between mt-1">
+                      <small>Used: {mbToGB(overallStorageInfo.usedStorage || 0)}</small>
+                      <small>Free: {mbToGB(overallStorageInfo.freeStorage || 0)}</small>
+                      <small>Total: {mbToGB(overallStorageInfo.totalStorage || 1)}</small>
+                    </div>
+                  </>
+                )}
+              </Card>
+            </div>
+          ) : (
+            // Show team storage limit when in a path
+            nextcloudConfig && nextcloudConfig.storageTypePerTeam !== "infinity" && (
+              <div className="mt-3">
+                <Card className="p-3">
+                  <h6>Team Storage Usage</h6>
+                  {isLoadingStorage ? (
+                    <div className="text-center py-3">
+                      <Spinner animation="border" variant="primary" />
+                    </div>
+                  ) : (
+                    <>
+                      <div className="progress" style={{ height: '25px' }}>
+                        <div 
+                          className={`progress-bar ${totalStorageSize > (nextcloudConfig.maxSizePerTeam * 0.9 * 1024 * 1024 * 1024) ? 'bg-danger' : 'bg-success'}`}
+                          role="progressbar" 
+                          style={{ 
+                            width: `${Math.min((totalStorageSize / (nextcloudConfig.maxSizePerTeam * 1024 * 1024 * 1024)) * 100, 100)}%`,
+                            minWidth: '5%',
+                            padding: '10px'
+                          }}
+                          aria-valuenow={Math.min((totalStorageSize / (nextcloudConfig.maxSizePerTeam * 1024 * 1024 * 1024)) * 100, 100)}
+                          aria-valuemin="0" 
+                          aria-valuemax="100"
+                        >
+                          {Math.round((totalStorageSize / (nextcloudConfig.maxSizePerTeam * 1024 * 1024 * 1024)) * 100)}%
+                        </div>
+                      </div>
+                      <div className="d-flex justify-content-between mt-1">
+                        <small>Used: {bytesToSize(totalStorageSize)}</small>
+                        <small>Limit: {nextcloudConfig.maxSizePerTeam} GB</small>
+                      </div>
+                    </>
+                  )}
+                </Card>
+              </div>
+            )
+          )}
         </Card.Body>
       </Card>
     </div>

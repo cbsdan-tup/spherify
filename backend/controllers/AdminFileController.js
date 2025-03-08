@@ -1,5 +1,5 @@
 const File = require('../models/File');
-const Team = require('../models/Team');
+const {Team} = require('../models/Team');
 const axios = require('axios');
 const { createWebDAVClient } = require('../utils/nextcloud.js');
 const mongoose = require('mongoose');
@@ -11,6 +11,12 @@ exports.getAllFiles = async (req, res) => {
   try {
     // Get query parameters for filtering
     const { team, type, search } = req.query;
+    
+    // At root level, we only want to show team folders
+    const showOnlyTeams = !req.query.path;
+    
+    // Base path for Nextcloud
+    const basePath = `https://spherify-cloud.mooo.com/remote.php/dav/files/spherify/Spherify_Data`;
     
     // Build query object
     const query = {};
@@ -30,15 +36,45 @@ exports.getAllFiles = async (req, res) => {
     // Don't include deleted files by default
     query.isDeleted = { $ne: true };
     
-    // Find all files and folders
-    const files = await File.find(query)
-      .populate('owner', 'firstName lastName email')
-      .sort({ createdAt: -1 });
-    
-    return res.json({
-      success: true,
-      files,
-    });
+    // If we're at the root level, only return team folders
+    if (showOnlyTeams) {
+      // Get team data first
+      const teams = await Team.find({});
+      
+      // Find only files that are team folders (directly under Spherify_Data)
+      query.type = 'folder';
+      query.teamId = { $exists: true };
+      query.url = { $regex: new RegExp(`^${basePath}/[^/]+$`, 'i') };
+      
+      const folders = await File.find(query)
+        .populate('owner', 'firstName lastName email')
+        .sort({ name: 1 });
+      
+      // Enhance folder data with team information
+      const enhancedFolders = folders.map(folder => {
+        const team = teams.find(t => t._id.toString() === folder.teamId.toString());
+        return {
+          ...folder.toObject(),
+          teamName: team?.name || 'Unknown Team',
+          displayName: team?.name || folder.name // Show team name instead of folder name
+        };
+      });
+      
+      return res.json({
+        success: true,
+        files: enhancedFolders,
+      });
+    } else {
+      // For non-root paths, return files as usual
+      const files = await File.find(query)
+        .populate('owner', 'firstName lastName email')
+        .sort({ createdAt: -1 });
+      
+      return res.json({
+        success: true,
+        files,
+      });
+    }
   } catch (error) {
     console.error('Error fetching all files:', error);
     return res.status(500).json({
@@ -98,6 +134,19 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
     const currentFolderUrl = `${basePath}/${relativePath}`;
     files = files.filter((file) => file.url !== currentFolderUrl);
 
+    // Process files to extract clean names from paths
+    files = files.map(file => {
+      // For display purposes, we want just the last part of the path as name
+      const urlParts = file.url.split('/');
+      const displayName = urlParts[urlParts.length - 1]; // Just the last segment
+      
+      return {
+        ...file.toObject(),
+        displayName,
+        relativePath: file.url.substring(basePath.length + 1) // +1 for the trailing slash
+      };
+    });
+
     // Handle file sizes
     let totalFolderSize = 0;
     const updatedFiles = await Promise.all(
@@ -130,14 +179,15 @@ exports.getFilesAndFoldersByPath = async (req, res) => {
         } catch (err) {
           console.log("Error fetching file size for", file.url);
         }
-        return { ...file.toObject(), size: fileSize };
+        return { ...file, size: fileSize };
       })
     );
 
     return res.status(200).json({ 
       success: true, 
       files: updatedFiles,
-      totalFolderSize 
+      totalFolderSize,
+      currentPath: relativePath
     });
   } catch (error) {
     console.error('Error fetching files by path:', error);
