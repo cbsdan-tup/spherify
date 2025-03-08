@@ -134,6 +134,29 @@ const io = new Server(server, {
   },
 });
 
+// Add this helper function at the top of the file after imports
+function getUniqueColorForUser(userId) {
+  if (!userId) return "#ccc";
+  const colors = [
+    "#FF6633", "#FFB399", "#FF33FF", "#FFFF99", "#00B3E6",
+    "#E6B333", "#3366E6", "#999966", "#99FF99", "#B34D4D",
+    "#80B300", "#809900", "#E6B3B3", "#6680B3", "#66991A",
+    "#FF99E6", "#CCFF1A", "#FF1A66", "#E6331A", "#33FFCC",
+    "#66994D", "#B366CC", "#4D8000", "#B33300", "#CC80CC",
+    "#66664D", "#991AFF", "#E666FF", "#4DB3FF", "#1AB399",
+    "#E666B3", "#33991A", "#CC9999", "#B3B31A", "#00E680",
+    "#4D8066", "#809980", "#E6FF80", "#1AFF33", "#999933",
+    "#FF3380", "#CCCC00", "#66E64D", "#4D80CC", "#9900B3",
+    "#E64D66", "#4DB380", "#FF4D4D", "#99E6E6", "#6666FF"
+  ];
+  let hash = 5381;
+  for (let i = 0; i < userId.length; i++) {
+    hash = (hash * 33) ^ userId.charCodeAt(i);
+  }
+  const index = Math.abs(hash) % colors.length;
+  return colors[index];
+}
+
 // Status update helper functions
 async function updateUserStatusOnLogin(userId) {
   try {
@@ -349,7 +372,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Handle join group event
   socket.on("joinGroup", (groupId) => {
     const validGroupId = mongoose.Types.ObjectId.isValid(groupId) ? groupId : null;
     if (!validGroupId) {
@@ -361,26 +383,213 @@ io.on("connection", (socket) => {
     console.log(`User joined group: ${groupId}`);
   });
 
-  // Handle user editing updates
-  socket.on("update-user-status", (data) => {
-    const { documentId, user } = data;
-
-    // Track users editing the document
-    usersEditing[documentId] = usersEditing[documentId] || [];
-    if (!usersEditing[documentId].includes(user)) {
-      usersEditing[documentId].push(user);
+  socket.on("join-document", (documentId, user) => {
+    try {
+      if (!documentId || !user || !user.id || !user.firstName || !user.lastName) {
+        console.error("Invalid documentId or user data:", documentId, user);
+        return;
+      }
+  
+      socket.join(documentId); 
+      console.log(`User ${user.firstName} ${user.lastName} joined document room: ${documentId}`);
+  
+      const userId = user.id || user._id;
+  
+      if (!usersEditing[documentId]) {
+        usersEditing[documentId] = {};
+      }
+  
+      usersEditing[documentId][userId] = {
+        ...user,
+        id: userId,
+        _id: userId,
+        socketId: socket.id,
+        color: getUniqueColorForUser(userId)
+      };
+  
+      console.log(`User added to document ${documentId}:`, usersEditing[documentId][userId]);
+  
+      io.to(documentId).emit("user-editing", {
+        documentId,
+        users: Object.values(usersEditing[documentId]),
+      });
+    } catch (error) {
+      console.error("Error in join-document:", error);
     }
+  });
+  
+  socket.on("update-cursor-position", async ({ documentId, userId, cursorPosition }) => {
+    try {
+      console.log(`[CURSOR] Received cursor update for user ${userId} in doc ${documentId}`);
+      
+      if (!documentId || !userId || !cursorPosition) {
+        console.error("[CURSOR] Invalid data for cursor position update");
+        return;
+      }
 
-    // Emit the updated list of users editing the document to all clients in the room
-    io.to(documentId).emit("user-editing", {
-      documentId,
-      users: usersEditing[documentId],
-    });
+      if (!usersEditing[documentId]) {
+        console.log(`[CURSOR] Creating new document entry: ${documentId}`);
+        usersEditing[documentId] = {};
+      }
 
-    console.log(`User ${user} is editing document: ${documentId}`);
+      let userData = usersEditing[documentId][userId];
+      
+      if (!userData) {
+        console.log(`[CURSOR] User ${userId} not found in document ${documentId}, fetching from DB`);
+        try {
+          const dbUser = await User.findById(userId)
+            .select("firstName lastName avatar")
+            .lean();
+          
+          if (dbUser) {
+            userData = {
+              ...dbUser,
+              id: userId,
+              _id: userId,
+              socketId: socket.id,
+              color: getUniqueColorForUser(userId)
+            };
+            usersEditing[documentId][userId] = userData;
+            console.log(`[CURSOR] User added from DB: ${dbUser.firstName} ${dbUser.lastName}`);
+          } else {
+            userData = {
+              id: userId,
+              _id: userId,
+              firstName: "Anonymous",
+              lastName: "User",
+              socketId: socket.id,
+              color: getUniqueColorForUser(userId)
+            };
+            usersEditing[documentId][userId] = userData;
+            console.log(`[CURSOR] Created fallback user data for ${userId}`);
+          }
+        } catch (err) {
+          console.error(`[CURSOR] DB error for ${userId}:`, err);
+          userData = {
+            id: userId,
+            _id: userId,
+            firstName: "Unknown",
+            lastName: "User",
+            socketId: socket.id,
+            color: getUniqueColorForUser(userId)
+          };
+          usersEditing[documentId][userId] = userData;
+        }
+      } else {
+        userData.socketId = socket.id;
+        usersEditing[documentId][userId] = userData;
+      }
+
+      const name = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Anonymous';
+      const color = userData.color || getUniqueColorForUser(userId);
+
+      io.to(documentId).emit("cursor-position-updated", {
+        userId,
+        name,
+        range: cursorPosition,
+        color
+      });
+      
+      io.to(documentId).emit("user-editing", {
+        documentId,
+        users: Object.values(usersEditing[documentId] || {})
+      });
+      
+      console.log(`[CURSOR] Broadcast complete: ${name}'s cursor position in ${documentId}`);
+    } catch (error) {
+      console.error("[CURSOR] Error in update-cursor-position:", error);
+    }
   });
 
-  // Handle send message event
+  socket.on("update-user-status", ({ documentId, user }) => {
+    try {
+      if (!documentId || !user || !user.id) {
+        console.error("Invalid data for user status update:", { documentId, user });
+        return;
+      }
+
+      const userId = user.id || user._id;
+      
+      if (usersEditing[documentId] && usersEditing[documentId][userId]) {
+        usersEditing[documentId][userId].lastActive = new Date();
+        
+        io.to(documentId).emit("user-editing", {
+          documentId,
+          users: Object.values(usersEditing[documentId]),
+        });
+      }
+    } catch (error) {
+      console.error("Error handling user status update:", error);
+    }
+  });
+
+  socket.on("leave-document", (documentId, user) => {
+    try {
+      if (!documentId || !user || !user.id) {
+        console.error("Invalid documentId or user data:", documentId, user);
+        return;
+      }
+  
+      socket.leave(documentId);
+      console.log(`User ${user.firstName} ${user.lastName} left document room: ${documentId}`);
+  
+      if (usersEditing[documentId] && usersEditing[documentId][user.id]) {
+        delete usersEditing[documentId][user.id];
+  
+        if (Object.keys(usersEditing[documentId]).length === 0) {
+          delete usersEditing[documentId];
+        }
+      }
+  
+      console.log("Emitting user-editing:", {
+        documentId,
+        users: usersEditing[documentId] ? Object.values(usersEditing[documentId]) : [],
+      });
+      io.to(documentId).emit("user-editing", {
+        documentId,
+        users: usersEditing[documentId] ? Object.values(usersEditing[documentId]) : [],
+      });
+    } catch (error) {
+      console.error("Error in leave-document:", error);
+    }
+  });
+  
+  socket.on("disconnect", () => {
+    try {
+      console.log(`User disconnected: ${socket.id}`);
+  
+      for (const documentId in usersEditing) {
+        if (usersEditing[documentId]) {
+          const initialLength = Object.keys(usersEditing[documentId]).length;
+  
+          for (const userId in usersEditing[documentId]) {
+            if (usersEditing[documentId][userId].socketId === socket.id) {
+              delete usersEditing[documentId][userId];
+            }
+          }
+  
+          if (Object.keys(usersEditing[documentId]).length !== initialLength) {
+            if (Object.keys(usersEditing[documentId]).length === 0) {
+              delete usersEditing[documentId];
+            }
+  
+            console.log("Emitting user-editing:", {
+              documentId,
+              users: usersEditing[documentId] ? Object.values(usersEditing[documentId]) : [],
+            });
+            io.to(documentId).emit("user-editing", {
+              documentId,
+              users: usersEditing[documentId] ? Object.values(usersEditing[documentId]) : [],
+            });
+            console.log(`Removed user from document ${documentId}:`, usersEditing[documentId]);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error in disconnect handler:", error);
+    }
+  });
+
   socket.on("sendMessage", async ({ groupId, sender, content, images }) => {
     try {
       const messageGroup = await MessageGroup.findById(groupId);
@@ -396,7 +605,6 @@ io.on("connection", (socket) => {
 
       let uploadedImages = [];
 
-      // If there are images, upload them directly to Cloudinary
       if (Array.isArray(images) && images.length > 0) {
         uploadedImages = await Promise.all(
           images.map(async (image) => {
@@ -411,28 +619,24 @@ io.on("connection", (socket) => {
         );
       }
 
-      // Create new message with the sender automatically added to seenBy array
       const newMessage = {
         sender: senderDetails._id,
         content,
         createdAt: new Date(),
         images: uploadedImages,
-        seenBy: [{ user: senderDetails._id, seenAt: new Date() }] // Add sender as first seener
+        seenBy: [{ user: senderDetails._id, seenAt: new Date() }] 
       };
 
       messageGroup.messages.push(newMessage);
       await messageGroup.save();
 
-      // Get the newly created message with its ID from the database
       const savedMessage = messageGroup.messages[messageGroup.messages.length - 1];
 
-      // Notify sender that message is sent
       socket.emit("messageSentConfirmation");
       
-      // Emit the message with populated sender details and seenBy information
       io.to(groupId).emit("receiveMessage", {
         ...savedMessage.toObject(),
-        _id: savedMessage._id, // Ensure _id is included
+        _id: savedMessage._id, 
         sender: {
           _id: senderDetails._id,
           firstName: senderDetails.firstName,
@@ -456,7 +660,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Handle message seen event
   socket.on("messageSeen", async ({ messageId, groupId, userId }) => {
     try {
       if (!mongoose.Types.ObjectId.isValid(groupId) || !mongoose.Types.ObjectId.isValid(userId)) {
@@ -467,25 +670,21 @@ io.on("connection", (socket) => {
       const messageGroup = await MessageGroup.findById(groupId);
       if (!messageGroup) return;
       
-      // Find the message in the messages array
       const message = messageGroup.messages.id(messageId);
       if (!message) return;
       
-      // Check if user already marked this message as seen
       const alreadySeen = message.seenBy.some(seen => seen.user.toString() === userId);
       
       if (!alreadySeen) {
         message.seenBy.push({ user: userId, seenAt: new Date() });
         await messageGroup.save();
         
-        // Populate the seenBy field to include user details
         const updatedGroup = await MessageGroup.findById(groupId)
           .populate("messages.sender", "firstName lastName email avatar status statusUpdatedAt")
           .populate("messages.seenBy.user", "firstName lastName email avatar");
         
         const updatedMessage = updatedGroup.messages.id(messageId);
         
-        // Broadcast to all users in the group
         io.to(groupId).emit("messageSeenUpdate", updatedMessage);
       }
     } catch (err) {
@@ -493,7 +692,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Handle get document event
   socket.on("get-document", async (documentId) => {
     if (!mongoose.Types.ObjectId.isValid(documentId)) {
       console.error("❌ Invalid document ID:", documentId);
@@ -536,35 +734,38 @@ io.on("connection", (socket) => {
 
     socket.on("disconnect", () => {
       console.log(`❌ User disconnected from document: ${documentId}`);
-      // Remove the user from the editing list when they disconnect
-      for (let docId in usersEditing) {
-        usersEditing[docId] = usersEditing[docId].filter(
-          (user) => user !== socket.id
-        );
-        io.to(docId).emit("user-editing", {
-          documentId: docId,
-          users: usersEditing[docId],
+      if (usersEditing[documentId]) {
+        for (const userId in usersEditing[documentId]) {
+          if (usersEditing[documentId][userId].socketId === socket.id) {
+            delete usersEditing[documentId][userId];
+            console.log(`Removed user ${userId} from document ${documentId}`);
+          }
+        }
+        
+        io.to(documentId).emit("user-editing", {
+          documentId,
+          users: Object.values(usersEditing[documentId]),
         });
+        
+        if (Object.keys(usersEditing[documentId]).length === 0) {
+          delete usersEditing[documentId];
+        }
       }
     });
   });
 
-  // Handle log status change event
   socket.on("logStatusChange", (logData) => {
-    // Store the log
-    statusLogs.unshift(logData); // Add to beginning
+    statusLogs.unshift(logData); 
     
-    // Trim logs if needed
     if (statusLogs.length > MAX_STATUS_LOGS) {
-      statusLogs.pop(); // Remove oldest
+      statusLogs.pop(); 
     }
   });
 });
 
-// Status logs endpoint
 app.get("/api/v1/admin/status-logs", async (req, res) => {
   try {
-    // You should add proper authentication here
+    
     res.json({ logs: statusLogs });
   } catch (error) {
     console.error("Error retrieving status logs:", error);

@@ -151,7 +151,7 @@ const TeamManagement = () => {
             {row.name.charAt(0).toUpperCase()}
           </div>
         ),
-      center: true,
+      // center: true,
     },
     { name: "Name", selector: (row) => row.name, sortable: true },
     {
