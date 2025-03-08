@@ -1371,43 +1371,113 @@ form {
     text-align: center; /* Center-align description */
   }
 }
-
-/* Styling the container of editing users */
 .editing-users {
   margin-top: 20px;
   padding: 10px;
   background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  
 }
 
-/* Heading style */
 .editing-users h4 {
   font-size: 1.2em;
   font-weight: bold;
   margin-bottom: 10px;
 }
 
-/* Styling the list of users */
 .editing-users ul {
   list-style-type: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.editing-users li {
-  font-size: 1em;
-  padding: 5px 0;
-  border-bottom: 1px solid #ddd;
+.editing-user {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.editing-users li:last-child {
-  border-bottom: none; /* Remove bottom border on last item */
+.avatar-container {
+  position: relative;
+  display: inline-block;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  overflow: visible;
 }
 
-/* Style for when no users are editing */
-.editing-users .no-users {
+.user-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.default-avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background-color: #854343;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: #fff;
+}
+
+.user-name-tooltip {
+  visibility: hidden;
+  background-color: #3f5585;
+  color: #fff;
+  text-align: center;
+  border-radius: 4px;
+  padding: 5px 10px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  white-space: nowrap;
+  font-size: 12px;
+}
+
+.avatar-container:hover .user-name-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.no-users-editing {
   font-style: italic;
   color: #888;
   text-align: center;
+}
+
+@media (max-width: 600px) {
+  .editing-users ul {
+    flex-direction: column;
+  }
+}
+
+.ql-cursor {
+  border-left: 2px solid #000;
+  margin-left: -1px;
+  position: absolute;
+  white-space: nowrap;
+}
+
+.ql-cursor .ql-cursor-name {
+  background-color: #000;
+  color: #fff;
+  padding: 2px 4px;
+  font-size: 12px;
+  border-radius: 2px;
+  margin-left: 4px;
 }
