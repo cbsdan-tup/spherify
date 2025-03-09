@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import ActiveStatus from "./ActiveStatus";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { errMsg, succesMsg } from "../../../utils/helper";
@@ -23,6 +23,7 @@ function Header({
   const [isConfigAdmin, setIsConfigAdmin] = useState(false); // New state for config permissions
   const [showConfigModal, setShowConfigModal] = useState(false); // New state for modal
   const fileInputRef = useRef(null);
+  const navigate = useNavigate();
 
   const currentUser = useSelector((state) => state.auth.user);
   const token = useSelector((state) => state.auth.token);
@@ -58,6 +59,11 @@ function Header({
   // Handle closing the configuration modal
   const handleCloseConfigModal = () => {
     setShowConfigModal(false);
+  };
+  
+  // Navigate to team reports page
+  const navigateToReports = () => {
+    navigate(`/main/${currentTeamId}/reports`);
   };
 
   const handleLogoUpload = (e) => {
@@ -275,12 +281,43 @@ function Header({
           )}
         </div>
       </div>
-      <div className="d-flex align-items-center " style={{ gap: "1rem" }}>
+      <div className="d-flex align-items-center " style={{ gap: "0.6rem" }}>
+        <div 
+          onClick={navigateToReports} 
+          className="report-button" 
+          role="button"
+          style={{ 
+            cursor: "pointer", 
+            display: "flex", 
+            alignItems: "center", 
+            gap: "0.5rem",
+            backgroundColor: "#5a78a5",
+            color: "white",
+            borderRadius: "4px",
+            padding: "6px 12px",
+            transition: "background-color 0.2s ease"
+          }}
+          onMouseOver={(e) => e.currentTarget.style.backgroundColor = "#496792"} 
+          onMouseOut={(e) => e.currentTarget.style.backgroundColor = "#5a78a5"}
+        >
+          <i className="fas fa-chart-bar"></i>
+          <span>REPORTS</span>
+        </div>
         {/* Only show configuration button for admins and leaders */}
         {isConfigAdmin && (
           <div 
             className="set-team-configuration" 
-            style={{cursor: "pointer", fontSize: "1.5rem", color: "#1d559e"}}
+            style={{
+              cursor: "pointer", 
+              display: "flex", 
+              alignItems: "center", 
+              gap: "0.5rem", 
+              backgroundColor: "rgb(90, 120, 165)", 
+              color: "white", 
+              borderRadius: "4px", 
+              padding: "10px 12px", 
+              transition: "background-color 0.2s"
+            }}
             onClick={handleOpenConfigModal}
             title="Team Configuration"
           >
@@ -290,6 +327,17 @@ function Header({
 
         <div
           className="nav-button"
+          style={{
+            cursor: "pointer", 
+            display: "flex", 
+            alignItems: "center", 
+            gap: "0.5rem", 
+            backgroundColor: "rgb(90, 120, 165)", 
+            color: "white", 
+            borderRadius: "4px", 
+            padding: "3.5px 12px", 
+            transition: "background-color 0.2s"
+          }}
           onClick={() => {
             handleToggleChats();
             setShowRightPanel(true);

@@ -21,6 +21,7 @@ import FileSharingPage from "./main/file-sharing/FileSharingPage";
 import "../styles/MainHeader.css";
 import { io } from "socket.io-client";
 import Dashboard from "./main/team/Dashboard";
+import TeamReport from "./main/team/reports/TeamReport";
 const socket = io(`${import.meta.env.VITE_SOCKET_API}`);
 
 function Main() {
@@ -34,7 +35,7 @@ function Main() {
   const [isLoading, setIsLoading] = useState(false);
   const [teamConfiguration, setTeamConfiguration] = useState(null); // Add new state for team configuration
   const [fetchingConfiguration, setFetchingConfiguration] = useState(false); // Track loading state
-  
+
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const currentMeetingRoomName = useSelector(
     (state) => state.team.currentMeetingRoomName
@@ -45,14 +46,14 @@ function Main() {
 
   useEffect(() => {
     if (user) {
-      socket.emit("login", user?._id)
+      socket.emit("login", user?._id);
     }
   }, [user]);
 
   // Fetch group chat info when meeting room changes
   useEffect(() => {
     if (currentMeetingRoomName) {
-      console.log("Curent meeting room name", currentMeetingRoomName)
+      console.log("Curent meeting room name", currentMeetingRoomName);
       fetchGroupChatInfo(currentMeetingRoomName);
     }
   }, [currentMeetingRoomName]);
@@ -96,14 +97,14 @@ function Main() {
   // New function to fetch team configuration
   const fetchTeamConfiguration = async (teamId) => {
     if (!teamId || !authState?.token) return;
-    
+
     try {
       setFetchingConfiguration(true);
       const response = await axios.get(
         `${import.meta.env.VITE_API}/getTeamConfiguration/${teamId}`,
         { headers: { Authorization: `Bearer ${authState?.token}` } }
       );
-      
+
       if (response.data.success) {
         console.log("Team configuration loaded:", response.data.configuration);
         setTeamConfiguration(response.data.configuration);
@@ -130,12 +131,17 @@ function Main() {
     teamInfo,
     teamConfiguration,
     fetchingConfiguration,
-    refreshTeamConfiguration: () => fetchTeamConfiguration(currentTeamId)
+    refreshTeamConfiguration: () => fetchTeamConfiguration(currentTeamId),
   };
 
   return (
     <>
-      <Header teams={teams} setTeams={setTeams} isLoading={isLoading} setIsLoading={setIsLoading} />
+      <Header
+        teams={teams}
+        setTeams={setTeams}
+        isLoading={isLoading}
+        setIsLoading={setIsLoading}
+      />
       <div className="main-container">
         <div
           className={`pages-container container ${!showRightPanel && "full"}`}
@@ -143,7 +149,16 @@ function Main() {
           <Routes>
             <Route
               index
-              element={<Home refresh={refresh} setRefresh={setRefresh} teams={teams} setTeams={setTeams}  isLoading={isLoading} setIsLoading={setIsLoading} />}
+              element={
+                <Home
+                  refresh={refresh}
+                  setRefresh={setRefresh}
+                  teams={teams}
+                  setTeams={setTeams}
+                  isLoading={isLoading}
+                  setIsLoading={setIsLoading}
+                />
+              }
             />
             <Route path="settings" element={<Settings />} />
             <Route
@@ -158,19 +173,42 @@ function Main() {
                 />
               }
             >
-               <Route index element={<Dashboard teamConfiguration={teamConfiguration} />} />
-              <Route path="calendar" element={<Calendar teamConfiguration={teamConfiguration} />} />
+              <Route
+                index
+                element={<Dashboard teamConfiguration={teamConfiguration} />}
+              />
+              <Route
+                path="calendar"
+                element={<Calendar teamConfiguration={teamConfiguration} />}
+              />
               <Route
                 path="kanban"
-                element={<Kanban isFull={!showRightPanel} teamConfiguration={teamConfiguration} />}
+                element={
+                  <Kanban
+                    isFull={!showRightPanel}
+                    teamConfiguration={teamConfiguration}
+                  />
+                }
               />
-              <Route path="gantt" element={<Gantt teamConfiguration={teamConfiguration} />} />
-              <Route path="live-editing/:documentId" element={<TextEditor teamConfiguration={teamConfiguration} />} />
-              <Route path="message-group/:groupId" element={<MessageGroup teamConfiguration={teamConfiguration} />} />
+              <Route
+                path="gantt"
+                element={<Gantt teamConfiguration={teamConfiguration} />}
+              />
+              <Route
+                path="live-editing/:documentId"
+                element={<TextEditor teamConfiguration={teamConfiguration} />}
+              />
+              <Route
+                path="message-group/:groupId"
+                element={<MessageGroup teamConfiguration={teamConfiguration} />}
+              />
               <Route
                 path="file-sharing/:folderId"
-                element={<FileSharingPage teamConfiguration={teamConfiguration} />}
+                element={
+                  <FileSharingPage teamConfiguration={teamConfiguration} />
+                }
               />
+              <Route path="reports" element={<TeamReport />} />
             </Route>
           </Routes>
         </div>
@@ -190,7 +228,8 @@ function Main() {
 
       {/* Render right panel based on route */}
       {showRightPanel &&
-        (location.pathname === "/main" || location.pathname === "/main/settings" ? (
+        (location.pathname === "/main" ||
+        location.pathname === "/main/settings" ? (
           <RightMainPanel
             refresh={refresh}
             setRefresh={setRefresh}
@@ -205,7 +244,9 @@ function Main() {
         <JitsiMeeting
           roomName={currentMeetingRoomName}
           displayName={`${user.firstName} ${user.lastName}`}
-          chatName={`${teamInfo?.name || ""} - ${currentGroupChat?.name || "General"}`}
+          chatName={`${teamInfo?.name || ""} - ${
+            currentGroupChat?.name || "General"
+          }`}
         />
       )}
     </>

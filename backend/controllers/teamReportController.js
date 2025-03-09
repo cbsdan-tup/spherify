@@ -100,58 +100,61 @@ exports.getTeamActivityReport = async (req, res) => {
     }
     
     // Process activity data for each member
-    const activityStats = team.members.map(member => {
-      // Calculate days active in the last 30 days
-      const now = new Date();
-      const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
-      
-      // Get recent active days
-      const recentActiveDays = member.activeDays.filter(date => 
-        new Date(date) >= thirtyDaysAgo
-      );
-      
-      // Group active days by week
-      const weeklyActivity = {};
-      recentActiveDays.forEach(date => {
-        const dateObj = new Date(date);
-        // Get week number (0-4 for the last 4 weeks)
-        const weekNumber = Math.floor((now - dateObj) / (7 * 24 * 60 * 60 * 1000));
-        if (weekNumber >= 0 && weekNumber < 5) {
-          weeklyActivity[weekNumber] = (weeklyActivity[weekNumber] || 0) + 1;
+    const activityStats = team.members
+      .filter(member => member.leaveAt === null) // Filter out members who have left
+      .map(member => {
+        // Calculate days active in the last 30 days
+        const now = new Date();
+        const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
+        
+        // Get recent active days
+        const recentActiveDays = member.activeDays.filter(date => 
+          new Date(date) >= thirtyDaysAgo
+        );
+        
+        // Group active days by week
+        const weeklyActivity = {};
+        recentActiveDays.forEach(date => {
+          const dateObj = new Date(date);
+          // Get week number (0-4 for the last 4 weeks)
+          const weekNumber = Math.floor((now - dateObj) / (7 * 24 * 60 * 60 * 1000));
+          if (weekNumber >= 0 && weekNumber < 5) {
+            weeklyActivity[weekNumber] = (weeklyActivity[weekNumber] || 0) + 1;
+          }
+        });
+
+        // Format weekly activity for chart display (last 4 weeks)
+        const activityByWeek = [];
+        for (let i = 4; i >= 0; i--) {
+          activityByWeek.push(weeklyActivity[i] || 0);
         }
+
+        return {
+          userId: member.user._id,
+          name: `${member.user.firstName} ${member.user.lastName}`,
+          nickname: member.nickname || null,
+          email: member.user.email,
+          role: member.role,
+          isAdmin: member.isAdmin,
+          avatar: member.user.avatar?.url || null,
+          status: member.user.status,
+          statusUpdatedAt: member.user.statusUpdatedAt,
+          joinedAt: member.joinedAt,
+          activeDaysTotal: member.activeDays.length,
+          activeDaysLast30: recentActiveDays.length,
+          activityByWeek: activityByWeek,
+          lastActive: member.activeDays.length > 0 
+            ? new Date(Math.max(...member.activeDays.map(d => new Date(d)))) 
+            : member.joinedAt
+        };
       });
-
-      // Format weekly activity for chart display (last 4 weeks)
-      const activityByWeek = [];
-      for (let i = 4; i >= 0; i--) {
-        activityByWeek.push(weeklyActivity[i] || 0);
-      }
-
-      return {
-        userId: member.user._id,
-        name: `${member.user.firstName} ${member.user.lastName}`,
-        nickname: member.nickname || null,
-        email: member.user.email,
-        role: member.role,
-        isAdmin: member.isAdmin,
-        avatar: member.user.avatar?.url || null,
-        status: member.user.status,
-        statusUpdatedAt: member.user.statusUpdatedAt,
-        joinedAt: member.joinedAt,
-        activeDaysTotal: member.activeDays.length,
-        activeDaysLast30: recentActiveDays.length,
-        activityByWeek: activityByWeek,
-        lastActive: member.activeDays.length > 0 
-          ? new Date(Math.max(...member.activeDays.map(d => new Date(d)))) 
-          : member.joinedAt
-      };
-    });
     
     // Get team overall statistics
     const teamStats = {
-      totalMembers: team.members.length,
-      activeMembers: team.members.filter(m => m.user.status === 'active').length,
-      averageActiveDays: activityStats.reduce((sum, m) => sum + m.activeDaysLast30, 0) / team.members.length || 0,
+      totalMembers: team.members.filter(m => m.leaveAt === null).length,
+      activeMembers: team.members.filter(m => m.user.status === 'active' && m.leaveAt === null).length,
+      averageActiveDays: activityStats.length ? 
+        activityStats.reduce((sum, m) => sum + m.activeDaysLast30, 0) / activityStats.length : 0,
       createdAt: team.createdAt,
       ageInDays: Math.floor((new Date() - new Date(team.createdAt)) / (24 * 60 * 60 * 1000)),
     };
@@ -305,7 +308,7 @@ exports.getTeamDetails = async (req, res) => {
     
     const activeMembers = team.members.filter(m => !m.leaveAt).length;
     const newMembersThisMonth = team.members.filter(m => 
-      new Date(m.joinedAt) >= startOfMonth
+      new Date(m.joinedAt) >= startOfMonth && !m.leaveAt
     ).length;
     const leftMembersThisMonth = team.members.filter(m => 
       m.leaveAt && new Date(m.leaveAt) >= startOfMonth
@@ -515,17 +518,22 @@ exports.getTeamCollaboration = async (req, res) => {
       });
     
     const userMap = {};
-    team.members.forEach(member => {
-      userMap[member.user._id.toString()] = {
-        id: member.user._id,
-        name: `${member.user.firstName} ${member.user.lastName}`,
-        avatar: member.user.avatar?.url || null,
-        interactionCount: userInteractions[member.user._id.toString()] || 0
-      };
-    });
+    // Only include active members in the user map
+    team.members
+      .filter(member => member.leaveAt === null)
+      .forEach(member => {
+        userMap[member.user._id.toString()] = {
+          id: member.user._id,
+          name: `${member.user.firstName} ${member.user.lastName}`,
+          avatar: member.user.avatar?.url || null,
+          interactionCount: userInteractions[member.user._id.toString()] || 0
+        };
+      });
     
     // Format collaboration network for visualization
-    const nodes = Object.keys(userInteractions).map(userId => userMap[userId]);
+    const nodes = Object.keys(userInteractions)
+      .filter(userId => userMap[userId]) // Only include users who are still members
+      .map(userId => userMap[userId]);
     const links = Object.keys(collaborationNetwork).map(pair => {
       const [source, target] = pair.split('-');
       return {
@@ -629,6 +637,9 @@ exports.getTeamContributionReport = async (req, res) => {
         message: 'Team not found' 
       });
     }
+
+    // Filter to only include active members (leaveAt is null)
+    const activeMembers = team.members.filter(member => member.leaveAt === null);
 
     // Get file creation and edits by each member
     const files = await File.find({ 
@@ -742,8 +753,8 @@ exports.getTeamContributionReport = async (req, res) => {
       });
     });
 
-    // Combine all metrics for each user
-    const userContributions = team.members.map(member => {
+    // Combine all metrics for each user, but only for active members
+    const userContributions = activeMembers.map(member => {
       const userId = member.user._id.toString();
       return {
         userId,
@@ -780,49 +791,4 @@ exports.getTeamContributionReport = async (req, res) => {
   }
 };
 
-// Get team storage usage
-exports.getTeamStorageUsage = async (req, res) => {
-  try {
-    const { teamId } = req.params;
-    
-    // Fetch team files and calculate storage usage
-    const files = await File.find({ teamId });
-    
-    let usedStorage = 0;
-    
-    files.forEach(file => {
-      usedStorage += file.size || 0;
-    });
-    
-    // Fetch storage configuration from AdminConfig
-    const adminConfig = await AdminConfig.findOne();
-    
-    let totalStorage;
-    if (!adminConfig || adminConfig.nextcloud.storageTypePerTeam === 'infinity') {
-      // For unlimited storage, use a reasonable value for visualization
-      // (e.g., 2x the current usage or a large default)
-      totalStorage = Math.max(usedStorage * 2, 10 * 1024 * 1024 * 1024); // 10GB minimum for visual representation
-    } else {
-      // Convert GB to bytes
-      totalStorage = adminConfig.nextcloud.maxSizePerTeam * 1024 * 1024 * 1024;
-    }
-    
-    const freeStorage = Math.max(0, totalStorage - usedStorage);
-    
-    return res.status(200).json({
-      totalStorage,
-      usedStorage,
-      freeStorage,
-      fileCount: files.length,
-      storageType: adminConfig ? adminConfig.nextcloud.storageTypePerTeam : 'limited'
-    });
-  } catch (error) {
-    console.error('Error getting team storage usage:', error);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Error fetching team storage usage',
-      error: error.message 
-    });
-  }
-};
 

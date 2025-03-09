@@ -1534,3 +1534,106 @@ h2 {
   border-radius: 2px;
   margin-left: 4px;
 }
+
+/* Team Reports Styles */
+.team-report-container {
+  margin-top: 150px !important;
+  max-width: 100%;
+  margin: 0 auto;
+  background-color: #f9fafb;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.team-report-container .badge {
+  color: var(--text-white)
+}
+.team-report-header h1 {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.team-report-tabs .nav-tabs {
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.team-report-tabs .nav-item .nav-link {
+  color: #555;
+  border: none;
+  padding: 10px 16px;
+  font-weight: 500;
+}
+
+.team-report-tabs .nav-item .nav-link.active {
+  color: #1d559e;
+  border-bottom: 2px solid #1d559e;
+  background-color: transparent;
+}
+
+.team-report-content {
+  padding: 20px 0;
+}
+
+/* Activity heatmap styles */
+.activity-heatmap {
+  display: flex;
+  align-items: center;
+}
+
+.activity-cell {
+  border-radius: 2px;
+}
+
+/* Stats cards for team overview */
+.stat-card {
+  background-color: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  text-align: center;
+}
+
+.stat-title {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1d559e;
+}
+
+/* Member cards grid layout */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-gap: 10px;
+  margin-bottom: 15px;
+}
+
+.stats-grid .stat-item {
+  background-color: #f5f7fa;
+  padding: 10px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.stats-grid .stat-label {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.stats-grid .stat-value {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1d559e;
+}
+
+/* Report button styling */
+.report-button:hover {
+  background-color: #496792;
+}
