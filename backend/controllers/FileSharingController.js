@@ -1329,8 +1329,8 @@ exports.generatePublicLink = async (req, res) => {
           console.log(`Adding history for writable share link for ${file.name} (${file._id})`);
           
           // Add history entry for the shared file itself
-          await file.addHistory('shared', userId, {
-            comment: `${file.type === 'folder' ? 'Folder' : 'File'} "${file.name}" was shared with write access`,
+          await file.addHistory('edited', userId, {
+            comment: `${file.type === 'folder' ? 'Folder' : 'File'} "${file.name}" was edited.`,
             shareUrl: shareUrl,
             permissions: 'write'
           });
@@ -1342,7 +1342,7 @@ exports.generatePublicLink = async (req, res) => {
               userId,
               'shared',
               {
-                comment: `${file.type === 'folder' ? 'Folder' : 'File'} "${file.name}" was shared with write access`,
+                comment: `${file.type === 'folder' ? 'Folder' : 'File'} "${file.name}" was edited.`,
                 shareUrl: shareUrl,
                 permissions: 'write',
                 securityAlert: true  // Flag this as security-sensitive

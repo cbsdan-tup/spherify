@@ -38,6 +38,7 @@ const FileUpload = () => {
   const [fileSelected, setFileSelected] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Rename modal state
   const [showRenameModal, setShowRenameModal] = useState(false);
@@ -393,6 +394,7 @@ const FileUpload = () => {
       }).then(async (result) => {
         if (result.isConfirmed) {
           try {
+            setIsDeleting(true);
             await axios.delete(
               `${import.meta.env.VITE_API}/soft-delete/${fileId}`,
               {
@@ -419,6 +421,8 @@ const FileUpload = () => {
                 type === "folder" ? "folder" : "file"
               } to trash!`
             );
+          } finally {
+            setIsDeleting(false);
           }
         }
       });
@@ -452,6 +456,7 @@ const FileUpload = () => {
     }).then(async (result) => {
       if (result.isConfirmed) {
         try {
+          setIsDeleting(true);
           // Use Promise.all to wait for all deletions to complete
           await Promise.all(
             selectedItems.map((itemId) =>
@@ -472,6 +477,8 @@ const FileUpload = () => {
         } catch (error) {
           console.error("Delete error:", error);
           errMsg("Failed to move selected items to trash!");
+        } finally {
+          setIsDeleting(false);
         }
       }
     });
@@ -764,7 +771,7 @@ const FileUpload = () => {
       if (teamContext?.teamInfo && teamContext?.teamConfiguration) {
         // Add a safety check to ensure members array exists
         const members = teamContext.teamInfo.members || [];
-        
+
         const currentMember = members.find(
           (member) =>
             member.user &&
@@ -812,7 +819,7 @@ const FileUpload = () => {
           // Find current user in team members
           // Add a safety check to ensure members array exists
           const members = teamResponse.data.members || [];
-          
+
           const currentMember = members.find(
             (member) =>
               member.user &&
@@ -858,7 +865,13 @@ const FileUpload = () => {
       <div className={`fs-container ${showStorage ? "half-border" : ""}`}>
         {/* Add permission notification banner if user doesn't have permission */}
         {!hasFilePermission && (
-          <div className="alert alert-info mb-0" style={{borderTopLeftRadius: "12px", borderTopRightRadius: "12px"}}>
+          <div
+            className="alert alert-info mb-0"
+            style={{
+              borderTopLeftRadius: "12px",
+              borderTopRightRadius: "12px",
+            }}
+          >
             <i className="fa-solid fa-info-circle me-2"></i>
             You can view and download files, but you don't have permission to
             upload, modify, or delete files.
@@ -1121,8 +1134,14 @@ const FileUpload = () => {
                   onClick={handleDeleteSelected}
                   disabled={!(selectedItems.length > 0)}
                 >
-                  <i className="fa-solid fa-trash"></i>
-                  <span>Delete</span>
+                  {isDeleting ? (
+                    <div className="loader"></div>
+                  ) : (
+                    <>
+                      <i className="fa-solid fa-trash"></i>
+                      <span>Delete</span>
+                    </>
+                  )}
                 </button>
               )}
             </div>
@@ -1221,8 +1240,14 @@ const FileUpload = () => {
                                       )
                                     }
                                   >
-                                    <i className="fa-solid fa-trash"></i>
-                                    <span>Trash</span>
+                                    {isDeleting ? (
+                                      <div className="loader"></div>
+                                    ) : (
+                                      <>
+                                        <i className="fa-solid fa-trash"></i>
+                                        <span>Trash</span>
+                                      </>
+                                    )}
                                   </div>
                                 </>
                               )}
