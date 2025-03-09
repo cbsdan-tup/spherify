@@ -2,6 +2,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&display=swap');
 
+
 *::-webkit-scrollbar-track {
   background: transparent;
 }
@@ -1533,6 +1534,125 @@ h2 {
   font-size: 12px;
   border-radius: 2px;
   margin-left: 4px;
+}.file-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  position: relative;
+  padding-right: 10px;
+}
+
+.file {
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.delete-btn,
+.rename-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 5px;
+  margin-left: 8px;
+  flex-shrink: 0;
+  opacity: 0; /* Hide buttons by default */
+  transition: opacity 0.2s;
+  visibility: hidden; /* Completely hide the buttons */
+}
+
+/* Show buttons only on hover */
+.file-container:hover .delete-btn,
+.file-container:hover .rename-btn {
+  opacity: 0.7; /* Show with partial opacity when container is hovered */
+  visibility: visible; /* Make buttons visible */
+}
+
+/* Specific colors for each button */
+.delete-btn {
+  color: #ff5555; /* Red color for delete button */
+}
+
+.rename-btn {
+  color: #5555ff; /* Blue color for rename button */
+}
+
+/* Full opacity when hovering over the button itself */
+.delete-btn:hover,
+.rename-btn:hover {
+  opacity: 1;
+}
+
+/* Add these styles to your CSS file */
+
+.tool-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.add, .trash-toggle {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.add:hover, .trash-toggle:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.trash-view {
+  margin-top: 10px;
+}
+
+.trash-view h4 {
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #ccc;
+}
+
+.empty-trash-message {
+  font-style: italic;
+  color: #888;
+  font-size: 13px;
+  padding: 5px;
+}
+
+.deleted-file-container {
+  display: flex;
+  align-items: center;
+  padding: 5px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.deleted-file {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+}
+
+.deleted-file .icon {
+  color: #ff6b6b;
+  margin-right: 8px;
+}
+
+.restore-btn {
+  background: none;
+  border: none;
+  color: #4CAF50;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.restore-btn:hover {
+  color: #66BB6A;
 }
 
 /* Team Reports Styles */
