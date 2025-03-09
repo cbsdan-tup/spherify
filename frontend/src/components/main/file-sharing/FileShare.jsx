@@ -762,7 +762,10 @@ const FileUpload = () => {
     try {
       // If we already have the configuration from context, use it directly
       if (teamContext?.teamInfo && teamContext?.teamConfiguration) {
-        const currentMember = teamContext.teamInfo.members.find(
+        // Add a safety check to ensure members array exists
+        const members = teamContext.teamInfo.members || [];
+        
+        const currentMember = members.find(
           (member) =>
             member.user &&
             member.user._id === user._id &&
@@ -807,7 +810,10 @@ const FileUpload = () => {
 
         if (teamResponse.data) {
           // Find current user in team members
-          const currentMember = teamResponse.data.members.find(
+          // Add a safety check to ensure members array exists
+          const members = teamResponse.data.members || [];
+          
+          const currentMember = members.find(
             (member) =>
               member.user &&
               member.user._id === user._id &&
@@ -832,8 +838,15 @@ const FileUpload = () => {
       }
     } catch (error) {
       console.error("Error checking file permissions:", error);
+      // Set default permission to false in case of error
+      setHasFilePermission(false);
     }
   }, [currentTeamId, user, token, teamContext]);
+
+  // Add a useEffect to log the context for debugging
+  useEffect(() => {
+    console.log("Team context in FileShare:", teamContext);
+  }, [teamContext]);
 
   // Call permission check when team changes
   useEffect(() => {

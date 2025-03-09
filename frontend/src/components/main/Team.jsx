@@ -41,11 +41,18 @@ function Team({showRightPanel, setShowRightPanel, showChats, handleToggleChats, 
   useEffect(() => {
     fetchTeamInfo();
   }, [teamId, currentFileId, refresh]);
+  
+  // Create a merged context value that includes both teamContext and the local teamInfo
+  const mergedTeamContext = {
+    ...teamContext,
+    teamInfo: teamInfo || {}  // Ensure teamInfo is available directly in context
+  };
+  
   return (
     <>
     <div className="team-container">
       {teamInfo && teamInfo.name ? (
-        <TeamConfigContext.Provider value={teamContext}>
+        <TeamConfigContext.Provider value={mergedTeamContext}>
           <Header setRefresh={setRefresh} showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} showChats={showChats} handleToggleChats={handleToggleChats} {...teamInfo} />
           <Outlet />
         </TeamConfigContext.Provider>
