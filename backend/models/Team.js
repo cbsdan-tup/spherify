@@ -56,12 +56,12 @@ const TeamSchema = new mongoose.Schema(
       },
     ],
     teamConfiguration: {
-      AllowedRoleToModifyFiles: { type: [String], default: ["leader"] },
-      AllowedRoleToModifyKanban: { type: [String], default: ["leader"] },
-      AllowedRoleToModifyGantt: { type: [String], default: ["leader"] },
-      AllowedRoleToCreateGroupMessage: { type: [String], default: ["leader"] },
-      AllowedRoleToModifyCalendar: { type: [String], default: ["leader"] },
-      AllowedRoleToModiyLiveEdit: { type: [String], default: ["leader"] }
+      AllowedRoleToModifyFiles: { type: [String], default: ["leader", "moderator", "member"] },
+      AllowedRoleToModifyKanban: { type: [String], default: ["leader", "moderator", "member"] },
+      AllowedRoleToModifyGantt: { type: [String], default: ["leader", "moderator", "member"] },
+      AllowedRoleToCreateGroupMessage: { type: [String], default: ["leader", "moderator", "member"] },
+      AllowedRoleToModifyCalendar: { type: [String], default: ["leader", "moderator", "member"] },
+      AllowedRoleToModiyLiveEdit: { type: [String], default: ["leader", "moderator", "member"] }
     },
     messageGroups: [
       { type: mongoose.Schema.Types.ObjectId, ref: "MessageGroup" },
