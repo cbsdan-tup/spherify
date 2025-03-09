@@ -99,25 +99,69 @@ exports.getTeamActivityReport = async (req, res) => {
       });
     }
     
-    // Process activity data for each member
-    const activityStats = team.members
-      .filter(member => member.leaveAt === null) // Filter out members who have left
-      .map(member => {
+    // Group members by user ID to handle rejoin cases
+    const membersByUserId = {};
+    team.members.forEach(member => {
+      const userId = member.user._id.toString();
+      
+      // Initialize user entry if first time seeing this user
+      if (!membersByUserId[userId]) {
+        membersByUserId[userId] = {
+          user: member.user,
+          memberships: [],
+          isCurrentMember: false,
+          joinedAt: null,
+          activeDays: [],
+          role: null,
+          isAdmin: false,
+          nickname: null
+        };
+      }
+      
+      // Add this membership instance
+      membersByUserId[userId].memberships.push({
+        joinedAt: member.joinedAt,
+        leaveAt: member.leaveAt,
+        role: member.role,
+        isAdmin: member.isAdmin,
+        activeDays: member.activeDays || [],
+        nickname: member.nickname
+      });
+      
+      // If this membership is current (leaveAt is null), update the current status
+      if (member.leaveAt === null) {
+        membersByUserId[userId].isCurrentMember = true;
+        membersByUserId[userId].joinedAt = member.joinedAt;
+        membersByUserId[userId].role = member.role;
+        membersByUserId[userId].isAdmin = member.isAdmin;
+        membersByUserId[userId].nickname = member.nickname;
+      }
+    });
+    
+    // Process activity data for each member, but only include current members
+    const activityStats = Object.values(membersByUserId)
+      .filter(memberData => memberData.isCurrentMember) // Only include current members
+      .map(memberData => {
+        // Merge all activity days from all memberships
+        const allActiveDays = memberData.memberships.reduce((allDays, membership) => {
+          return [...allDays, ...(membership.activeDays || [])];
+        }, []);
+        
+        // Remove duplicate days (in case they were recorded in multiple memberships)
+        const uniqueActiveDays = [...new Set(allActiveDays.map(date => date.toISOString()))].map(dateStr => new Date(dateStr));
+        
         // Calculate days active in the last 30 days
         const now = new Date();
         const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
         
         // Get recent active days
-        const recentActiveDays = member.activeDays.filter(date => 
-          new Date(date) >= thirtyDaysAgo
-        );
+        const recentActiveDays = uniqueActiveDays.filter(date => date >= thirtyDaysAgo);
         
         // Group active days by week
         const weeklyActivity = {};
         recentActiveDays.forEach(date => {
-          const dateObj = new Date(date);
           // Get week number (0-4 for the last 4 weeks)
-          const weekNumber = Math.floor((now - dateObj) / (7 * 24 * 60 * 60 * 1000));
+          const weekNumber = Math.floor((now - date) / (7 * 24 * 60 * 60 * 1000));
           if (weekNumber >= 0 && weekNumber < 5) {
             weeklyActivity[weekNumber] = (weeklyActivity[weekNumber] || 0) + 1;
           }
@@ -130,29 +174,30 @@ exports.getTeamActivityReport = async (req, res) => {
         }
 
         return {
-          userId: member.user._id,
-          name: `${member.user.firstName} ${member.user.lastName}`,
-          nickname: member.nickname || null,
-          email: member.user.email,
-          role: member.role,
-          isAdmin: member.isAdmin,
-          avatar: member.user.avatar?.url || null,
-          status: member.user.status,
-          statusUpdatedAt: member.user.statusUpdatedAt,
-          joinedAt: member.joinedAt,
-          activeDaysTotal: member.activeDays.length,
+          userId: memberData.user._id,
+          name: `${memberData.user.firstName} ${memberData.user.lastName}`,
+          nickname: memberData.nickname || null,
+          email: memberData.user.email,
+          role: memberData.role,
+          isAdmin: memberData.isAdmin,
+          avatar: memberData.user.avatar?.url || null,
+          status: memberData.user.status,
+          statusUpdatedAt: memberData.user.statusUpdatedAt,
+          joinedAt: memberData.joinedAt,
+          activeDaysTotal: uniqueActiveDays.length,
           activeDaysLast30: recentActiveDays.length,
           activityByWeek: activityByWeek,
-          lastActive: member.activeDays.length > 0 
-            ? new Date(Math.max(...member.activeDays.map(d => new Date(d)))) 
-            : member.joinedAt
+          lastActive: uniqueActiveDays.length > 0 
+            ? new Date(Math.max(...uniqueActiveDays.map(d => d.getTime()))) 
+            : memberData.joinedAt
         };
       });
     
     // Get team overall statistics
     const teamStats = {
-      totalMembers: team.members.filter(m => m.leaveAt === null).length,
-      activeMembers: team.members.filter(m => m.user.status === 'active' && m.leaveAt === null).length,
+      totalMembers: Object.values(membersByUserId).filter(m => m.isCurrentMember).length,
+      activeMembers: Object.values(membersByUserId)
+        .filter(m => m.isCurrentMember && m.user.status === 'active').length,
       averageActiveDays: activityStats.length ? 
         activityStats.reduce((sum, m) => sum + m.activeDaysLast30, 0) / activityStats.length : 0,
       createdAt: team.createdAt,

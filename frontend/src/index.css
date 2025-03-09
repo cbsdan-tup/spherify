@@ -1544,7 +1544,7 @@ h2 {
   padding-right: 10px;
 }
 
-.file {
+.tool-file-container .file {
   flex-grow: 1;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1590,10 +1590,14 @@ h2 {
   align-items: center;
   cursor: pointer;
   padding: 5px 10px;
+  gap: 0.5rem;
   border-radius: 4px;
   transition: background-color 0.2s;
 }
 
+.trash-toggle i {
+  font-size: 0.8rem;
+}
 .add:hover, .trash-toggle:hover {
   background-color: rgba(255, 255, 255, 0.1);
 }
