@@ -5,12 +5,14 @@ const {isAuthenticatedUser} = require("../middleware/auth")
 const { 
     newTeamRequest,
     updateStatus,
-    getPendingRequests
+    getPendingRequests,
+    getTeamRequestHistory
 } = require('../controllers/TeamRequestController');
 
 router.get('/getTeamRequests/:userId',isAuthenticatedUser, getPendingRequests);
 router.post('/newTeamRequest',isAuthenticatedUser, newTeamRequest);
 router.put('/updateRequestStatus/:requestId', isAuthenticatedUser, updateStatus);
+router.get('/getTeamRequestHistory/:teamId',isAuthenticatedUser, getTeamRequestHistory);
 
 
 module.exports = router

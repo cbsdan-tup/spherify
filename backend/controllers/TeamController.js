@@ -813,3 +813,218 @@ exports.updateTeam = async (req, res) => {
   }
 };
 
+exports.getTeamChatAnalytics = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const days = parseInt(req.query.days) || 30;
+    const startDate = moment().subtract(days, 'days').startOf('day').toDate();
+    
+    const team = await Team.findById(teamId)
+      .populate('messageGroups');
+    
+    if (!team) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Team not found' 
+      });
+    }
+    
+    // Get all message groups for the team
+    const messageGroupIds = team.messageGroups.map(group => group._id);
+    const messageGroups = await MessageGroup.find({
+      _id: { $in: messageGroupIds }
+    });
+    
+    // Prepare daily message counts
+    const dailyMessages = [];
+    const messagesByMember = {};
+    const messagesByHour = Array(24).fill(0);
+    
+    // Generate all dates in the range for consistent chart data
+    for (let i = 0; i <= days; i++) {
+      const date = moment(startDate).add(i, 'days').format('YYYY-MM-DD');
+      dailyMessages.push({
+        date: date,
+        count: 0
+      });
+    }
+    
+    // Process all messages from all groups
+    messageGroups.forEach(group => {
+      group.messages.forEach(message => {
+        if (message.createdAt >= startDate) {
+          // Increment daily count
+          const messageDate = moment(message.createdAt).format('YYYY-MM-DD');
+          const dayIndex = dailyMessages.findIndex(day => day.date === messageDate);
+          if (dayIndex !== -1) {
+            dailyMessages[dayIndex].count++;
+          }
+          
+          // Track messages by member
+          const senderId = message.sender.toString();
+          if (!messagesByMember[senderId]) {
+            messagesByMember[senderId] = 0;
+          }
+          messagesByMember[senderId]++;
+          
+          // Track messages by hour
+          const hour = moment(message.createdAt).hour();
+          messagesByHour[hour]++;
+        }
+      });
+    });
+    
+    // Get top members by message count
+    const topMemberIds = Object.keys(messagesByMember)
+      .sort((a, b) => messagesByMember[b] - messagesByMember[a])
+      .slice(0, 5);
+    
+    const totalMessages = Object.values(messagesByMember).reduce((sum, count) => sum + count, 0);
+    
+    // Get user details for top members
+    const users = await User.find({
+      _id: { $in: topMemberIds }
+    }).select('firstName lastName email');
+    
+    const topMembers = topMemberIds.map(userId => {
+      const user = users.find(u => u._id.toString() === userId);
+      return {
+        userId,
+        name: user ? `${user.firstName} ${user.lastName}` : 'Unknown User',
+        messageCount: messagesByMember[userId],
+        engagementPercentage: Math.round((messagesByMember[userId] / totalMessages) * 100)
+      };
+    });
+    
+    // Format hours data
+    const activeHours = messagesByHour
+      .map((count, hour) => ({
+        hour,
+        hourFormatted: moment().hour(hour).format('h A'),
+        count
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 5);
+    
+    res.status(200).json({
+      success: true,
+      dailyMessages,
+      topMembers,
+      activeHours,
+      totalMessages
+    });
+    
+  } catch (error) {
+    console.error('Error fetching team chat analytics:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+exports.getTeamMemberActivity = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const days = parseInt(req.query.days) || 30;
+    const startDate = moment().subtract(days, 'days').startOf('day').toDate();
+    
+    const team = await Team.findById(teamId)
+      .populate('members.user', 'firstName lastName email avatar');
+    
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: 'Team not found'
+      });
+    }
+    
+    // Filter only active members (leaveAt is null)
+    const activeMembers = team.members.filter(member => member.leaveAt === null);
+    
+    // Process member activity data
+    const members = activeMembers.map(member => {
+      const activeDays = member.activeDays.filter(day => day >= startDate);
+      
+      return {
+        id: member.user._id,
+        name: `${member.user.firstName} ${member.user.lastName}`,
+        avatar: member.user.avatar,
+        role: member.role,
+        isAdmin: member.isAdmin,
+        joinedAt: member.joinedAt,
+        nickname: member.nickname || '',
+        activeDaysCount: activeDays.length,
+        lastActivity: activeDays.length > 0 ? 
+          new Date(Math.max(...activeDays.map(d => d.getTime()))) : 
+          member.joinedAt
+      };
+    });
+    
+    res.status(200).json({
+      success: true,
+      members
+    });
+    
+  } catch (error) {
+    console.error('Error fetching team member activity:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+
+exports.getTeamRequestHistory = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    
+    // Verify the team exists
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: 'Team not found'
+      });
+    }
+    
+    // Get all team requests for this team
+    const teamRequests = await TeamRequest.find({ team: teamId })
+      .populate('inviter', 'firstName lastName email')
+      .populate('invitee', 'firstName lastName email')
+      .sort({ createdAt: -1 });
+    
+    // Count by status
+    const accepted = teamRequests.filter(req => req.status === 'accepted').length;
+    const pending = teamRequests.filter(req => req.status === 'pending').length;
+    const declined = teamRequests.filter(req => req.status === 'declined').length;
+    
+    // Format request data
+    const requests = teamRequests.map(request => ({
+      id: request._id,
+      inviterName: `${request.inviter.firstName} ${request.inviter.lastName}`,
+      inviteeName: `${request.invitee.firstName} ${request.invitee.lastName}`,
+      status: request.status,
+      invitedAt: request.invitedAt,
+    }));
+    
+    res.status(200).json({
+      success: true,
+      accepted,
+      pending,
+      declined,
+      requests
+    });
+    
+  } catch (error) {
+    console.error('Error fetching team request history:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
+    });
+  }
+};
+

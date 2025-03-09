@@ -9,7 +9,7 @@ import {
   LinearScale,
   BarElement,
 } from "chart.js";
-import { FaPlus, FaPencilAlt } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { errMsg, succesMsg, getToken, socket } from "../../../utils/helper";
@@ -18,11 +18,12 @@ import FileShare from "../file-sharing/FileShare";
 import InviteMemberPopUp from "../InviteMemberPopUp";
 import Calendar from "../projectmanagement/Calendar";
 import moment from "moment";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import CreateNewFile from "../live-editing/CreateNewFile";
 import { Modal, Button, Form } from "react-bootstrap";
 import { fetchTeamMembers } from "../../../functions/TeamFunctions";
 import debounce from "lodash/debounce";
+import TeamRequestHistory from "./TeamRequestHistory";
 
 // Register chart elements
 ChartJS.register(
@@ -295,6 +296,7 @@ const Dashboard = () => {
   const [showMemberEditModal, setShowMemberEditModal] = useState(false);
   const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showRequestHistory, setShowRequestHistory] = useState(false);
 
   const handleShowCreateFileClose = () => {
     setShowCreateFileModal(false);
@@ -933,6 +935,10 @@ const Dashboard = () => {
     }
   }, [currentTeamId]);
 
+  const handleShowRequestHistory = () => {
+    setShowRequestHistory(true);
+  };
+
   return (
     <div className="team-content container">
       <FileShare />
@@ -996,7 +1002,7 @@ const Dashboard = () => {
                   Object.values(priorityData).every(count => count === 0) ? (
                     <p className="text-center text-muted">No tasks available</p>
                   ) : (
-                    <div className="chart-container d-flex justify-content-center align-items-center">
+                    <div className="d-flex justify-content-center align-items-center">
                       <Pie 
                         data={kanbanData}
                         options={{
@@ -1018,8 +1024,8 @@ const Dashboard = () => {
                     </div>
                   )
                 ) : activeTab === 'completion' ? (
-                  <div className="completion-stats">
-                    <div className="chart-container d-flex justify-content-center">
+                  <div className="completion-stats d-flex justify-content-center align-items-center" >
+                    <div className="h-100">
                       <Pie 
                         data={completionChartData}
                         options={{
@@ -1132,9 +1138,18 @@ const Dashboard = () => {
           <div className="card chart-bg">
             <div className="card-header d-flex justify-content-between align-items-center">
               <span className="fw-semibold">Team Members</span>
-              <span className="badge bg-primary text-white">
-                {members && members.length}
-              </span>
+              <div style={{display: "flex", gap: "0.5rem", alignItems: "center"}}>
+                <span 
+                  className="team-request-history-dashboard"
+                  onClick={handleShowRequestHistory}
+                  style={{ cursor: "pointer" }}
+                >
+                  <i className="fas fa-history"></i>
+                </span>
+                <span className="badge bg-primary text-white">
+                  {members && members.length}
+                </span>
+              </div>
             </div>
             <div className="card-body">
               {/* Add search bar */}
@@ -1356,6 +1371,12 @@ const Dashboard = () => {
         </div>
       </div>
 
+      <TeamRequestHistory 
+        show={showRequestHistory}
+        onHide={() => setShowRequestHistory(false)}
+        teamId={currentTeamId}
+      />
+      
       <InviteMemberPopUp
         show={showInvitePopup}
         handleClose={handleCloseInvitePopUp}

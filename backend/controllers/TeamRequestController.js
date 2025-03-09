@@ -85,4 +85,30 @@ const getPendingRequests = async (req, res) => {
   }
 };
 
-module.exports = { newTeamRequest, updateStatus, getPendingRequests };
+const getTeamRequestHistory = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    
+    // Find all requests for this team regardless of status
+    const requestHistory = await TeamRequest.find({ team: teamId })
+      .populate('inviter', 'firstName lastName email avatar')
+      .populate('invitee', 'firstName lastName email avatar')
+      .populate('team', 'name description logo')
+      .sort({ invitedAt: -1 });
+    
+    res.status(200).json({
+      success: true,
+      requestHistory
+    });
+    
+  } catch (error) {
+    console.error('Error fetching team request history:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching team request history',
+      error: error.message
+    });
+  }
+};
+
+module.exports = { newTeamRequest, updateStatus, getPendingRequests, getTeamRequestHistory };
