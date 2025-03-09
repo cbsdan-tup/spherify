@@ -20,7 +20,8 @@ const {
     downloadFileOrFolder,
     getDeletedFilesAndFolders,
     renameFileOrFolder,
-    recordFileActivity
+    recordFileActivity,
+    getTeamRootFolder
 } = require("../controllers/FileSharingController");
 
 const upload = multer({ dest: "uploads/" });
@@ -34,7 +35,7 @@ router.get("/getAllFiles", upload.array("files"), getAllFilesAndFolders);
 router.get("/getTeamFiles/:teamId", getFilesAndFoldersByTeam);
 router.get("/getFilesAndFoldersByPath/:teamId", getFilesAndFoldersByPath);
 router.post("/createNewFolder", isAuthenticatedUser, createNewFolder)
-router.get("/getPublicLink", generatePublicLink);
+router.get("/getPublicLink", isAuthenticatedUser, generatePublicLink);
 router.post("/recordActivity/:fileId", isAuthenticatedUser, recordFileActivity);
 router.delete("/delete/:fileId", isAuthenticatedUser, deleteFileOrFolder);
 router.delete("/soft-delete/:fileId", isAuthenticatedUser, softDeleteFileOrFolder);
@@ -42,6 +43,7 @@ router.get("/get-deleted-files/:teamId", getDeletedFilesAndFolders);
 router.put("/restore/:fileId", isAuthenticatedUser, restoreFileOrFolder);
 router.put("/rename/:fileId", isAuthenticatedUser, renameFileOrFolder); 
 
+router.get("/getTeamRootFolder/:teamId", isAuthenticatedUser, getTeamRootFolder);
 router.get("/getStorageInfo", isAdmin, getStorageInfo);
 router.get("/getFolderSize", isAuthenticatedUser, getFolderSize);
 router.get("/downloadFileOrFolder", downloadFileOrFolder);

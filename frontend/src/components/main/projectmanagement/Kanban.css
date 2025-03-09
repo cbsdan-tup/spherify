@@ -1,6 +1,8 @@
 .kanban-container {
-  margin-top: 140px;
+  margin-top: 150px;
   padding: 20px;
+  background-color: var(--tertiary-color);
+  border-radius: 10px;
 }
 
 .kanban-header {

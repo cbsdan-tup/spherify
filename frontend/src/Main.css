@@ -896,8 +896,11 @@ body {
 }
 
 .main-container .team-container .calendar-container {
+  padding: 1rem;
+  padding-bottom: 0;
   margin-top: 150px;
   background-color: var(--tertiary-color);
+  border-radius: 10px;
 }
 .calendar-modal .modal-dialog{
   max-width: 500px;
@@ -947,7 +950,7 @@ body {
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   padding: 1rem;
-  margin-top: 180px; 
+  margin-top: 150px; 
 
 }
 

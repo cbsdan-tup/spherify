@@ -287,7 +287,7 @@ function Kanban({isFull}) {
   return (
     <div className={`kanban-container ${isFull ? "full" : ""}`}>
       <div className="kanban-header">
-        <h1 className="kanban-title">Team Kanban Board</h1>
+        <h2 className="kanban-title" style={{fontSize: "2rem"}}>TEAM KANBAN BOARD</h2>
         <button className="add-list-button" onClick={handleOpenDialog}>
           <span className="add-icon">+</span> Add List
         </button>

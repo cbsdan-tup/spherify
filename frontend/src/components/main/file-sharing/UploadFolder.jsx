@@ -135,7 +135,32 @@ const UploadFolder = ({
       
       xhr.onload = () => {
         if (xhr.status >= 200 && xhr.status < 300) {
-          const response = JSON.parse(xhr.responseText);
+          // Instead of parsing the entire response at once,
+          // split by newlines and parse each line separately
+          console.log('Raw response preview:', xhr.responseText.substring(0, 200));
+          
+          // Process each line as a separate JSON object
+          const responseLines = xhr.responseText.split('\n').filter(line => line.trim());
+          const responses = [];
+          
+          for (const line of responseLines) {
+            try {
+              const parsedLine = JSON.parse(line);
+              responses.push(parsedLine);
+              
+              // Process streaming updates if needed
+              if (parsedLine.type === 'fileComplete' || parsedLine.type === 'fileStart') {
+                console.log('File status update:', parsedLine.file, parsedLine.status);
+              }
+            } catch (lineErr) {
+              console.warn('Failed to parse response line:', line, lineErr);
+            }
+          }
+          
+          // Use the last response as our final response object
+          const finalResponse = responses.length > 0 ? 
+            responses[responses.length - 1] : 
+            { success: true };
           
           // Mark files as complete one by one with timestamps
           // This simulates individual file completion since the backend

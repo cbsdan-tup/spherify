@@ -100,7 +100,9 @@ const FileUpload = () => {
     } catch (error) {
       console.error("Rename error:", error);
       errMsg(
-        `Failed to rename ${itemToRename.type === "folder" ? "folder" : "file"}.`
+        `Failed to rename ${
+          itemToRename.type === "folder" ? "folder" : "file"
+        }.`
       );
     }
   };
@@ -133,7 +135,7 @@ const FileUpload = () => {
       Swal.fire({
         icon: "info",
         title: "No Recent Uploads",
-        text: "You haven't uploaded any files in this session."
+        text: "You haven't uploaded any files in this session.",
       });
     }
   };
@@ -141,7 +143,6 @@ const FileUpload = () => {
   useEffect(() => {
     setProgress(0);
   }, [refresh]);
-
 
   const fetchFolderConsume = useCallback(
     async (path) => {
@@ -167,48 +168,51 @@ const FileUpload = () => {
     [token]
   );
 
-  const fetchFilesAndFolders = useCallback(async (path = "") => {
-    try {
-      if (currentTeamId === null) {
-        return;
-      }
-      setSelectedItems([]);
-      setIsFileFetching(true);
-      
-      // Add a timeout to prevent UI from being permanently stuck
-      const timeoutId = setTimeout(() => {
-        console.log("Fetch operation timed out");
+  const fetchFilesAndFolders = useCallback(
+    async (path = "") => {
+      try {
+        if (currentTeamId === null) {
+          return;
+        }
+        setSelectedItems([]);
+        setIsFileFetching(true);
+
+        // Add a timeout to prevent UI from being permanently stuck
+        const timeoutId = setTimeout(() => {
+          console.log("Fetch operation timed out");
+          setIsFileFetching(false);
+        }, 15000); // 15 seconds timeout
+
+        const response = await axios.get(
+          `${
+            import.meta.env.VITE_API
+          }/getFilesAndFoldersByPath/${currentTeamId}?path=${encodeURIComponent(
+            path
+          )}`
+        );
+
+        // Clear timeout since request completed
+        clearTimeout(timeoutId);
+
+        console.log("Files and folders:", response.data);
+        const sortedFiles = response.data.files.sort((a, b) => {
+          if (a.type === "folder" && b.type === "file") return -1;
+          if (a.type === "file" && b.type === "folder") return 1;
+          return a.name.localeCompare(b.name);
+        });
+
+        setFolders(sortedFiles.filter((file) => file.type === "folder"));
+        setFiles(sortedFiles.filter((file) => file.type === "file"));
         setIsFileFetching(false);
-      }, 15000); // 15 seconds timeout
-      
-      const response = await axios.get(
-        `${
-          import.meta.env.VITE_API
-        }/getFilesAndFoldersByPath/${currentTeamId}?path=${encodeURIComponent(
-          path
-        )}`
-      );
-      
-      // Clear timeout since request completed
-      clearTimeout(timeoutId);
-
-      console.log("Files and folders:", response.data);
-      const sortedFiles = response.data.files.sort((a, b) => {
-        if (a.type === "folder" && b.type === "file") return -1;
-        if (a.type === "file" && b.type === "folder") return 1;
-        return a.name.localeCompare(b.name);
-      });
-
-      setFolders(sortedFiles.filter((file) => file.type === "folder"));
-      setFiles(sortedFiles.filter((file) => file.type === "file"));
-      setIsFileFetching(false);
-    } catch (error) {
-      console.error("Error fetching files and folders:", error);
-      // Important: Make sure we exit loading state even on error
-      setIsFileFetching(false);
-      errMsg("Failed to load files. Please try again.");
-    }
-  }, [currentTeamId]); // Add currentTeamId as a dependency
+      } catch (error) {
+        console.error("Error fetching files and folders:", error);
+        // Important: Make sure we exit loading state even on error
+        setIsFileFetching(false);
+        errMsg("Failed to load files. Please try again.");
+      }
+    },
+    [currentTeamId]
+  ); // Add currentTeamId as a dependency
 
   const toggleShowStorage = () => {
     setShowStorage((prev) => !prev);
@@ -307,100 +311,109 @@ const FileUpload = () => {
   );
 
   // Add new function for file editing
-  const handleFileEdit = useCallback(async (file) => {
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API}/getPublicLink`,
-        {
-          params: { 
-            filePath: file.url,
-            permissions: 3 // Request write permissions (3 = read + write)
-          },
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      
-      if (response.data.publicUrl) {
-        // Open the URL in a new tab
-        window.open(response.data.publicUrl, "_blank");
-        
-        // Record the edit activity in file history
-        try {
-          await axios.post(
-            `${import.meta.env.VITE_API}/recordActivity/${file._id}`,
-            { 
-              action: 'edited',
-              details: { comment: `File opened for editing` }
+  const handleFileEdit = useCallback(
+    async (file) => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_API}/getPublicLink`,
+          {
+            params: {
+              filePath: file.url,
+              permissions: 3, // Request write permissions (3 = read + write)
             },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.data.publicUrl) {
+          // Open the URL in a new tab
+          window.open(response.data.publicUrl, "_blank");
+
+          // Record the edit activity in file history
+          try {
+            await axios.post(
+              `${import.meta.env.VITE_API}/recordActivity/${file._id}`,
+              {
+                action: "edited",
+                details: { comment: `File opened for editing` },
               },
-            }
-          );
-          
-          // Refresh after a short delay to show updated history
-          setTimeout(() => setRefresh(prev => !prev), 1500);
-        } catch (historyError) {
-          console.error("Failed to record edit activity:", historyError);
-          // Don't block the edit flow if history recording fails
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+
+            // Refresh after a short delay to show updated history
+            setTimeout(() => setRefresh((prev) => !prev), 1500);
+          } catch (historyError) {
+            console.error("Failed to record edit activity:", historyError);
+            // Don't block the edit flow if history recording fails
+          }
+        } else {
+          errMsg("Failed to generate edit link");
         }
-      } else {
-        errMsg("Failed to generate edit link");
+      } catch (error) {
+        console.error("Edit error:", error);
+        errMsg("Error opening file for editing");
       }
-    } catch (error) {
-      console.error("Edit error:", error);
-      errMsg("Error opening file for editing");
-    }
-  }, [token, setRefresh]);
+    },
+    [token, setRefresh]
+  );
 
   const getTimeFeedback = useCallback(
     (createdAt) => moment(createdAt).fromNow(),
     []
   );
 
-  const handleDelete = useCallback(async (fileId, fileName, type) => {
-    Swal.fire({
-      title: `Move this ${type === "folder" ? "Folder" : "File"} to Trash?`,
-      text: `Are you sure you want to move "${fileName}" to trash?`,
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, move it!",
-      cancelButtonText: "Cancel",
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        try {
-          await axios.delete(
-            `${import.meta.env.VITE_API}/soft-delete/${fileId}`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          succesMsg(
-            `${
-              type === "folder" ? "Folder" : "File"
-            } moved to trash successfully!`
-          );
-          
-          // Force refresh of data
-          setTimeout(() => {
-            setRefresh(prev => !prev);
-            fetchFilesAndFolders(currentPath); // Explicitly call fetch again
-          }, 300);
-        } catch (error) {
-          console.error("Delete error:", error);
-          errMsg(
-            `Failed to move ${type === "folder" ? "folder" : "file"} to trash!`
-          );
+  const handleDelete = useCallback(
+    async (fileId, fileName, type) => {
+      Swal.fire({
+        title: `Move this ${type === "folder" ? "Folder" : "File"} to Trash?`,
+        text: `Are you sure you want to move "${fileName}" to trash?`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, move it!",
+        cancelButtonText: "Cancel",
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+      }).then(async (result) => {
+        if (result.isConfirmed) {
+          try {
+            await axios.delete(
+              `${import.meta.env.VITE_API}/soft-delete/${fileId}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+            succesMsg(
+              `${
+                type === "folder" ? "Folder" : "File"
+              } moved to trash successfully!`
+            );
+
+            // Force refresh of data
+            setTimeout(() => {
+              setRefresh((prev) => !prev);
+              fetchFilesAndFolders(currentPath); // Explicitly call fetch again
+            }, 300);
+          } catch (error) {
+            console.error("Delete error:", error);
+            errMsg(
+              `Failed to move ${
+                type === "folder" ? "folder" : "file"
+              } to trash!`
+            );
+          }
         }
-      }
-    });
-  }, [token, fetchFilesAndFolders, currentPath]);
+      });
+    },
+    [token, fetchFilesAndFolders, currentPath]
+  );
 
   const toggleSelection = useCallback((id) => {
     setSelectedItems((prevSelectedItems) =>
@@ -430,9 +443,10 @@ const FileUpload = () => {
         try {
           // Use Promise.all to wait for all deletions to complete
           await Promise.all(
-            selectedItems.map(itemId => 
+            selectedItems.map((itemId) =>
               axios.delete(
-                `${import.meta.env.VITE_API}/soft-delete/${itemId}`, {
+                `${import.meta.env.VITE_API}/soft-delete/${itemId}`,
+                {
                   headers: {
                     Authorization: `Bearer ${token}`,
                   },
@@ -440,9 +454,9 @@ const FileUpload = () => {
               )
             )
           );
-          
+
           succesMsg("Selected items moved to trash successfully!");
-          setRefresh(prev => !prev); // Now refresh will work after all operations complete
+          setRefresh((prev) => !prev); // Now refresh will work after all operations complete
           setSelectedItems([]); // Clear selected items
         } catch (error) {
           console.error("Delete error:", error);
@@ -452,70 +466,93 @@ const FileUpload = () => {
     });
   }, [selectedItems, token]);
 
-  const [sortField, setSortField] = useState('name');
-  const [sortDirection, setSortDirection] = useState('asc');
-  
-  const handleSort = useCallback((field) => {
-    if (sortField === field) {
-      // Toggle direction if clicking the same field
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      // Default to ascending when changing sort field
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  }, [sortField, sortDirection]);
+  const [sortField, setSortField] = useState("name");
+  const [sortDirection, setSortDirection] = useState("asc");
+
+  const handleSort = useCallback(
+    (field) => {
+      if (sortField === field) {
+        // Toggle direction if clicking the same field
+        setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+      } else {
+        // Default to ascending when changing sort field
+        setSortField(field);
+        setSortDirection("asc");
+      }
+    },
+    [sortField, sortDirection]
+  );
 
   // Update the sortedFolders and sortedFiles to use our sorting logic
   const sortedFolders = useMemo(() => {
-    const filtered = [...folders].filter(folder => 
-      searchTerm ? folder.name.toLowerCase().includes(searchTerm.toLowerCase()) : true
+    const filtered = [...folders].filter((folder) =>
+      searchTerm
+        ? folder.name.toLowerCase().includes(searchTerm.toLowerCase())
+        : true
     );
-    
+
     const sorted = filtered;
-    if (sortField === 'name') {
+    if (sortField === "name") {
       sorted.sort((a, b) => {
         const comparison = a.name.localeCompare(b.name);
-        return sortDirection === 'asc' ? comparison : -comparison;
+        return sortDirection === "asc" ? comparison : -comparison;
       });
-    } else if (sortField === 'size') {
+    } else if (sortField === "size") {
       sorted.sort((a, b) => {
         const comparison = a.size - b.size;
-        return sortDirection === 'asc' ? comparison : -comparison;
+        return sortDirection === "asc" ? comparison : -comparison;
       });
-    } else if (sortField === 'date') {
+    } else if (sortField === "date") {
       sorted.sort((a, b) => {
-        const dateA = new Date(a.history?.length ? a.history[a.history.length-1].timestamp : a.createdAt);
-        const dateB = new Date(b.history?.length ? b.history[b.history.length-1].timestamp : b.createdAt);
+        const dateA = new Date(
+          a.history?.length
+            ? a.history[a.history.length - 1].timestamp
+            : a.createdAt
+        );
+        const dateB = new Date(
+          b.history?.length
+            ? b.history[b.history.length - 1].timestamp
+            : b.createdAt
+        );
         const comparison = dateA - dateB;
-        return sortDirection === 'asc' ? comparison : -comparison;
+        return sortDirection === "asc" ? comparison : -comparison;
       });
     }
     return sorted;
   }, [folders, sortField, sortDirection, searchTerm]);
 
   const sortedFiles = useMemo(() => {
-    const filtered = [...files].filter(file =>
-      searchTerm ? file.name.toLowerCase().includes(searchTerm.toLowerCase()) : true
+    const filtered = [...files].filter((file) =>
+      searchTerm
+        ? file.name.toLowerCase().includes(searchTerm.toLowerCase())
+        : true
     );
-    
+
     const sorted = filtered;
-    if (sortField === 'name') {
+    if (sortField === "name") {
       sorted.sort((a, b) => {
         const comparison = a.name.localeCompare(b.name);
-        return sortDirection === 'asc' ? comparison : -comparison;
+        return sortDirection === "asc" ? comparison : -comparison;
       });
-    } else if (sortField === 'size') {
+    } else if (sortField === "size") {
       sorted.sort((a, b) => {
         const comparison = a.size - b.size;
-        return sortDirection === 'asc' ? comparison : -comparison;
+        return sortDirection === "asc" ? comparison : -comparison;
       });
-    } else if (sortField === 'date') {
+    } else if (sortField === "date") {
       sorted.sort((a, b) => {
-        const dateA = new Date(a.history?.length ? a.history[a.history.length-1].timestamp : a.createdAt);
-        const dateB = new Date(b.history?.length ? b.history[b.history.length-1].timestamp : b.createdAt);
+        const dateA = new Date(
+          a.history?.length
+            ? a.history[a.history.length - 1].timestamp
+            : a.createdAt
+        );
+        const dateB = new Date(
+          b.history?.length
+            ? b.history[b.history.length - 1].timestamp
+            : b.createdAt
+        );
         const comparison = dateA - dateB;
-        return sortDirection === 'asc' ? comparison : -comparison;
+        return sortDirection === "asc" ? comparison : -comparison;
       });
     }
     return sorted;
@@ -536,7 +573,7 @@ const FileUpload = () => {
   const handleDownload = async (filePath, isFolder) => {
     try {
       const response = await axios.get(
-        `${import.meta.env.VITE_API}/downloadFileOrFolder`, 
+        `${import.meta.env.VITE_API}/downloadFileOrFolder`,
         {
           params: { filePath, isFolder },
           headers: { Authorization: `Bearer ${token}` },
@@ -556,14 +593,21 @@ const FileUpload = () => {
 
   // Add this helper function to format history action text
   const formatHistoryAction = useCallback((action) => {
-    switch(action) {
-      case 'created': return 'Created';
-      case 'renamed': return 'Renamed';
-      case 'moved': return 'Moved';
-      case 'deleted': return 'Moved to trash';
-      case 'edited': return 'Edited';
-      case 'restored': return 'Restored';
-      default: return action;
+    switch (action) {
+      case "created":
+        return "Created";
+      case "renamed":
+        return "Renamed";
+      case "moved":
+        return "Moved";
+      case "deleted":
+        return "Moved to trash";
+      case "edited":
+        return "Edited";
+      case "restored":
+        return "Restored";
+      default:
+        return action;
     }
   }, []);
 
@@ -579,33 +623,125 @@ const FileUpload = () => {
     // Initial data fetch when component mounts or when path/team/refresh changes
     if (currentPath && currentTeamId) {
       fetchFilesAndFolders(currentPath);
-      
+
       // Also fetch folder size if we're in a folder
       try {
-        axios.get(
-          `${import.meta.env.VITE_API}/getFolderSize/?path=${encodeURIComponent(
-            currentTeamId
-          )}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        ).then(response => {
-          if (response.data && response.data.size !== undefined) {
-            setFolderConsume(response.data.size);
-          }
-        }).catch(error => {
-          console.error("Error fetching folder size:", error);
-          // Don't block UI on folder size fetch errors
-          setIsFileFetching(false);
-        });
+        axios
+          .get(
+            `${
+              import.meta.env.VITE_API
+            }/getFolderSize/?path=${encodeURIComponent(currentTeamId)}`,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          )
+          .then((response) => {
+            if (response.data && response.data.size !== undefined) {
+              setFolderConsume(response.data.size);
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching folder size:", error);
+            // Don't block UI on folder size fetch errors
+            setIsFileFetching(false);
+          });
       } catch (error) {
         console.error("Error setting up folder size fetch:", error);
         setIsFileFetching(false);
       }
     }
   }, [currentPath, currentTeamId, token, fetchFilesAndFolders, refresh]); // Add refresh as dependency
+
+  const [rootFolderHistory, setRootFolderHistory] = useState(null);
+  const [rootFolderLoading, setRootFolderLoading] = useState(false);
+  const [showRootHistory, setShowRootHistory] = useState(false);
+
+  // New function to fetch root folder history
+  const fetchRootFolderHistory = useCallback(async () => {
+    if (!currentTeamId) return;
+
+    try {
+      setRootFolderLoading(true);
+
+      // Fetch the root folder document which contains history
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_API
+        }/getFilesAndFoldersByPath/${currentTeamId}?path=`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Find the root folder in the response (name matches teamId)
+      const rootFolder = response.data.files.find(
+        (file) => file.type === "folder" && file.name === currentTeamId
+      );
+
+      console.log("Reponse of history", rootFolder);
+      if (rootFolder && rootFolder.history) {
+        setRootFolderHistory(rootFolder.history);
+      }
+    } catch (error) {
+      console.error("Error fetching root folder history:", error);
+    } finally {
+      setRootFolderLoading(false);
+    }
+  }, [currentTeamId, token]);
+
+  // Call the function when teamId changes or component refreshes
+  useEffect(() => {
+    if (currentTeamId) {
+      fetchRootFolderHistory();
+    }
+  }, [currentTeamId, refresh, fetchRootFolderHistory]);
+
+  const [rootFolderFetching, setRootFolderFetching] = useState(false);
+
+  // Add a function to fetch the root folder ID
+  const fetchRootFolderId = useCallback(async () => {
+    if (!currentTeamId) return;
+
+    try {
+      setRootFolderFetching(true);
+      console.log("Fetching root folder ID for team:", currentTeamId);
+
+      const response = await axios.get(
+        `${import.meta.env.VITE_API}/getTeamRootFolder/${currentTeamId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data.success && response.data.rootFolder) {
+        console.log("Found root folder ID:", response.data.rootFolder._id);
+        setCurrentFolderId(response.data.rootFolder._id);
+      } else {
+        console.log("Root folder not found for team, setting empty ID");
+        setCurrentFolderId("");
+      }
+    } catch (error) {
+      console.error("Error fetching root folder ID:", error);
+      setCurrentFolderId("");
+    } finally {
+      setRootFolderFetching(false);
+    }
+  }, [currentTeamId, token]);
+
+  // Update the useEffect to fetch the root folder ID when team changes
+  useEffect(() => {
+    if (currentTeamId) {
+      setPathHistory([]);
+      setCurrentPath(currentTeamId);
+      fetchRootFolderId(); // Fetch the root folder ID
+    }
+  }, [currentTeamId, fetchRootFolderId]);
 
   return (
     <div className="file-sharing">
@@ -620,7 +756,8 @@ const FileUpload = () => {
                 <div className="refresh" onClick={() => setRefresh(!refresh)}>
                   <i className="fa-solid fa-rotate-right"></i>
                 </div>
-                <button 
+                {/* Keep existing code for buttons */}
+                <button
                   className="main-button"
                   onClick={() => setShowFileButtons(!showFileButtons)}
                 >
@@ -631,6 +768,31 @@ const FileUpload = () => {
                   className="fa-solid fa-box-archive archive-button"
                   onClick={handleArchiveModalOpen}
                 ></i>
+                {/* Team history button - updated to use modal */}
+                <div className="team-history-button">
+                      <i
+                        className="fa-solid fa-clock-rotate-left history-icon"
+                        title="Team folder history"
+                        onClick={() => {
+                          // Create a team folder history item to pass to the modal
+                          const teamHistoryItem = {
+                            _id: currentTeamId,
+                            name: "Team Activity",
+                            type: "folder",
+                            history: rootFolderHistory || [],
+                            createdAt:
+                              rootFolderHistory && rootFolderHistory.length > 0
+                                ? rootFolderHistory.find(
+                                    (h) => h.action === "created"
+                                  )?.timestamp
+                                : new Date(),
+                            owner: user,
+                          };
+                          setSelectedItemForHistory(teamHistoryItem);
+                          setShowHistoryModal(true);
+                        }}
+                      ></i>
+                    </div>
                 <i
                   className="fa-solid fa-bars show-storage"
                   onClick={toggleShowStorage}
@@ -652,7 +814,11 @@ const FileUpload = () => {
                       setLastUploadStatus={setLastUploadStatus}
                       setLastUploadSummary={setLastUploadSummary}
                     />
-                    <button onClick={viewLatestUploads} className="view-latest-uploads">
+                    
+                    <button
+                      onClick={viewLatestUploads}
+                      className="view-latest-uploads"
+                    >
                       <i className="fa-solid fa-list-check"></i>
                       <span>Recent Uploads</span>
                     </button>
@@ -666,7 +832,7 @@ const FileUpload = () => {
                 <div className="branch"></div>
                 <div className="path">
                   <div className="current-path">
-                    {currentPath.replace(currentTeamId, "")} {" "}/
+                    {currentPath.replace(currentTeamId, "")} /
                   </div>
                   <div className="back" onClick={navigateBack}>
                     <i className="fa-solid fa-arrow-left"></i> Back
@@ -689,6 +855,31 @@ const FileUpload = () => {
                     className="fa-solid fa-box-archive archive-button"
                     onClick={handleArchiveModalOpen}
                   ></i>
+                                  {/* Team history button - updated to use modal */}
+                <div className="team-history-button">
+                      <i
+                        className="fa-solid fa-clock-rotate-left history-icon"
+                        title="Team folder history"
+                        onClick={() => {
+                          // Create a team folder history item to pass to the modal
+                          const teamHistoryItem = {
+                            _id: currentTeamId,
+                            name: "Team Activity",
+                            type: "folder",
+                            history: rootFolderHistory || [],
+                            createdAt:
+                              rootFolderHistory && rootFolderHistory.length > 0
+                                ? rootFolderHistory.find(
+                                    (h) => h.action === "created"
+                                  )?.timestamp
+                                : new Date(),
+                            owner: user,
+                          };
+                          setSelectedItemForHistory(teamHistoryItem);
+                          setShowHistoryModal(true);
+                        }}
+                      ></i>
+                    </div>
                   <i
                     className="fa-solid fa-bars show-storage"
                     onClick={toggleShowStorage}
@@ -707,8 +898,8 @@ const FileUpload = () => {
                         parentFolder={currentFolderId}
                         setProgress={setProgress}
                         availableUploadSize={availableUploadSize}
-                        setLastUploadStatus={setLastUploadStatus}  // Add this prop
-                        setLastUploadSummary={setLastUploadSummary}  // Add this prop
+                        setLastUploadStatus={setLastUploadStatus}
+                        setLastUploadSummary={setLastUploadSummary}
                       />
                       <UploadFolder
                         currentPath={currentPath}
@@ -716,10 +907,14 @@ const FileUpload = () => {
                         parentFolder={currentFolderId}
                         setProgress={setProgress}
                         availableUploadSize={availableUploadSize}
-                        setLastUploadStatus={setLastUploadStatus}  // Add this prop
-                        setLastUploadSummary={setLastUploadSummary}  // Add this prop
+                        setLastUploadStatus={setLastUploadStatus}
+                        setLastUploadSummary={setLastUploadSummary}
                       />
-                      <button onClick={viewLatestUploads} className="view-latest-uploads">
+
+                      <button
+                        onClick={viewLatestUploads}
+                        className="view-latest-uploads"
+                      >
                         <i className="fa-solid fa-list-check"></i>
                         <span>Recent Uploads</span>
                       </button>
@@ -732,20 +927,23 @@ const FileUpload = () => {
         </div>
         <div className={`fs-content ${showStorage ? "half-border" : ""}`}>
           <div className="search-container mb-3">
-            <div className="input-group" style={{backgroundColor: "transparent"}}>
-              <input 
-                type="text" 
-                className="form-control search-input" 
-                placeholder="Search files and folders..." 
+            <div
+              className="input-group"
+              style={{ backgroundColor: "transparent" }}
+            >
+              <input
+                type="text"
+                className="form-control search-input"
+                placeholder="Search files and folders..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                style={{backgroundColor: "transparent"}}
+                style={{ backgroundColor: "transparent" }}
               />
               {searchTerm && (
-                <button 
-                  className="btn btn-outline-secondary" 
+                <button
+                  className="btn btn-outline-secondary"
                   type="button"
-                  onClick={() => setSearchTerm('')}
+                  onClick={() => setSearchTerm("")}
                 >
                   <i className="fa-solid fa-xmark"></i>
                 </button>
@@ -753,27 +951,44 @@ const FileUpload = () => {
             </div>
           </div>
           <div className="fs-content-header">
-            <div className="name sortable" onClick={() => handleSort('name')}>
+            <div className="name sortable" onClick={() => handleSort("name")}>
               Name
-              {sortField === 'name' && (
-                <i className={`fa-solid fa-sort-${sortDirection === 'asc' ? 'up' : 'down'} ms-1`}></i>
+              {sortField === "name" && (
+                <i
+                  className={`fa-solid fa-sort-${
+                    sortDirection === "asc" ? "up" : "down"
+                  } ms-1`}
+                ></i>
               )}
             </div>
-            <div className="filesize sortable" onClick={() => handleSort('size')}>
+            <div
+              className="filesize sortable"
+              onClick={() => handleSort("size")}
+            >
               Size
-              {sortField === 'size' && (
-                <i className={`fa-solid fa-sort-${sortDirection === 'asc' ? 'up' : 'down'} ms-1`}></i>
+              {sortField === "size" && (
+                <i
+                  className={`fa-solid fa-sort-${
+                    sortDirection === "asc" ? "up" : "down"
+                  } ms-1`}
+                ></i>
               )}
             </div>
-            <div className="modification-delete sortable" onClick={() => handleSort('date')}>
+            <div
+              className="modification-delete sortable"
+              onClick={() => handleSort("date")}
+            >
               Date
-              {sortField === 'date' && (
-                <i className={`fa-solid fa-sort-${sortDirection === 'asc' ? 'up' : 'down'} ms-1`}></i>
+              {sortField === "date" && (
+                <i
+                  className={`fa-solid fa-sort-${
+                    sortDirection === "asc" ? "up" : "down"
+                  } ms-1`}
+                ></i>
               )}
             </div>
             <div className="action">
-              {
-                selectedItems.length > 0 && (
+              {selectedItems.length > 0 && (
                 <button
                   className="bulk-delete-button"
                   onClick={handleDeleteSelected}
@@ -782,8 +997,7 @@ const FileUpload = () => {
                   <i className="fa-solid fa-trash"></i>
                   <span>Delete</span>
                 </button>
-                )
-              }
+              )}
             </div>
           </div>
           {isFileFetching ? (
@@ -818,10 +1032,18 @@ const FileUpload = () => {
                       {folder.history && folder.history.length > 0 ? (
                         <>
                           <div className="last-action">
-                            {formatHistoryAction(folder.history[folder.history.length-1].action)} {" "}
-                            {getTimeFeedback(folder.history[folder.history.length-1].timestamp)} by{" "}
-                            {folder.history[folder.history.length-1].performedBy?.firstName || ""} {" "}
-                            {folder.history[folder.history.length-1].performedBy?.lastName || ""}
+                            {formatHistoryAction(
+                              folder.history[folder.history.length - 1].action
+                            )}{" "}
+                            {getTimeFeedback(
+                              folder.history[folder.history.length - 1]
+                                .timestamp
+                            )}{" "}
+                            by{" "}
+                            {folder.history[folder.history.length - 1]
+                              .performedBy?.firstName || ""}{" "}
+                            {folder.history[folder.history.length - 1]
+                              .performedBy?.lastName || ""}
                           </div>
                         </>
                       ) : (
@@ -913,10 +1135,17 @@ const FileUpload = () => {
                       {file.history && file.history.length > 0 ? (
                         <>
                           <div className="last-action">
-                            {formatHistoryAction(file.history[file.history.length-1].action)} {" "}
-                            {getTimeFeedback(file.history[file.history.length-1].timestamp)} by{" "}
-                            {file.history[file.history.length-1].performedBy?.firstName || ""} {" "}
-                            {file.history[file.history.length-1].performedBy?.lastName || ""}
+                            {formatHistoryAction(
+                              file.history[file.history.length - 1].action
+                            )}{" "}
+                            {getTimeFeedback(
+                              file.history[file.history.length - 1].timestamp
+                            )}{" "}
+                            by{" "}
+                            {file.history[file.history.length - 1].performedBy
+                              ?.firstName || ""}{" "}
+                            {file.history[file.history.length - 1].performedBy
+                              ?.lastName || ""}
                           </div>
                         </>
                       ) : (
@@ -936,7 +1165,10 @@ const FileUpload = () => {
                       ></i>
                       {showMenu && fileSelected === file._id && (
                         <div className="menu-options">
-                          <div className="view option" onClick={() => handleFileClick(file.url)}>
+                          <div
+                            className="view option"
+                            onClick={() => handleFileClick(file.url)}
+                          >
                             <i className="fa-solid fa-eye"></i>
                             <span>View</span>
                           </div>
@@ -954,8 +1186,8 @@ const FileUpload = () => {
                             <i className="fa-solid fa-pencil"></i>
                             <span>Rename</span>
                           </div>
-                          <div 
-                            className="edit option" 
+                          <div
+                            className="edit option"
                             onClick={() => handleFileEdit(file)}
                           >
                             <i className="fa-solid fa-pen-to-square"></i>{" "}
@@ -1006,7 +1238,7 @@ const FileUpload = () => {
                   {progress === 100 ? "Finishing" : "Uploading"}
                 </span>
               </div>
-              <button 
+              <button
                 className="view-status-btn"
                 onClick={() => setShowUploadStatusModal(true)}
               >
@@ -1016,7 +1248,7 @@ const FileUpload = () => {
             </>
           )}
           {progress === 0 && Object.keys(lastUploadStatus).length > 0 && (
-            <button 
+            <button
               className="view-status-btn last-upload"
               onClick={() => setShowUploadStatusModal(true)}
             >
@@ -1066,13 +1298,17 @@ const FileUpload = () => {
         setRefresh={setRefresh}
       />
       {/* File History Modal */}
-      <FileHistoryModal 
-        isOpen={showHistoryModal} 
-        onClose={handleHistoryModalClose} 
-        item={selectedItemForHistory} 
+      <FileHistoryModal
+        isOpen={showHistoryModal}
+        onClose={handleHistoryModalClose}
+        item={selectedItemForHistory}
       />
       {/* Rename Modal */}
-      <Modal show={showRenameModal} onHide={handleRenameModalClose} className="rename-modal">
+      <Modal
+        show={showRenameModal}
+        onHide={handleRenameModalClose}
+        className="rename-modal"
+      >
         <Modal.Header closeButton>
           <Modal.Title>Rename</Modal.Title>
         </Modal.Header>
@@ -1104,10 +1340,110 @@ const FileUpload = () => {
         uploadStatus={lastUploadStatus}
         summary={lastUploadSummary}
       />
+      <style jsx>{`
+        .team-history-button {
+          position: relative;
+        }
+
+        .history-icon {
+          cursor: pointer;
+          padding: 5px;
+          color: #555;
+          transition: color 0.3s;
+        }
+
+        .history-icon:hover {
+          color: #007bff;
+        }
+
+        .history-dropdown {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          width: 320px;
+          background-color: #fff;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          z-index: 100;
+          max-height: 400px;
+          overflow-y: auto;
+        }
+
+        .history-header {
+          padding: 8px 12px;
+          font-weight: bold;
+          border-bottom: 1px solid #eee;
+          background-color: #f8f9fa;
+        }
+
+        .history-items {
+          padding: 8px 0;
+        }
+
+        .history-item {
+          padding: 8px 12px;
+          border-bottom: 1px solid #f0f0f0;
+        }
+
+        .history-item:last-child {
+          border-bottom: none;
+        }
+
+        .history-action {
+          font-weight: 500;
+          color: #007bff;
+          font-size: 0.9rem;
+        }
+
+        .history-details {
+          margin: 4px 0;
+          font-size: 0.85rem;
+          color: #333;
+        }
+
+        .history-time,
+        .history-user {
+          font-size: 0.75rem;
+          color: #777;
+        }
+
+        .view-all-history {
+          text-align: center;
+          padding: 6px;
+          background-color: #f8f9fa;
+          cursor: pointer;
+          color: #007bff;
+          font-size: 0.8rem;
+        }
+
+        .view-all-history:hover {
+          background-color: #e9ecef;
+        }
+
+        .history-loader {
+          display: inline-block;
+          width: 14px;
+          height: 14px;
+          border: 2px solid rgba(0, 0, 0, 0.1);
+          border-top: 2px solid #007bff;
+          border-radius: 50%;
+          margin-left: 5px;
+          vertical-align: middle;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% {
+            transform: rotate(0deg);
+          }
+          100% {
+            transform: rotate(360deg);
+          }
+        }
+      `}</style>
     </div>
   );
 };
-
-
 
 export default FileUpload;

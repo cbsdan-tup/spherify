@@ -305,6 +305,7 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
+  color: var(--header-text-color)
 }
 
 .assigned-members {

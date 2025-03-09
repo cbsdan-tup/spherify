@@ -82,10 +82,28 @@ exports.createFileOrFolder = async (req, res) => {
         await folderRecord.addHistory('created', createdBy, {
           comment: `Folder "${name}" created`
         });
+        
+        // Update ancestor folders about this new folder creation
+        // This is useful to track when subfolders are added to parent folders
+        if (folderRecord.parentFolder) {
+          await File.updateAncestorFoldersHistory(
+            folderRecord._id,
+            createdBy,
+            'created',
+            {
+              comment: `Folder "${name}" was created in this folder`,
+              itemName: name,
+              itemType: 'folder'
+            }
+          );
+        }
       }
     }
 
     if (req.files && req.files.length > 0) {
+      // Track file IDs for batch ancestor update
+      let uploadedFileIds = [];
+      
       for (const file of req.files) {
         const filePath = file.path;
         const fileName = file.originalname;
@@ -130,11 +148,32 @@ exports.createFileOrFolder = async (req, res) => {
         }
         
         uploadedFiles.push(fileRecord);
+        uploadedFileIds.push(fileRecord._id);
+      }
+      
+      // Update ancestors only once for all files in the batch
+      if (uploadedFileIds.length > 0 && createdBy) {
+        await File.batchUpdateAncestorFoldersHistory(
+          uploadedFileIds, 
+          createdBy, 
+          'created',
+          { comment: `${uploadedFileIds.length} file(s) were uploaded` }
+        );
       }
     } else {
-      return res
-        .status(400)
-        .json({ success: false, error: "No file uploaded" });
+      // If we're only creating a folder (no files uploaded),
+      // and we successfully created the folder, return success
+      if (folderRecord) {
+        return res.status(201).json({
+          success: true,
+          message: `Folder created successfully`,
+          folder: folderRecord,
+        });
+      } else {
+        return res
+          .status(400)
+          .json({ success: false, error: "No file uploaded" });
+      }
     }
 
     res.write(
@@ -217,44 +256,64 @@ exports.uploadFolders = async (req, res) => {
         teamId,
         type: "folder",
         name: rootFolderName,
-        url: new RegExp(`${BASE_URL}/${uploadPath}/${rootFolderName}$`, 'i')
+        url: new RegExp(`${BASE_URL}/${uploadPath}/${rootFolderName}$`, 'i'),
+        isDeleted: false
       });
       
       if (existingFolder) {
         rootFolderId = existingFolder._id;
         uploadedFolders.set(rootFolderPath, existingFolder);
-      }
-    } catch (err) {
-      if (err.status === 404) {
-        console.log("Creating root folder:", rootFolderPath);
-        await webdavClient.createDirectory(rootFolderPath);
         
-        // Save root folder to database
-        const rootFolder = new File({
-          teamId,
-          type: "folder",
-          name: rootFolderName,
-          url: `${BASE_URL}/${rootFolderPath}`,
-          createdBy,
-          owner,
-          parentFolder: mongoose.Types.ObjectId.isValid(parentFolder)
-            ? parentFolder
-            : null,
-        });
-        const savedRootFolder = await rootFolder.save();
-        
-        // Add history entry for root folder creation
+        // Add history entry for folder update if it exists
         if (createdBy) {
-          await savedRootFolder.addHistory('created', createdBy, {
-            comment: `Root folder "${rootFolderName}" created during folder upload`
+          await existingFolder.addHistory('edited', createdBy, {
+            comment: `Root folder "${rootFolderName}" updated during folder upload`
           });
         }
         
-        rootFolderId = savedRootFolder._id;
-        uploadedFolders.set(rootFolderPath, savedRootFolder);
-      } else {
+        console.log(`Using existing root folder: ${rootFolderName} (${rootFolderId})`);
+      }
+    } catch (err) {
+      if (err.status !== 404) {
         throw err;
       }
+    }
+    
+    // If we didn't find an existing root folder, create a new one
+    if (!rootFolderId) {
+      console.log("Creating root folder:", rootFolderPath);
+      try {
+        await webdavClient.createDirectory(rootFolderPath);
+      } catch (err) {
+        // Ignore if folder already exists
+        if (err.status !== 405 && err.status !== 409) {
+          throw err;
+        }
+      }
+      
+      // Save root folder to database
+      const rootFolder = new File({
+        teamId,
+        type: "folder",
+        name: rootFolderName,
+        url: `${BASE_URL}/${rootFolderPath}`,
+        createdBy,
+        owner,
+        parentFolder: mongoose.Types.ObjectId.isValid(parentFolder)
+          ? parentFolder
+          : null,
+      });
+      const savedRootFolder = await rootFolder.save();
+      
+      // Add history entry for root folder creation
+      if (createdBy) {
+        await savedRootFolder.addHistory('created', createdBy, {
+          comment: `Root folder "${rootFolderName}" created during folder upload`
+        });
+      }
+      
+      rootFolderId = savedRootFolder._id;
+      uploadedFolders.set(rootFolderPath, savedRootFolder);
     }
 
     // Function to create parent directories recursively with proper parent-child relationships
@@ -279,13 +338,13 @@ exports.uploadFolders = async (req, res) => {
           continue;
         }
         
-        // Create folder if it doesn't exist
+        // Create folder if it doesn't exist in Nextcloud
         try {
           await webdavClient.stat(currentPath);
-          console.log(`Folder exists: ${currentPath}`);
+          console.log(`Folder exists in Nextcloud: ${currentPath}`);
         } catch (err) {
           if (err.status === 404) {
-            console.log(`Creating missing folder: ${currentPath}`);
+            console.log(`Creating missing folder in Nextcloud: ${currentPath}`);
             await webdavClient.createDirectory(currentPath);
           } else {
             console.error(`Error checking folder ${currentPath}:`, err);
@@ -293,24 +352,61 @@ exports.uploadFolders = async (req, res) => {
           }
         }
         
-        // Save folder to database
-        const folderRecord = new File({
+        // Check if folder exists in database with same name and parent
+        const existingFolder = await File.findOne({
           teamId,
           type: "folder",
           name: segment,
-          url: `${BASE_URL}/${currentPath}`,
-          createdBy,
-          owner,
-          parentFolder: parentId
+          parentFolder: parentId,
+          isDeleted: false
         });
         
-        const savedFolder = await folderRecord.save();
+        let savedFolder;
         
-        // Add history entry for folder creation
-        if (createdBy) {
-          await savedFolder.addHistory('created', createdBy, {
-            comment: `Folder "${segment}" created as part of folder structure upload`
+        if (existingFolder) {
+          console.log(`Folder "${segment}" already exists in database. Updating record.`);
+          
+          // Store previous URL for history
+          const previousUrl = existingFolder.url;
+          
+          // Update the folder record if the URL has changed
+          if (existingFolder.url !== `${BASE_URL}/${currentPath}`) {
+            existingFolder.url = `${BASE_URL}/${currentPath}`;
+            existingFolder.updatedAt = new Date();
+            
+            savedFolder = await existingFolder.save();
+            
+            // Add history entry for folder update
+            if (createdBy) {
+              await savedFolder.addHistory('edited', createdBy, {
+                comment: `Folder "${segment}" updated during folder structure upload`,
+                previousPath: previousUrl,
+                newPath: savedFolder.url
+              });
+            }
+          } else {
+            savedFolder = existingFolder;
+          }
+        } else {
+          // Create new folder record
+          const folderRecord = new File({
+            teamId,
+            type: "folder",
+            name: segment,
+            url: `${BASE_URL}/${currentPath}`,
+            createdBy,
+            owner,
+            parentFolder: parentId
           });
+          
+          savedFolder = await folderRecord.save();
+          
+          // Add history entry for folder creation
+          if (createdBy) {
+            await savedFolder.addHistory('created', createdBy, {
+              comment: `Folder "${segment}" created as part of folder structure upload`
+            });
+          }
         }
         
         // Update parent ID for next iteration
@@ -389,6 +485,7 @@ exports.uploadFolders = async (req, res) => {
     console.log("Uploading files...");
     const totalFiles = req.files.length;
     let completedFiles = 0;
+    let uploadedFileIds = [];
     
     for (const file of req.files) {
       const filePath = file.path;
@@ -436,28 +533,67 @@ exports.uploadFolders = async (req, res) => {
       try {
         await retryUpload(fileStream, nextcloudPath, fileName);
         
-        // Save file to MongoDB
-        const newFile = new File({
+        // Check if file with same name already exists in the same folder
+        // FIXING: Extract the actual basename from the relative file path
+        const fileBaseName = path.basename(relativeFilePath);
+        const existingFile = await File.findOne({
           teamId,
           type: "file",
-          name: path.basename(fileName),
-          url: `${BASE_URL}/${nextcloudPath}`,
-          createdBy,
-          owner,
-          parentFolder: parentFolderId
+          name: fileBaseName,
+          parentFolder: parentFolderId,
+          isDeleted: false
         });
         
-        const savedFile = await newFile.save();
+        let savedFile;
         
-        // Add history entry for file creation
-        if (createdBy) {
-          await savedFile.addHistory('created', createdBy, {
-            comment: `File "${fileName}" uploaded as part of folder structure`,
-            path: relativeFilePath
+        if (existingFile) {
+          // Update existing file record
+          console.log(`File "${fileBaseName}" already exists. Updating existing record.`);
+          
+          // Store previous URL for history
+          const previousUrl = existingFile.url;
+          
+          // Update the file record
+          existingFile.url = `${BASE_URL}/${nextcloudPath}`;
+          existingFile.updatedAt = new Date();
+          existingFile.version = (existingFile.version || 1) + 1;
+          
+          savedFile = await existingFile.save();
+          
+          // Add history entry for file update
+          if (createdBy) {
+            await savedFile.addHistory('edited', createdBy, {
+              comment: `File "${fileBaseName}" updated with new version as part of folder upload`,
+              previousPath: previousUrl,
+              newPath: savedFile.url,
+              path: relativeFilePath
+            });
+          }
+        } else {
+          // Save file to MongoDB as new record
+          const newFile = new File({
+            teamId,
+            type: "file",
+            name: fileBaseName, // Use the extracted basename
+            url: `${BASE_URL}/${nextcloudPath}`,
+            createdBy,
+            owner,
+            parentFolder: parentFolderId
           });
+          
+          savedFile = await newFile.save();
+          
+          // Add history entry for file creation
+          if (createdBy) {
+            await savedFile.addHistory('created', createdBy, {
+              comment: `File "${fileBaseName}" uploaded as part of folder structure`,
+              path: relativeFilePath
+            });
+          }
         }
         
         uploadedFiles.push(savedFile);
+        uploadedFileIds.push(savedFile._id);
         completedFiles++;
         
         // Send completion event for this file
@@ -467,8 +603,10 @@ exports.uploadFolders = async (req, res) => {
           fileId: savedFile._id,
           status: 'complete',
           progress: '100',
-          message: `Successfully uploaded ${relativeFilePath}`,
-          completedAt: new Date().toISOString()
+          message: existingFile ? `Successfully updated ${relativeFilePath}` : `Successfully uploaded ${relativeFilePath}`,
+          completedAt: new Date().toISOString(),
+          isUpdate: !!existingFile,
+          version: savedFile.version || 1
         });
         
         // Clean up the temporary file
@@ -486,6 +624,16 @@ exports.uploadFolders = async (req, res) => {
         });
       }
     }
+    
+    // Batch update all ancestors at once after all files are processed
+    if (uploadedFileIds.length > 0 && createdBy) {
+      await File.batchUpdateAncestorFoldersHistory(
+        uploadedFileIds,
+        createdBy,
+        'created',
+        { comment: `${uploadedFileIds.length} file(s) were uploaded as part of folder structure` }
+      );
+    }
 
     // Send final summary
     const finalResponse = {
@@ -497,11 +645,16 @@ exports.uploadFolders = async (req, res) => {
       failedFiles: totalFiles - completedFiles,
       uploadedFolders: Array.from(uploadedFolders.values()).map(folder => ({
         _id: folder._id,
-        name: folder.name
+        name: folder.name,
+        url: folder.url,
+        isUpdate: folder.updatedAt > folder.createdAt
       })),
       uploadedFiles: uploadedFiles.map(file => ({
         _id: file._id,
-        name: file.name
+        name: file.name,
+        url: file.url,
+        version: file.version || 1,
+        isUpdate: file.updatedAt > file.createdAt
       }))
     };
     
@@ -567,6 +720,9 @@ exports.uploadFiles = async (req, res) => {
     // For streaming progress updates
     const totalFiles = req.files.length;
     let completedFiles = 0;
+    let uploadedFileIds = [];
+    let newFilesCount = 0;  // Track number of new files
+    let updatedFilesCount = 0;  // Track number of updated files
     
     // Process each file one by one to better track individual progress
     for (const file of req.files) {
@@ -606,28 +762,68 @@ exports.uploadFiles = async (req, res) => {
 
         fs.unlinkSync(filePath);
 
-        const fileRecord = new File({
+        // Check if file with same name already exists in the same folder
+        const parentFolderId = mongoose.Types.ObjectId.isValid(parentFolder) ? parentFolder : null;
+        const existingFile = await File.findOne({
           teamId,
           type: "file",
           name: fileName,
-          url: `${BASE_URL}/${nextcloudPath}`,
-          createdBy,
-          owner,
-          parentFolder: mongoose.Types.ObjectId.isValid(parentFolder)
-            ? parentFolder
-            : null,
+          parentFolder: parentFolderId,
+          isDeleted: false
         });
         
-        const savedFile = await fileRecord.save();
+        let savedFile;
+        let isNewFile = !existingFile;  // Flag to track if this is a new file
         
-        // Add history entry for file upload
-        if (createdBy) {
-          await fileRecord.addHistory('created', createdBy, {
-            comment: `File "${fileName}" uploaded to ${relativePath || 'root folder'}`
+        if (existingFile) {
+          // Update existing file record
+          updatedFilesCount++;  // Increment updated files count
+          console.log(`File "${fileName}" already exists. Updating existing record.`);
+          
+          // Store previous URL for history
+          const previousUrl = existingFile.url;
+          
+          // Update the file record
+          existingFile.url = `${BASE_URL}/${nextcloudPath}`;
+          existingFile.updatedAt = new Date();
+          existingFile.version = (existingFile.version || 1) + 1;
+          
+          savedFile = await existingFile.save();
+          
+          // Add history entry for file update
+          if (createdBy) {
+            await savedFile.addHistory('edited', createdBy, {
+              comment: `File "${fileName}" updated with new version`,
+              previousPath: previousUrl,
+              newPath: savedFile.url
+            });
+          }
+        } else {
+          // Create new file record
+          newFilesCount++;  // Increment new files count
+          const fileRecord = new File({
+            teamId,
+            type: "file",
+            name: fileName,
+            url: `${BASE_URL}/${nextcloudPath}`,
+            createdBy,
+            owner,
+            parentFolder: parentFolderId,
+            version: 1
           });
+          
+          savedFile = await fileRecord.save();
+          
+          // Add history entry for file upload
+          if (createdBy) {
+            await savedFile.addHistory('created', createdBy, {
+              comment: `File "${fileName}" uploaded to ${relativePath || 'root folder'}`
+            });
+          }
         }
         
-        uploadedFiles.push(savedFile);
+        uploadedFiles.push({...savedFile.toObject(), isNewFile});
+        uploadedFileIds.push(savedFile._id);
         completedFiles++;
         
         // Send completion event for this file
@@ -637,11 +833,13 @@ exports.uploadFiles = async (req, res) => {
           fileId: savedFile._id,
           status: 'complete',
           progress: '100',
-          message: `Successfully uploaded ${fileName}`,
-          completedAt: new Date().toISOString()
+          message: isNewFile ? `Successfully uploaded ${fileName}` : `Successfully updated ${fileName}`,
+          completedAt: new Date().toISOString(),
+          isUpdate: !isNewFile,
+          version: savedFile.version || 1
         }) + '\n');
         
-        console.log(`Successfully uploaded ${fileName}`);
+        console.log(`Successfully ${isNewFile ? 'uploaded' : 'updated'} ${fileName}`);
       } catch (error) {
         console.error(`Error uploading file ${fileName}:`, error);
         
@@ -655,6 +853,29 @@ exports.uploadFiles = async (req, res) => {
         }) + '\n');
       }
     }
+    
+    // Now do a single batch update for all files together
+    if (uploadedFileIds.length > 0 && createdBy) {
+      console.log(`Running batch update for ${uploadedFileIds.length} files`);
+      
+      // Create appropriate message based on file count
+      let message;
+      if (uploadedFileIds.length === 1) {
+        // Single file upload - use the isNewFile flag we stored
+        const isNewFile = uploadedFiles[0].isNewFile;
+        message = `File "${uploadedFiles[0].name}" was ${isNewFile ? 'uploaded' : 'updated'}`;
+      } else {
+        // Multiple file upload - use our counters
+        message = `Batch upload: ${newFilesCount} new file(s)${updatedFilesCount > 0 ? ` and ${updatedFilesCount} updated file(s)` : ''} were processed`;
+      }
+      
+      await File.batchUpdateAncestorFoldersHistory(
+        uploadedFileIds,
+        createdBy,
+        'batch_updated',
+        { comment: message }
+      );
+    }
 
     // Send final summary
     const responseData = {
@@ -663,11 +884,15 @@ exports.uploadFiles = async (req, res) => {
       message: "Files uploaded successfully",
       totalFiles,
       completedFiles,
+      newFiles: newFilesCount,
+      updatedFiles: updatedFilesCount,
       failedFiles: totalFiles - completedFiles,
       uploadedFiles: uploadedFiles.map(file => ({
         _id: file._id,
         name: file.name,
-        url: file.url
+        url: file.url,
+        version: file.version,
+        isNewFile: file.isNewFile
       }))
     };
 
@@ -994,6 +1219,20 @@ exports.createNewFolder = async (req, res) => {
       await newFolder.addHistory('created', createdBy, {
         comment: `Folder "${name}" created${relativePath ? ` in ${relativePath}` : ''}`
       });
+      
+      // Update ancestor folders about this folder creation
+      if (newFolder.parentFolder) {
+        await File.updateAncestorFoldersHistory(
+          newFolder._id,
+          createdBy,
+          'created',
+          {
+            comment: `Folder "${name}" was created in this folder`,
+            itemName: name,
+            itemType: 'folder'
+          }
+        );
+      }
     }
 
     res.status(201).json({
@@ -1011,6 +1250,8 @@ exports.generatePublicLink = async (req, res) => {
   try {
     const { filePath } = req.query; // Get filePath from query parameters
     const permissions = parseInt(req.query.permissions) || 1; // Default to read-only (1) if not specified
+    // Get user ID from authenticated request for history tracking
+    const userId = req.user ? req.user._id : null;
 
     console.log("Generating public link for:", filePath);
     console.log("Requested permissions:", permissions);
@@ -1074,7 +1315,56 @@ exports.generatePublicLink = async (req, res) => {
       });
     }
 
-    res.json({ success: true, publicUrl: shareUrl });
+    // If permissions include write access (permissions=3) and we have a userId,
+    // find the file and update ancestors about this security-sensitive action
+    if (permissions === 3 && userId) {
+      try {
+        // Find the file by URL
+        const file = await File.findOne({ 
+          url: { $regex: new RegExp(filePath.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "$", "i") },
+          isDeleted: false
+        });
+
+        if (file) {
+          console.log(`Adding history for writable share link for ${file.name} (${file._id})`);
+          
+          // Add history entry for the shared file itself
+          await file.addHistory('shared', userId, {
+            comment: `${file.type === 'folder' ? 'Folder' : 'File'} "${file.name}" was shared with write access`,
+            shareUrl: shareUrl,
+            permissions: 'write'
+          });
+          
+          // Update ancestor folders about this security-sensitive action
+          if (file.parentFolder) {
+            await File.updateAncestorFoldersHistory(
+              file._id,
+              userId,
+              'shared',
+              {
+                comment: `${file.type === 'folder' ? 'Folder' : 'File'} "${file.name}" was shared with write access`,
+                shareUrl: shareUrl,
+                permissions: 'write',
+                securityAlert: true  // Flag this as security-sensitive
+              }
+            );
+          }
+          
+          // Save the shareLink to the file record
+          file.shareLink = shareUrl;
+          await file.save();
+        }
+      } catch (historyErr) {
+        // Log error but don't fail the request if history update fails
+        console.error("Error updating history for shared file:", historyErr);
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      publicUrl: shareUrl, 
+      permissions: permissions === 3 ? 'read-write' : 'read-only' 
+    });
   } catch (error) {
     console.error(
       "Error generating public link:",
@@ -1200,6 +1490,27 @@ exports.deleteFileOrFolder = async (req, res) => {
     const fileName = fileRecord.name;
     const fileType = fileRecord.type;
     const filePath = fileRecord.url;
+    const parentFolderId = fileRecord.parentFolder;
+
+    // Update ancestor folders about this permanent deletion if we have a parent
+    if (userId && parentFolderId) {
+      try {
+        await File.updateAncestorFoldersHistory(
+          fileId,
+          userId,
+          'deleted',
+          {
+            comment: `${fileType === 'folder' ? 'Folder' : 'File'} "${fileName}" was permanently deleted`,
+            itemName: fileName,
+            itemType: fileType,
+            permanent: true
+          }
+        );
+      } catch (ancestorErr) {
+        console.error("Error updating ancestors about permanent deletion:", ancestorErr);
+        // Continue with deletion even if ancestor update fails
+      }
+    }
 
     const { webdavClient } = await createWebDAVClient();
     const nextcloudPath = fileRecord.url.replace(
@@ -1433,6 +1744,18 @@ exports.softDeleteFileOrFolder = async (req, res) => {
       await file.addHistory('deleted', userId, {
         comment: `${file.type === 'folder' ? 'Folder' : 'File'} "${file.name}" moved to trash`
       });
+      
+      // Update ancestor folders about this deletion
+      await File.updateAncestorFoldersHistory(
+        fileId,
+        userId,
+        'deleted',
+        {
+          comment: `${file.type === 'folder' ? 'Folder' : 'File'} "${file.name}" was moved to trash`,
+          itemName: file.name,
+          itemType: file.type
+        }
+      );
     } else {
       await file.save();
     }
@@ -1534,6 +1857,18 @@ exports.restoreFileOrFolder = async (req, res) => {
       await file.addHistory('restored', userId, {
         comment: `${file.type === 'folder' ? 'Folder' : 'File'} "${file.name}" restored from trash`
       });
+      
+      // Update ancestor folders about this restoration
+      await File.updateAncestorFoldersHistory(
+        fileId,
+        userId,
+        'restored',
+        {
+          comment: `${file.type === 'folder' ? 'Folder' : 'File'} "${file.name}" was restored from trash`,
+          itemName: file.name,
+          itemType: file.type
+        }
+      );
     } else {
       await file.save();
     }
@@ -1647,6 +1982,18 @@ exports.renameFileOrFolder = async (req, res) => {
         newPath: newPath,
         comment: `Renamed from "${originalName}" to "${newName}"`
       });
+      
+      // Update ancestors about this rename
+      await File.updateAncestorFoldersHistory(
+        fileRecord._id,
+        userId,
+        'renamed',
+        {
+          comment: `${fileRecord.type === 'folder' ? 'Folder' : 'File'} "${originalName}" was renamed to "${newName}"`,
+          previousName: originalName,
+          newName: newName
+        }
+      );
     } else {
       // Just save without history if no user ID is available
       await fileRecord.save();
@@ -1707,6 +2054,102 @@ exports.renameFileOrFolder = async (req, res) => {
     res.status(500).json({ 
       success: false, 
       error: "Failed to rename file/folder." 
+    });
+  }
+};
+
+// Add a new utility function to test ancestor updates directly
+exports.testAncestorUpdate = async (req, res) => {
+  try {
+    const { fileId } = req.params;
+    const userId = req.user ? req.user._id : null;
+    
+    if (!fileId || !userId) {
+      return res.status(400).json({
+        success: false,
+        error: "File ID and user ID are required"
+      });
+    }
+    
+    // Get the file to verify it exists
+    const file = await File.findById(fileId).populate('parentFolder');
+    if (!file) {
+      return res.status(404).json({
+        success: false,
+        error: "File not found"
+      });
+    }
+    
+    console.log(`Testing ancestor update for file: ${file.name} with parent: ${file.parentFolder ? file.parentFolder._id : 'none'}`);
+    
+    // Force an update to all ancestors
+    const result = await File.updateAncestorFoldersHistory(
+      fileId,
+      userId,
+      'test_update',
+      { comment: `Test update triggered manually for ${file.name}` }
+    );
+    
+    return res.status(200).json({
+      success: true,
+      message: "Ancestor update test completed",
+      result,
+      file: {
+        id: file._id,
+        name: file.name,
+        parentFolder: file.parentFolder ? {
+          id: file.parentFolder._id,
+          name: file.parentFolder.name
+        } : null
+      }
+    });
+  } catch (error) {
+    console.error("Error testing ancestor updates:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to test ancestor updates"
+    });
+  }
+};
+
+exports.getTeamRootFolder = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(teamId)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid teamId format"
+      });
+    }
+
+    // Find the root folder for this team (named same as team ID)
+    const rootFolder = await File.findOne({
+      teamId,
+      type: "folder",
+      name: teamId,
+      isDeleted: false
+    });
+
+    if (!rootFolder) {
+      return res.status(404).json({
+        success: false,
+        message: "Root folder not found for this team"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      rootFolder: {
+        _id: rootFolder._id,
+        name: rootFolder.name
+      }
+    });
+  } catch (error) {
+    console.error("Error fetching team root folder:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to fetch team root folder"
     });
   }
 };

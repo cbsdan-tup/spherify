@@ -207,7 +207,7 @@ const CardModal = ({ onClose, listId, teamId, mode = "create", initialData = {} 
   return (
     <div className="card-modal-overlay kanban-create-modal" onClick={onClose}>
       <div className="card-modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="card-modal-header">
+        <div className="card-modal-header" style={{color: "#1d559e"}}>
           <h3>{mode === "create" ? "Add New Card" : isEditing ? "Edit Card" : "Card Details"}</h3>
           <div className="modal-header-actions">
             {mode === "view" && !isEditing && (
@@ -215,7 +215,7 @@ const CardModal = ({ onClose, listId, teamId, mode = "create", initialData = {} 
                 <button className="edit-button" onClick={() => setIsEditing(true)}>
                   Edit
                 </button>
-                <button className="delete-button" onClick={handleDelete}>
+                <button className="delete-button" style={{color: "white", opacity: 1, padding: "0.5rem"}} onClick={handleDelete}>
                   Delete
                 </button>
               </>
