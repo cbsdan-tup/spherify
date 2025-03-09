@@ -1534,7 +1534,8 @@ h2 {
   font-size: 12px;
   border-radius: 2px;
   margin-left: 4px;
-}.file-container {
+}
+.tool-file-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1550,8 +1551,8 @@ h2 {
   white-space: nowrap;
 }
 
-.delete-btn,
-.rename-btn {
+.tool-delete-btn,
+.tool-rename-btn {
   border: none;
   background: none;
   cursor: pointer;
@@ -1564,24 +1565,15 @@ h2 {
 }
 
 /* Show buttons only on hover */
-.file-container:hover .delete-btn,
-.file-container:hover .rename-btn {
+.tool-file-container:hover .tool-delete-btn,
+.tool-file-container:hover .tool-rename-btn {
   opacity: 0.7; /* Show with partial opacity when container is hovered */
   visibility: visible; /* Make buttons visible */
 }
 
-/* Specific colors for each button */
-.delete-btn {
-  color: #ff5555; /* Red color for delete button */
-}
-
-.rename-btn {
-  color: #5555ff; /* Blue color for rename button */
-}
-
 /* Full opacity when hovering over the button itself */
-.delete-btn:hover,
-.rename-btn:hover {
+.tool-delete-btn:hover,
+.tool-rename-btn:hover {
   opacity: 1;
 }
 
@@ -1632,18 +1624,18 @@ h2 {
   background-color: rgba(255, 255, 255, 0.05);
 }
 
-.deleted-file {
+.tool-deleted-file {
   display: flex;
   align-items: center;
   flex-grow: 1;
 }
 
-.deleted-file .icon {
+.tool-deleted-file .icon {
   color: #ff6b6b;
   margin-right: 8px;
 }
 
-.restore-btn {
+.tool-restore-btn {
   background: none;
   border: none;
   color: #4CAF50;
@@ -1651,7 +1643,7 @@ h2 {
   transition: color 0.2s;
 }
 
-.restore-btn:hover {
+.tool-restore-btn:hover {
   color: #66BB6A;
 }
 

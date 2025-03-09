@@ -370,7 +370,7 @@ const addNewFile = async (fileName, user, currentTeamId) => {
           {!showTrash ? (
             // Regular files view
             files.map((file) => (
-              <div key={file._id} className="file-container">
+              <div key={file._id} className="tool-file-container">
                 <Link
                   className={
                     currentFileId === file._id
@@ -392,10 +392,10 @@ const addNewFile = async (fileName, user, currentTeamId) => {
 
                 {/* Rename Button */}
                 <button
-                  className="rename-btn"
+                  className="tool-rename-btn"
                   onClick={(e) => {
-                    e.preventDefault(); // Prevent navigation when clicking the rename button
-                    handleRename(file._id); // Call the rename function
+                    e.preventDefault(); 
+                    handleRename(file._id); 
                   }}
                 >
                   <i className="fa-solid fa-pen-to-square"></i>
@@ -403,10 +403,10 @@ const addNewFile = async (fileName, user, currentTeamId) => {
 
                 {/* Delete Button */}
                 <button
-                  className="delete-btn"
+                  className="tool-delete-btn"
                   onClick={(e) => {
-                    e.preventDefault(); // Prevent navigation when clicking the delete button
-                    handleSoftDelete(file._id); // Call the delete function
+                    e.preventDefault();
+                    handleSoftDelete(file._id); 
                   }}
                 >
                   <i className="fa-solid fa-trash"></i>
@@ -422,14 +422,14 @@ const addNewFile = async (fileName, user, currentTeamId) => {
               ) : (
                 deletedFiles.map((file) => (
                   <div key={file._id} className="deleted-file-container">
-                    <div className="deleted-file">
+                    <div className="tool-deleted-file">
                       <i className="fa-solid fa-file-circle-xmark icon"></i>
                       <span className="label">{file.fileName}</span>
                     </div>
                     
                     {/* Restore Button */}
                     <button
-                      className="restore-btn"
+                      className="tool-restore-btn"
                       onClick={() => handleRestoreFile(file._id)}
                       title="Restore file"
                     >

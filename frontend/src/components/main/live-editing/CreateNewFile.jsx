@@ -23,7 +23,7 @@ const CreateNewFile = ({ show, onHide, onCreateFile }) => {
         modalElement.style.display = "none";
       }
     }
-  }, [show, onCreateFile]);
+  }, [show]);
 
   const handleFileNameChange = (e) => {
     const newFileName = e.target.value;
@@ -82,11 +82,11 @@ const CreateNewFile = ({ show, onHide, onCreateFile }) => {
 
   return (
     <div
-      className="modal fade"
-      id="createFileModal"
-      tabIndex="-1"
-      aria-hidden="true"
-    >
+    className={`modal fade ${show ? 'show d-block' : 'd-none'}`}
+    id="createFileModal"
+    tabIndex="-1"
+    aria-hidden="true"
+  >
       <div className="modal-dialog modal-dialog-centered create-modal">
         <div className="modal-content">
           <div className="modal-header">
