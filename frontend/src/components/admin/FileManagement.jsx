@@ -725,7 +725,7 @@ const FileManagement = () => {
                   <Spinner animation="border" size="sm" />
                 )}
                 <small className="text-muted">
-                  <a href="/admin/configuration" className="text-decoration-none">
+                  <a href="/admin/configurations" className="text-decoration-none">
                     <i className="fa-solid fa-edit me-1"></i>
                     Adjust in settings
                   </a>

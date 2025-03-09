@@ -997,7 +997,7 @@ const Dashboard = () => {
                   </Link>
                 </div>
               </div>
-              <div className="card-body" style={{alignItems: "unset", maxHeight: "345px"}}>
+              <div className="card-body" style={{alignItems: "unset"}}>
                 {activeTab === 'priorities' ? (
                   Object.values(priorityData).every(count => count === 0) ? (
                     <p className="text-center text-muted">No tasks available</p>

@@ -105,7 +105,7 @@ const Message = ({ msg, user, index }) => {
           object-fit: contain;
         }
         
-        .close-btn {
+        .image-full-view-container .close-btn {
           position: absolute;
           top: -10px;
           right: -40px;
