@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useContext,
+} from "react";
 import axios from "axios";
 import { useSelector } from "react-redux";
 import { errMsg, succesMsg } from "../../../utils/helper";
@@ -11,6 +17,7 @@ import ArchiveModal from "./ArchiveModal";
 import { Modal, Button, Form } from "react-bootstrap";
 import FileHistoryModal from "./FileHistoryModal";
 import UploadStatusModal from "./UploadStatusModal";
+import { TeamConfigContext } from "../../main/Team"; // Import team context
 
 const FileUpload = () => {
   const [files, setFiles] = useState([]);
@@ -48,6 +55,10 @@ const FileUpload = () => {
   const [lastUploadStatus, setLastUploadStatus] = useState({});
   const [lastUploadSummary, setLastUploadSummary] = useState(null);
   const [showUploadStatusModal, setShowUploadStatusModal] = useState(false);
+
+  const [hasFilePermission, setHasFilePermission] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  const [teamConfig, setTeamConfig] = useState(null);
 
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const user = useSelector((state) => state.auth.user);
@@ -743,9 +754,103 @@ const FileUpload = () => {
     }
   }, [currentTeamId, fetchRootFolderId]);
 
+  // Check if user has permission to modify files
+  const teamContext = useContext(TeamConfigContext);
+  const checkFilePermissions = useCallback(async () => {
+    if (!currentTeamId || !user) return;
+
+    try {
+      // If we already have the configuration from context, use it directly
+      if (teamContext?.teamInfo && teamContext?.teamConfiguration) {
+        const currentMember = teamContext.teamInfo.members.find(
+          (member) =>
+            member.user &&
+            member.user._id === user._id &&
+            member.leaveAt === null
+        );
+
+        if (currentMember) {
+          setUserRole(currentMember.role);
+
+          // Check permissions using the context-provided configuration
+          const hasPermission =
+            currentMember.role === "leader" ||
+            currentMember.isAdmin ||
+            (
+              teamContext.teamConfiguration?.AllowedRoleToModifyFiles || []
+            ).includes(currentMember.role);
+
+          setHasFilePermission(hasPermission);
+          return;
+        }
+      }
+
+      // Fallback to fetching both if not available from context
+      const configResponse = await axios.get(
+        `${import.meta.env.VITE_API}/getTeamConfiguration/${currentTeamId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (configResponse.data.success) {
+        const teamResponse = await axios.get(
+          `${import.meta.env.VITE_API}/getTeamById/${currentTeamId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (teamResponse.data) {
+          // Find current user in team members
+          const currentMember = teamResponse.data.members.find(
+            (member) =>
+              member.user &&
+              member.user._id === user._id &&
+              member.leaveAt === null
+          );
+
+          if (currentMember) {
+            setUserRole(currentMember.role);
+
+            // Check permissions: leader, admin, or role in AllowedRoleToModifyFiles
+            const hasPermission =
+              currentMember.role === "leader" ||
+              currentMember.isAdmin ||
+              (
+                configResponse.data.configuration?.AllowedRoleToModifyFiles ||
+                []
+              ).includes(currentMember.role);
+
+            setHasFilePermission(hasPermission);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error checking file permissions:", error);
+    }
+  }, [currentTeamId, user, token, teamContext]);
+
+  // Call permission check when team changes
+  useEffect(() => {
+    checkFilePermissions();
+  }, [currentTeamId, checkFilePermissions]);
+
   return (
     <div className="file-sharing">
       <div className={`fs-container ${showStorage ? "half-border" : ""}`}>
+        {/* Add permission notification banner if user doesn't have permission */}
+        {!hasFilePermission && (
+          <div className="alert alert-info mb-0" style={{borderTopLeftRadius: "12px", borderTopRightRadius: "12px"}}>
+            <i className="fa-solid fa-info-circle me-2"></i>
+            You can view and download files, but you don't have permission to
+            upload, modify, or delete files.
+          </div>
+        )}
         <div className={`fs-header ${showStorage ? "half-border" : ""}`}>
           {currentPath === currentTeamId ? (
             <div className="header-title">
@@ -756,48 +861,53 @@ const FileUpload = () => {
                 <div className="refresh" onClick={() => setRefresh(!refresh)}>
                   <i className="fa-solid fa-rotate-right"></i>
                 </div>
-                {/* Keep existing code for buttons */}
-                <button
-                  className="main-button"
-                  onClick={() => setShowFileButtons(!showFileButtons)}
-                >
-                  <i className="fa-solid fa-plus"></i>
-                  <span>New</span>
-                </button>
-                <i
-                  className="fa-solid fa-box-archive archive-button"
-                  onClick={handleArchiveModalOpen}
-                ></i>
+                {/* Only show file buttons if user has permission */}
+                {hasFilePermission && (
+                  <button
+                    className="main-button"
+                    onClick={() => setShowFileButtons(!showFileButtons)}
+                  >
+                    <i className="fa-solid fa-plus"></i>
+                    <span>New</span>
+                  </button>
+                )}
+                {/* Only show archive button if user has permission */}
+                {hasFilePermission && (
+                  <i
+                    className="fa-solid fa-box-archive archive-button"
+                    onClick={handleArchiveModalOpen}
+                  ></i>
+                )}
                 {/* Team history button - updated to use modal */}
                 <div className="team-history-button">
-                      <i
-                        className="fa-solid fa-clock-rotate-left history-icon"
-                        title="Team folder history"
-                        onClick={() => {
-                          // Create a team folder history item to pass to the modal
-                          const teamHistoryItem = {
-                            _id: currentTeamId,
-                            name: "Team Activity",
-                            type: "folder",
-                            history: rootFolderHistory || [],
-                            createdAt:
-                              rootFolderHistory && rootFolderHistory.length > 0
-                                ? rootFolderHistory.find(
-                                    (h) => h.action === "created"
-                                  )?.timestamp
-                                : new Date(),
-                            owner: user,
-                          };
-                          setSelectedItemForHistory(teamHistoryItem);
-                          setShowHistoryModal(true);
-                        }}
-                      ></i>
-                    </div>
+                  <i
+                    className="fa-solid fa-clock-rotate-left history-icon"
+                    title="Team folder history"
+                    onClick={() => {
+                      // Create a team folder history item to pass to the modal
+                      const teamHistoryItem = {
+                        _id: currentTeamId,
+                        name: "Team Activity",
+                        type: "folder",
+                        history: rootFolderHistory || [],
+                        createdAt:
+                          rootFolderHistory && rootFolderHistory.length > 0
+                            ? rootFolderHistory.find(
+                                (h) => h.action === "created"
+                              )?.timestamp
+                            : new Date(),
+                        owner: user,
+                      };
+                      setSelectedItemForHistory(teamHistoryItem);
+                      setShowHistoryModal(true);
+                    }}
+                  ></i>
+                </div>
                 <i
                   className="fa-solid fa-bars show-storage"
                   onClick={toggleShowStorage}
                 ></i>
-                {showFileButtons && (
+                {showFileButtons && hasFilePermission && (
                   <div className="hidden-buttons">
                     <CreateNewFolder
                       parentFolder={currentFolderId}
@@ -814,7 +924,7 @@ const FileUpload = () => {
                       setLastUploadStatus={setLastUploadStatus}
                       setLastUploadSummary={setLastUploadSummary}
                     />
-                    
+
                     <button
                       onClick={viewLatestUploads}
                       className="view-latest-uploads"
@@ -844,47 +954,51 @@ const FileUpload = () => {
                   <i className="fa-solid fa-rotate-right"></i>
                 </div>
                 <div className="button-container">
-                  <button
-                    className="main-button"
-                    onClick={() => setShowFileButtons(!showFileButtons)}
-                  >
-                    <i className="fa-solid fa-plus"></i>
-                    <span>New</span>
-                  </button>
-                  <i
-                    className="fa-solid fa-box-archive archive-button"
-                    onClick={handleArchiveModalOpen}
-                  ></i>
-                                  {/* Team history button - updated to use modal */}
-                <div className="team-history-button">
-                      <i
-                        className="fa-solid fa-clock-rotate-left history-icon"
-                        title="Team folder history"
-                        onClick={() => {
-                          // Create a team folder history item to pass to the modal
-                          const teamHistoryItem = {
-                            _id: currentTeamId,
-                            name: "Team Activity",
-                            type: "folder",
-                            history: rootFolderHistory || [],
-                            createdAt:
-                              rootFolderHistory && rootFolderHistory.length > 0
-                                ? rootFolderHistory.find(
-                                    (h) => h.action === "created"
-                                  )?.timestamp
-                                : new Date(),
-                            owner: user,
-                          };
-                          setSelectedItemForHistory(teamHistoryItem);
-                          setShowHistoryModal(true);
-                        }}
-                      ></i>
-                    </div>
+                  {hasFilePermission && (
+                    <button
+                      className="main-button"
+                      onClick={() => setShowFileButtons(!showFileButtons)}
+                    >
+                      <i className="fa-solid fa-plus"></i>
+                      <span>New</span>
+                    </button>
+                  )}
+                  {hasFilePermission && (
+                    <i
+                      className="fa-solid fa-box-archive archive-button"
+                      onClick={handleArchiveModalOpen}
+                    ></i>
+                  )}
+                  {/* Team history button - updated to use modal */}
+                  <div className="team-history-button">
+                    <i
+                      className="fa-solid fa-clock-rotate-left history-icon"
+                      title="Team folder history"
+                      onClick={() => {
+                        // Create a team folder history item to pass to the modal
+                        const teamHistoryItem = {
+                          _id: currentTeamId,
+                          name: "Team Activity",
+                          type: "folder",
+                          history: rootFolderHistory || [],
+                          createdAt:
+                            rootFolderHistory && rootFolderHistory.length > 0
+                              ? rootFolderHistory.find(
+                                  (h) => h.action === "created"
+                                )?.timestamp
+                              : new Date(),
+                          owner: user,
+                        };
+                        setSelectedItemForHistory(teamHistoryItem);
+                        setShowHistoryModal(true);
+                      }}
+                    ></i>
+                  </div>
                   <i
                     className="fa-solid fa-bars show-storage"
                     onClick={toggleShowStorage}
                   ></i>
-                  {showFileButtons && (
+                  {showFileButtons && hasFilePermission && (
                     <div className="hidden-buttons">
                       <CreateNewFolder
                         parentFolder={currentFolderId}
@@ -988,7 +1102,7 @@ const FileUpload = () => {
               )}
             </div>
             <div className="action">
-              {selectedItems.length > 0 && (
+              {selectedItems.length > 0 && hasFilePermission && (
                 <button
                   className="bulk-delete-button"
                   onClick={handleDeleteSelected}
@@ -1072,13 +1186,33 @@ const FileUpload = () => {
                                 <i className="fa-solid fa-clock-rotate-left"></i>
                                 <span>History</span>
                               </div>
-                              <div
-                                className="rename option"
-                                onClick={() => handleRenameModalOpen(folder)}
-                              >
-                                <i className="fa-solid fa-pencil"></i>{" "}
-                                <span>Rename</span>
-                              </div>
+                              {/* Only show edit options if user has permission */}
+                              {hasFilePermission && (
+                                <>
+                                  <div
+                                    className="rename option"
+                                    onClick={() =>
+                                      handleRenameModalOpen(folder)
+                                    }
+                                  >
+                                    <i className="fa-solid fa-pencil"></i>{" "}
+                                    <span>Rename</span>
+                                  </div>
+                                  <div
+                                    className="delete option"
+                                    onClick={() =>
+                                      handleDelete(
+                                        folder._id,
+                                        folder.name,
+                                        "folder"
+                                      )
+                                    }
+                                  >
+                                    <i className="fa-solid fa-trash"></i>
+                                    <span>Trash</span>
+                                  </div>
+                                </>
+                              )}
                               <div
                                 className="save option"
                                 onClick={() => {
@@ -1087,19 +1221,6 @@ const FileUpload = () => {
                               >
                                 <i className="fa-solid fa-download"></i>
                                 <span>Download</span>
-                              </div>
-                              <div
-                                className="delete option"
-                                onClick={() =>
-                                  handleDelete(
-                                    folder._id,
-                                    folder.name,
-                                    "folder"
-                                  )
-                                }
-                              >
-                                <i className="fa-solid fa-trash"></i>
-                                <span>Trash</span>
                               </div>
                             </>
                           )}
@@ -1179,20 +1300,34 @@ const FileUpload = () => {
                             <i className="fa-solid fa-clock-rotate-left"></i>
                             <span>History</span>
                           </div>
-                          <div
-                            className="rename option"
-                            onClick={() => handleRenameModalOpen(file)}
-                          >
-                            <i className="fa-solid fa-pencil"></i>
-                            <span>Rename</span>
-                          </div>
-                          <div
-                            className="edit option"
-                            onClick={() => handleFileEdit(file)}
-                          >
-                            <i className="fa-solid fa-pen-to-square"></i>{" "}
-                            <span>Edit</span>
-                          </div>
+                          {/* Only show edit options if user has permission */}
+                          {hasFilePermission && (
+                            <>
+                              <div
+                                className="rename option"
+                                onClick={() => handleRenameModalOpen(file)}
+                              >
+                                <i className="fa-solid fa-pencil"></i>
+                                <span>Rename</span>
+                              </div>
+                              <div
+                                className="edit option"
+                                onClick={() => handleFileEdit(file)}
+                              >
+                                <i className="fa-solid fa-pen-to-square"></i>{" "}
+                                <span>Edit</span>
+                              </div>
+                              <div
+                                className="delete option"
+                                onClick={() =>
+                                  handleDelete(file._id, file.name, "file")
+                                }
+                              >
+                                <i className="fa-solid fa-trash"></i>
+                                <span>Trash</span>
+                              </div>
+                            </>
+                          )}
                           <div
                             className="save option"
                             onClick={() => {
@@ -1201,15 +1336,6 @@ const FileUpload = () => {
                           >
                             <i className="fa-solid fa-download"></i>
                             <span>Download</span>
-                          </div>
-                          <div
-                            className="delete option"
-                            onClick={() =>
-                              handleDelete(file._id, file.name, "file")
-                            }
-                          >
-                            <i className="fa-solid fa-trash"></i>
-                            <span>Trash</span>
                           </div>
                         </div>
                       )}

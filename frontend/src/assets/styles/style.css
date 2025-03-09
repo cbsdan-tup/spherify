@@ -1,0 +1,50 @@
+.team-config-modal .modal-content {
+  border-radius: 0.5rem;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.team-config-modal .modal-header {
+  border-bottom: 1px solid #e9ecef;
+  background-color: #f8f9fa;
+}
+
+.team-config-modal .permission-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #495057;
+  border-left: 3px solid #1d559e;
+  padding-left: 0.75rem;
+}
+
+.team-config-modal .permission-options {
+  display: flex;
+  gap: 1.5rem;
+  padding: 0.5rem 0 0.5rem 1.25rem;
+}
+
+.team-config-modal .config-section {
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.team-config-modal .config-section:last-child {
+  border-bottom: none;
+}
+
+.team-config-modal .leader-checkbox {
+  opacity: 0.8;
+  position: relative;
+}
+
+.team-config-modal .leader-checkbox::after {
+  content: "(Required)";
+  font-size: 0.75rem;
+  color: #6c757d;
+  margin-left: 0.5rem;
+}
+
+.team-config-modal .leader-checkbox label {
+  font-weight: 500;
+  color: #495057;
+}

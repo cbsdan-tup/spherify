@@ -1,14 +1,16 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchTasks, createTask, updateTask, deleteTask } from "../../../redux/ganttSlice";
 import { Modal, Form, Button, Nav } from "react-bootstrap";
 import { toast } from "react-toastify";
+import { TeamConfigContext } from "../Team"; // Import the context
 import './Gantt.css';
 
 function Gantt() {
   const dispatch = useDispatch();
   const { tasks, loading, error } = useSelector((state) => state.gantt);
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
+  const user = useSelector((state) => state.auth.user); // Access the user
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [taskForm, setTaskForm] = useState({
@@ -20,6 +22,8 @@ function Gantt() {
     colorLabel: "Default"
   });
   
+  // Missing state variables
+  const [activeYear, setActiveYear] = useState(null);
   const [colorPresets, setColorPresets] = useState(() => {
     const saved = localStorage.getItem('ganttColorPresets');
     return saved ? JSON.parse(saved) : [
@@ -33,9 +37,37 @@ function Gantt() {
   const [newPreset, setNewPreset] = useState({ label: '', color: '#000000' });
   const [editingPresetIndex, setEditingPresetIndex] = useState(null);
   const [showPresetActionMenu, setShowPresetActionMenu] = useState(null);
-
+  
+  // Add ref for the Gantt chart element
   const ganttRef = useRef(null);
-  const [activeYear, setActiveYear] = useState(null);
+  
+  // Permission check state
+  const [hasGanttPermission, setHasGanttPermission] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  
+  // Get team context
+  const teamContext = useContext(TeamConfigContext);
+  
+  // Check if user has permission to modify Gantt
+  useEffect(() => {
+    if (teamContext?.teamInfo && teamContext?.teamConfiguration && user) {
+      const currentMember = teamContext.teamInfo.members.find(
+        member => member.user && member.user._id === user._id && member.leaveAt === null
+      );
+      
+      if (currentMember) {
+        setUserRole(currentMember.role);
+        
+        // Check permissions: leader, admin, or role in AllowedRoleToModifyGantt
+        const hasPermission = 
+          currentMember.role === "leader" || 
+          currentMember.isAdmin ||
+          (teamContext.teamConfiguration?.AllowedRoleToModifyGantt || []).includes(currentMember.role);
+        
+        setHasGanttPermission(hasPermission);
+      }
+    }
+  }, [teamContext, user]);
 
   useEffect(() => {
     if (currentTeamId) {
@@ -54,6 +86,12 @@ function Gantt() {
 
   const handleTaskSubmit = async (e) => {
     e.preventDefault();
+    // Add permission check
+    if (!hasGanttPermission) {
+      toast.error("You don't have permission to modify Gantt tasks");
+      return;
+    }
+    
     try {
       if (selectedTask) {
         await dispatch(updateTask({
@@ -86,6 +124,12 @@ function Gantt() {
   };
 
   const handleEditTask = (task) => {
+    // Add permission check
+    if (!hasGanttPermission) {
+      toast.error("You don't have permission to edit Gantt tasks");
+      return;
+    }
+    
     setSelectedTask(task);
     setTaskForm({
       title: task.title,
@@ -99,6 +143,12 @@ function Gantt() {
   };
 
   const handleDeleteTask = async (taskId) => {
+    // Add permission check
+    if (!hasGanttPermission) {
+      toast.error("You don't have permission to delete Gantt tasks");
+      return;
+    }
+    
     toast.info(
       <div>
         <p>Are you sure you want to delete this task?</p>
@@ -299,7 +349,13 @@ function Gantt() {
     );
   };
 
+  // Modify the handleAddColorPreset function to check permissions
   const handleAddColorPreset = () => {
+    if (!hasGanttPermission) {
+      toast.error("You don't have permission to modify categories");
+      return;
+    }
+    
     if (newPreset.label.trim()) {
       let updatedPresets;
       
@@ -349,7 +405,12 @@ function Gantt() {
     }
   };
 
+  // Update other color preset functions with permission checks
   const handleEditPreset = (index) => {
+    if (!hasGanttPermission) {
+      toast.error("You don't have permission to edit categories");
+      return;
+    }
     setEditingPresetIndex(index);
     setNewPreset({ ...colorPresets[index] });
     setShowColorPresetModal(true);
@@ -357,6 +418,10 @@ function Gantt() {
   };
 
   const handleDeletePreset = (index) => {
+    if (!hasGanttPermission) {
+      toast.error("You don't have permission to delete categories");
+      return;
+    }
     const presetToDelete = colorPresets[index];
     
     // Check if preset is being used by any tasks
@@ -452,9 +517,13 @@ function Gantt() {
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h2>Team Gantt Chart</h2>
         <div className="d-flex align-items-center " style={{gap: "10px"}}>
-          <Button variant="primary" onClick={() => setShowTaskModal(true)} className="me-2">
-            Add Task
-          </Button>
+          {/* Only show Add Task button if user has permission */}
+          {hasGanttPermission && (
+            <Button variant="primary" onClick={() => setShowTaskModal(true)} className="me-2">
+              Add Task
+            </Button>
+          )}
+          {/* Fix the Refresh button syntax */}
           <Button variant="info" onClick={handleRefresh} className="me-2">
             <i className="fas fa-sync-alt me-1"></i> Refresh
           </Button>
@@ -604,36 +673,41 @@ function Gantt() {
                       justifyContent: 'center',
                       gap: '4px'
                     }}>
-                      <Button
-                        variant="outline-primary"
-                        size="sm"
-                        className="py-0 px-1"
-                        style={{ 
-                          minWidth: '24px', 
-                          height: '24px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        onClick={() => handleEditTask(task)}
-                      >
-                        <i className="fa-solid fa-pen fa-xs"></i>
-                      </Button>
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        className="py-0 px-1"
-                        style={{ 
-                          minWidth: '24px', 
-                          height: '24px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                        onClick={() => handleDeleteTask(task._id)}
-                      >
-                        <i className="fa-solid fa-trash fa-xs"></i>
-                      </Button>
+                      {/* Only show edit/delete buttons if user has permission */}
+                      {hasGanttPermission && (
+                        <>
+                          <Button
+                            variant="outline-primary"
+                            size="sm"
+                            className="py-0 px-1"
+                            style={{ 
+                              minWidth: '24px', 
+                              height: '24px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            onClick={() => handleEditTask(task)}
+                          >
+                            <i className="fa-solid fa-pen fa-xs"></i>
+                          </Button>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            className="py-0 px-1"
+                            style={{ 
+                              minWidth: '24px', 
+                              height: '24px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}
+                            onClick={() => handleDeleteTask(task._id)}
+                          >
+                            <i className="fa-solid fa-trash fa-xs"></i>
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
@@ -829,6 +903,14 @@ function Gantt() {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Add a notice when user doesn't have permission */}
+      {!hasGanttPermission && (
+        <div className="alert alert-info mt-3">
+          <i className="fa-solid fa-info-circle me-2"></i>
+          You can view the Gantt chart, but you don't have permission to add, edit, or delete tasks.
+        </div>
+      )}
     </div>
   );
 }

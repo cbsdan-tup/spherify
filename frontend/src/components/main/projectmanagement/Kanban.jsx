@@ -1,10 +1,12 @@
-import React, { useEffect, useState, memo, useCallback } from "react";
+import React, { useEffect, useState, memo, useCallback, useContext } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchLists, createList, updateList, deleteList, updateListPositions, addOptimistic, deleteOptimistic, updateOptimistic } from "../../../redux/listSlice";
 import { updateCardPositions, fetchCards } from "../../../redux/cardSlice";
 import { useParams } from "react-router-dom";
 import ListItem from "./ListItem";
 import "./Kanban.css";
+import { TeamConfigContext } from "../Team"; // Import TeamConfigContext
+import { toast } from "react-toastify"; // Import toast for notifications
 
 // Import dnd-kit
 import { DndContext, closestCenter, MouseSensor, TouchSensor, useSensor, useSensors, DragOverlay, pointerWithin } from "@dnd-kit/core";
@@ -28,21 +30,51 @@ function Kanban({isFull}) {
   // Create flat array of all card IDs for DnD context
   const allCardIds = Object.values(cardsByList).flat().map(card => card._id);
 
-  // Configure sensors for better drag detection
+  // Add permission check state
+  const [hasKanbanPermission, setHasKanbanPermission] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  
+  // Get team context
+  const teamContext = useContext(TeamConfigContext);
+  const user = useSelector((state) => state.auth.user);
+
+  // Configure sensors for better drag detection - only enable if user has permission
   const sensors = useSensors(
     useSensor(MouseSensor, {
       activationConstraint: {
-        distance: 5,
+        distance: hasKanbanPermission ? 5 : Infinity, // Disable dragging if no permission
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 100, // Reduce delay for mobile
+        delay: hasKanbanPermission ? 100 : Infinity, // Disable touch dragging if no permission
         tolerance: 5,
       },
     })
   );
+  
+  // Check if user has permission to modify Kanban
+  useEffect(() => {
+    if (teamContext?.teamInfo && teamContext?.teamConfiguration && user) {
+      const currentMember = teamContext.teamInfo.members.find(
+        member => member.user && member.user._id === user._id && member.leaveAt === null
+      );
+      
+      if (currentMember) {
+        setUserRole(currentMember.role);
+        
+        // Check permissions: leader, admin, or role in AllowedRoleToModifyKanban
+        const hasPermission = 
+          currentMember.role === "leader" || 
+          currentMember.isAdmin ||
+          (teamContext.teamConfiguration?.AllowedRoleToModifyKanban || []).includes(currentMember.role);
+        
+        setHasKanbanPermission(hasPermission);
+      }
+    }
+  }, [teamContext, user]);
 
+  // Always fetch data regardless of permissions
   useEffect(() => {
     dispatch(fetchLists(teamId));
   }, [dispatch, teamId]);
@@ -56,7 +88,14 @@ function Kanban({isFull}) {
     }
   }, [dispatch, teamId, lists]);
 
-  const handleOpenDialog = () => setOpenDialog(true);
+  const handleOpenDialog = () => {
+    if (!hasKanbanPermission) {
+      toast.error("You don't have permission to add lists to the Kanban board");
+      return;
+    }
+    setOpenDialog(true);
+  };
+  
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setNewListTitle("");
@@ -64,6 +103,10 @@ function Kanban({isFull}) {
 
   const handleAddList = (e) => {
     e.preventDefault();
+    if (!hasKanbanPermission) {
+      toast.error("You don't have permission to add lists to the Kanban board");
+      return;
+    }
     if (newListTitle.trim()) {
       // Create optimistic list with a specific temporary ID pattern
       const optimisticList = {
@@ -84,11 +127,15 @@ function Kanban({isFull}) {
   };
 
   const handleEditList = useCallback((listId, newTitle) => {
-    if (!listId || !newTitle?.trim()) return;
+    if (!hasKanbanPermission) {
+      toast.error("You don't have permission to edit Kanban lists");
+      return false; // Return false to indicate permission denied
+    }
+    if (!listId || !newTitle?.trim()) return false;
     
     // Find the list to update
     const listToUpdate = lists.find(list => list._id === listId);
-    if (!listToUpdate) return;
+    if (!listToUpdate) return false;
     
     // Create updated list with new title
     const updatedList = {
@@ -106,10 +153,16 @@ function Kanban({isFull}) {
         console.error('Failed to update list:', error);
         dispatch(fetchLists(teamId));
       });
-  }, [dispatch, lists, teamId]);
+      
+    return true; // Return true to indicate success
+  }, [dispatch, lists, teamId, hasKanbanPermission]);
 
   const handleDeleteList = useCallback((listId) => {
-    if (!listId) return;
+    if (!hasKanbanPermission) {
+      toast.error("You don't have permission to delete Kanban lists");
+      return false;
+    }
+    if (!listId) return false;
     
     if (window.confirm("Are you sure you want to delete this list?")) {
       // Remove from UI immediately
@@ -122,10 +175,19 @@ function Kanban({isFull}) {
           console.error('Failed to delete list:', error);
           dispatch(fetchLists(teamId));
         });
+      return true;
     }
-  }, [dispatch, teamId]);
+    return false;
+  }, [dispatch, teamId, hasKanbanPermission]);
 
   const handleDragStart = (event) => {
+    // Don't allow dragging if no permission
+    if (!hasKanbanPermission) {
+      event.cancel();
+      toast.error("You don't have permission to modify the Kanban board");
+      return;
+    }
+    
     const { active } = event;
     setActiveId(active.id);
     
@@ -143,6 +205,9 @@ function Kanban({isFull}) {
   };
 
   const handleDragOver = (event) => {
+    // Don't proceed if user doesn't have permission
+    if (!hasKanbanPermission) return;
+    
     const { active, over } = event;
     
     // Skip if nothing is being dragged over
@@ -189,6 +254,9 @@ function Kanban({isFull}) {
   };
 
   const handleDragEnd = (event) => {
+    // Don't process drag end if no permission
+    if (!hasKanbanPermission) return;
+    
     const { active, over } = event;
     
     // Reset state variables
@@ -294,6 +362,12 @@ function Kanban({isFull}) {
       });
   };
 
+  // Create a function to pass permission status to child components
+  const getPermissionProps = () => ({
+    hasPermission: hasKanbanPermission,
+    onPermissionDenied: () => toast.error("You don't have permission to modify the Kanban board")
+  });
+
   return (
     <div className={`kanban-container ${isFull ? "full" : ""}`}>
       <div className="kanban-header">
@@ -302,11 +376,22 @@ function Kanban({isFull}) {
           <button className="refresh-button" onClick={handleRefresh} title="Refresh Board">
             <i className="fas fa-refresh"></i>
           </button>
-          <button className="add-list-button" onClick={handleOpenDialog}>
-            <span className="add-icon">+</span> Add List
-          </button>
+          {/* Only show Add List button if user has permission */}
+          {hasKanbanPermission && (
+            <button className="add-list-button" onClick={handleOpenDialog}>
+              <span className="add-icon">+</span> Add List
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Add a permission notice if user doesn't have permission */}
+      {!hasKanbanPermission && (
+        <div className="alert alert-info mt-2 mb-3">
+          <i className="fa-solid fa-info-circle me-2"></i>
+          You can view the Kanban board, but you don't have permission to modify it.
+        </div>
+      )}
 
       <DndContext 
         sensors={sensors}
@@ -329,6 +414,7 @@ function Kanban({isFull}) {
                   onEdit={(newTitle) => handleEditList(list._id, newTitle)}
                   onDelete={() => handleDeleteList(list._id)}
                   cards={cardsByList[list._id] || []}
+                  permissionProps={getPermissionProps()} // Pass permission props to child
                 />
               </React.Fragment>
             ))}

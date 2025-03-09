@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, createContext } from "react";
 import { Outlet, Routes, Route, useParams } from "react-router-dom";
 import axios from "axios";
 import Header from "./team/Header";
@@ -13,7 +13,9 @@ import FileSharingPage from "./file-sharing/FileSharingPage";
 import Kanban from './projectmanagement/Kanban';
 import Gantt from './projectmanagement/Gantt';  
 
-function Team({showRightPanel, setShowRightPanel, showChats, handleToggleChats}) {
+export const TeamConfigContext = createContext();
+
+function Team({showRightPanel, setShowRightPanel, showChats, handleToggleChats, teamContext}) {
   const { teamId } = useParams();
   const [teamInfo, setTeamInfo] = useState({});
   const [loading, setLoading] = useState(true);
@@ -41,17 +43,16 @@ function Team({showRightPanel, setShowRightPanel, showChats, handleToggleChats})
   }, [teamId, currentFileId, refresh]);
   return (
     <>
+    <div className="team-container">
       {teamInfo && teamInfo.name ? (
-        <div className="team-container">
+        <TeamConfigContext.Provider value={teamContext}>
           <Header setRefresh={setRefresh} showRightPanel={showRightPanel} setShowRightPanel={setShowRightPanel} showChats={showChats} handleToggleChats={handleToggleChats} {...teamInfo} />
           <Outlet />
-          <Routes>
-            <Route index element={<Dashboard />} />
-          </Routes>
-        </div>
+        </TeamConfigContext.Provider>
       ) : (
         <LoadingSpinner message={"Loading Team..."} />
       )}
+    </div>
     </>
   );
 }

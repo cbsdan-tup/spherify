@@ -20,6 +20,7 @@ import MessageGroup from "./main/textchats/MessageGroup";
 import FileSharingPage from "./main/file-sharing/FileSharingPage";
 import "../styles/MainHeader.css";
 import { io } from "socket.io-client";
+import Dashboard from "./main/team/Dashboard";
 const socket = io(`${import.meta.env.VITE_SOCKET_API}`);
 
 function Main() {
@@ -31,6 +32,8 @@ function Main() {
   const [teamInfo, setTeamInfo] = useState({});
   const [teams, setTeams] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [teamConfiguration, setTeamConfiguration] = useState(null); // Add new state for team configuration
+  const [fetchingConfiguration, setFetchingConfiguration] = useState(false); // Track loading state
   
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const currentMeetingRoomName = useSelector(
@@ -59,6 +62,7 @@ function Main() {
     if (currentTeamId) {
       console.log("Current team id", currentTeamId);
       fetchTeamInfo(currentTeamId);
+      fetchTeamConfiguration(currentTeamId); // Add call to fetch configuration
     }
   }, [currentTeamId]);
 
@@ -89,6 +93,28 @@ function Main() {
     }
   };
 
+  // New function to fetch team configuration
+  const fetchTeamConfiguration = async (teamId) => {
+    if (!teamId || !authState?.token) return;
+    
+    try {
+      setFetchingConfiguration(true);
+      const response = await axios.get(
+        `${import.meta.env.VITE_API}/getTeamConfiguration/${teamId}`,
+        { headers: { Authorization: `Bearer ${authState?.token}` } }
+      );
+      
+      if (response.data.success) {
+        console.log("Team configuration loaded:", response.data.configuration);
+        setTeamConfiguration(response.data.configuration);
+      }
+    } catch (error) {
+      console.error("Error fetching team configuration:", error);
+    } finally {
+      setFetchingConfiguration(false);
+    }
+  };
+
   // Toggle right panel visibility
   const handleToggleShow = () => {
     setShowRightPanel(!showRightPanel);
@@ -97,6 +123,14 @@ function Main() {
   // Toggle chats visibility
   const handleToggleChats = () => {
     setShowChats(!showChats);
+  };
+
+  // Create a context value that includes team configuration
+  const teamContextValue = {
+    teamInfo,
+    teamConfiguration,
+    fetchingConfiguration,
+    refreshTeamConfiguration: () => fetchTeamConfiguration(currentTeamId)
   };
 
   return (
@@ -120,23 +154,24 @@ function Main() {
                   setShowRightPanel={setShowRightPanel}
                   showChats={showChats}
                   handleToggleChats={handleToggleChats}
+                  teamContext={teamContextValue} // Pass the team context with configuration
                 />
               }
             >
-              <Route path="calendar" element={<Calendar />} />
+               <Route index element={<Dashboard teamConfiguration={teamConfiguration} />} />
+              <Route path="calendar" element={<Calendar teamConfiguration={teamConfiguration} />} />
               <Route
                 path="kanban"
-                element={<Kanban isFull={!showRightPanel} />}
+                element={<Kanban isFull={!showRightPanel} teamConfiguration={teamConfiguration} />}
               />
-              <Route path="gantt" element={<Gantt />} />
-              <Route path="live-editing/:documentId" element={<TextEditor />} />
-              <Route path="message-group/:groupId" element={<MessageGroup />} />
+              <Route path="gantt" element={<Gantt teamConfiguration={teamConfiguration} />} />
+              <Route path="live-editing/:documentId" element={<TextEditor teamConfiguration={teamConfiguration} />} />
+              <Route path="message-group/:groupId" element={<MessageGroup teamConfiguration={teamConfiguration} />} />
               <Route
                 path="file-sharing/:folderId"
-                element={<FileSharingPage />}
+                element={<FileSharingPage teamConfiguration={teamConfiguration} />}
               />
             </Route>
-            <Route path=":teamId/*" element={<Team />} />
           </Routes>
         </div>
       </div>

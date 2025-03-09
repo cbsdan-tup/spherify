@@ -55,6 +55,14 @@ const TeamSchema = new mongoose.Schema(
         activeDays: [{ type: Date }] // Simplified to just store dates when user was active
       },
     ],
+    teamConfiguration: {
+      AllowedRoleToModifyFiles: { type: [String], default: ["leader"] },
+      AllowedRoleToModifyKanban: { type: [String], default: ["leader"] },
+      AllowedRoleToModifyGantt: { type: [String], default: ["leader"] },
+      AllowedRoleToCreateGroupMessage: { type: [String], default: ["leader"] },
+      AllowedRoleToModifyCalendar: { type: [String], default: ["leader"] },
+      AllowedRoleToModiyLiveEdit: { type: [String], default: ["leader"] }
+    },
     messageGroups: [
       { type: mongoose.Schema.Types.ObjectId, ref: "MessageGroup" },
     ],

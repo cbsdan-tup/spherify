@@ -88,7 +88,7 @@ const EditMemberModal = ({
         {member && (
           <Form onSubmit={handleSubmit}>
             <div className="text-center mb-4 member-profile">
-              <div className="avatar-container mx-auto mb-3 mt-3">
+              <div className="mx-auto mb-3 mt-3">
                 <img
                   src={member.user?.avatar?.url || "/images/account.png"}
                   alt={member.user?.firstName}
@@ -1139,15 +1139,15 @@ const Dashboard = () => {
             <div className="card-header d-flex justify-content-between align-items-center">
               <span className="fw-semibold">Team Members</span>
               <div style={{display: "flex", gap: "0.5rem", alignItems: "center"}}>
+                <span className="badge bg-primary text-white">
+                  {members && members.length}
+                </span>
                 <span 
                   className="team-request-history-dashboard"
                   onClick={handleShowRequestHistory}
-                  style={{ cursor: "pointer" }}
+                  style={{ cursor: "pointer", marginLeft: "10px" }}
                 >
                   <i className="fas fa-history"></i>
-                </span>
-                <span className="badge bg-primary text-white">
-                  {members && members.length}
                 </span>
               </div>
             </div>

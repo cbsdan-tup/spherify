@@ -1,13 +1,13 @@
-import React, { useState, memo, useCallback, useEffect } from "react";
+import React, { useState, memo, useCallback, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useSortable, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import "./ListItem.css";
 import CardItem from "./CardItem";
 import CardModal from "./CardModal";
-import { fetchCards } from "../../../redux/cardSlice";
+import { fetchCards, createCard } from "../../../redux/cardSlice";
 
-const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) {
+const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId, permissionProps }) {
   const dispatch = useDispatch();
   
   // Get cards from the Redux store instead of the list prop
@@ -22,6 +22,17 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
   const [isEditing, setIsEditing] = useState(false);
   const [editingTitle, setEditingTitle] = useState(list.title);
   const [showCardModal, setShowCardModal] = useState(false);
+  const [showAddCard, setShowAddCard] = useState(false);
+  const [newCardText, setNewCardText] = useState("");
+  const [cardPriority, setCardPriority] = useState("medium");
+
+  const { hasPermission, onPermissionDenied } = permissionProps || { 
+    hasPermission: false, 
+    onPermissionDenied: () => {} 
+  };
+
+  const editInputRef = useRef(null);
+  const cardInputRef = useRef(null);
 
   const {
     attributes,
@@ -35,7 +46,8 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
     data: {
       type: "LIST",
       list
-    }
+    },
+    disabled: !hasPermission // Disable sortable if no permission
   });
 
   const style = {
@@ -48,6 +60,19 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
     height: 'fit-content',
     flexShrink: 0
   };
+
+  useEffect(() => {
+    if (isEditing && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    if (showAddCard && cardInputRef.current) {
+      cardInputRef.current.focus();
+    }
+  }, [showAddCard]);
 
   const handleEdit = useCallback((e) => {
     e.stopPropagation();
@@ -77,6 +102,50 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
     setShowCardModal(false);
   };
 
+  const handleEditClick = () => {
+    if (!hasPermission) {
+      onPermissionDenied();
+      return;
+    }
+    setIsEditing(true);
+    setEditingTitle(list.title);
+  };
+
+  const handleEditSubmit = () => {
+    if (editingTitle.trim() && editingTitle !== list.title) {
+      const success = onEdit(editingTitle.trim());
+      if (success) {
+        setIsEditing(false);
+      }
+    } else {
+      setIsEditing(false);
+    }
+  };
+
+  const handleAddCardClick = () => {
+    if (!hasPermission) {
+      onPermissionDenied();
+      return;
+    }
+    setShowAddCard(true);
+  };
+
+  const handleAddCardSubmit = (e) => {
+    e.preventDefault();
+    if (newCardText.trim()) {
+      dispatch(createCard({
+        cardTitle: newCardText.trim(),
+        teamId,
+        listId: id,
+        priority: cardPriority,
+        position: cards.length ? (cards[cards.length - 1].position + 16384) : 16384
+      }));
+      setNewCardText("");
+      setCardPriority("medium");
+      setShowAddCard(false);
+    }
+  };
+
   return (
     <div 
       ref={setNodeRef} 
@@ -84,6 +153,7 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
       className={`list-item-container ${isDragging ? 'is-dragging' : ''}`}
       data-type="LIST"
       data-list-id={list._id}
+      {...(hasPermission ? attributes : {})}
     >
       <div className="list-card">
         {/* List Header */}
@@ -95,10 +165,11 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
                 className="title-input"
                 value={editingTitle}
                 onChange={(e) => setEditingTitle(e.target.value)}
-                onBlur={handleEdit}
-                onKeyPress={handleKeyPress}
+                onBlur={handleEditSubmit}
+                onKeyPress={(e) => e.key === "Enter" && handleEditSubmit()}
                 autoFocus
                 onClick={(e) => e.stopPropagation()}
+                ref={editInputRef}
               />
             </div>
           ) : (
@@ -107,8 +178,12 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
                 <span className="drag-handle">⋮⋮</span> {list.title}
               </div>
               <div className="list-actions">
-                <button className="icon-button edit-button" onClick={() => setIsEditing(true)}>✎</button>
-                <button className="icon-button delete-button" onClick={handleDelete}>✕</button>
+                {hasPermission && (
+                  <>
+                    <button className="icon-button edit-button" onClick={handleEditClick}>✎</button>
+                    <button className="icon-button delete-button" onClick={handleDelete}>✕</button>
+                  </>
+                )}
               </div>
             </div>
           )}
@@ -130,6 +205,8 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
                     listId={list._id}
                     teamId={teamId}
                     index={index}
+                    hasPermission={hasPermission}
+                    onPermissionDenied={onPermissionDenied}
                   />
                 ))
               ) : (
@@ -143,9 +220,70 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId }) 
 
         {/* List Footer */}
         <div className="list-footer">
-          <button className="add-card-button" onClick={() => setShowCardModal(true)}>
-            <span className="add-icon">+</span> Add Card
-          </button>
+          {showAddCard ? (
+            <div className="add-card-form">
+              <form onSubmit={handleAddCardSubmit}>
+                <textarea
+                  ref={cardInputRef}
+                  value={newCardText}
+                  onChange={(e) => setNewCardText(e.target.value)}
+                  placeholder="Enter a title for this card..."
+                  className="add-card-input"
+                />
+                <div className="card-priority-selector">
+                  <span>Priority:</span>
+                  <div className="priority-options">
+                    <label className="priority-option">
+                      <input
+                        type="radio"
+                        value="low"
+                        checked={cardPriority === "low"}
+                        onChange={() => setCardPriority("low")}
+                      />
+                      <span className="priority-label low">Low</span>
+                    </label>
+                    <label className="priority-option">
+                      <input
+                        type="radio"
+                        value="medium"
+                        checked={cardPriority === "medium"}
+                        onChange={() => setCardPriority("medium")}
+                      />
+                      <span className="priority-label medium">Medium</span>
+                    </label>
+                    <label className="priority-option">
+                      <input
+                        type="radio"
+                        value="high"
+                        checked={cardPriority === "high"}
+                        onChange={() => setCardPriority("high")}
+                      />
+                      <span className="priority-label high">High</span>
+                    </label>
+                  </div>
+                </div>
+                <div className="add-card-actions">
+                  <button type="submit" className="add-card-submit">
+                    Add Card
+                  </button>
+                  <button
+                    type="button"
+                    className="add-card-cancel"
+                    onClick={() => setShowAddCard(false)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          ) : (
+            /* Only show add card button if user has permission */
+            hasPermission && (
+              <button className="add-card-button" onClick={handleAddCardClick}>
+                <span className="add-icon">+</span> Add Card
+              </button>
+            )
+          )}
         </div>
       </div>
 

@@ -603,8 +603,9 @@ body {
   cursor: pointer;
 }
 .right-tool-panel .header .conferencing i {
-  font-size: 1.2rem;
-  color: var(--active-color);
+  font-size: 1.4rem;
+  color: #55ff9c;
+  margin-right: 0.3rem;
 }
 .right-tool-panel .header .chat-info {
   display: flex;

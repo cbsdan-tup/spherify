@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Modal, Button, Form, Toast } from "react-bootstrap";
 import {
@@ -12,6 +12,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import { fetchTeamMembers } from "../../../functions/TeamFunctions";
+import { TeamConfigContext } from "../Team"; // Import the context
 
 function Calendar({setRefresh = ()=>{}}) {
   const dispatch = useDispatch();
@@ -19,6 +20,13 @@ function Calendar({setRefresh = ()=>{}}) {
   const { events, error } = useSelector((state) => state.calendar);
   const { user } = useSelector((state) => state.auth);
   const authState = useSelector((state) => state.auth);
+  
+  // Add state for permission checking
+  const [hasCalendarPermission, setHasCalendarPermission] = useState(false);
+  const [userRole, setUserRole] = useState(null);
+  
+  // Get team context
+  const teamContext = useContext(TeamConfigContext);
   
   const [showEventModal, setShowEventModal] = useState(false);
   const [eventAction, setEventAction] = useState("create");
@@ -51,6 +59,27 @@ function Calendar({setRefresh = ()=>{}}) {
     loadMembers();
   }, [currentTeamId, authState]);
 
+  // Check if user has permission to modify calendar
+  useEffect(() => {
+    if (teamContext?.teamInfo && teamContext?.teamConfiguration && user) {
+      const currentMember = teamContext.teamInfo.members.find(
+        member => member.user && member.user._id === user._id && member.leaveAt === null
+      );
+      
+      if (currentMember) {
+        setUserRole(currentMember.role);
+        
+        // Check permissions: leader, admin, or role in AllowedRoleToModifyCalendar
+        const hasPermission = 
+          currentMember.role === "leader" || 
+          currentMember.isAdmin ||
+          (teamContext.teamConfiguration?.AllowedRoleToModifyCalendar || []).includes(currentMember.role);
+        
+        setHasCalendarPermission(hasPermission);
+      }
+    }
+  }, [teamContext, user]);
+
   const formatDateForInput = (date) => {
     if (!date) return '';
     // Ensure we're working with a Date object
@@ -60,6 +89,12 @@ function Calendar({setRefresh = ()=>{}}) {
   };
 
   const handleDateSelect = (selectInfo) => {
+    // Check permission before allowing event creation
+    if (!hasCalendarPermission) {
+      toast.error("You don't have permission to create calendar events");
+      return;
+    }
+
     setEventAction("create");
     setEventForm({
       name: "",
@@ -73,18 +108,35 @@ function Calendar({setRefresh = ()=>{}}) {
   };
 
   const handleEventClick = (clickInfo) => {
-    setEventAction("edit");
-    setSelectedEvent(clickInfo.event);
-    const eventDetails = clickInfo.event;
+    const event = clickInfo.event;
+    
+    // Set selected event regardless of permission (for viewing)
+    setSelectedEvent({
+      id: event.id,
+      title: event.title,
+      start: event.start,
+      end: event.end,
+      description: event.extendedProps.description || "",
+      location: event.extendedProps.location || "",
+      assignedMembers: event.extendedProps.assignedMembers || []
+    });
+    
+    // Only set event action to "edit" if user has permission
+    if (hasCalendarPermission) {
+      setEventAction("edit");
+    } else {
+      setEventAction("view"); // Just view mode for non-permitted users
+    }
     
     setEventForm({
-      name: eventDetails.title,
-      description: eventDetails.extendedProps.description || "",
-      startDate: formatDateForInput(eventDetails.start),
-      endDate: formatDateForInput(eventDetails.end || eventDetails.start),
-      location: eventDetails.extendedProps.location || "",
-      assignedMembers: eventDetails.extendedProps.assignedMembers || []
+      name: event.title,
+      description: event.extendedProps.description || "",
+      location: event.extendedProps.location || "",
+      startDate: formatDateForInput(event.start),
+      endDate: formatDateForInput(event.end || event.start),
+      assignedMembers: event.extendedProps.assignedMembers || []
     });
+    
     setShowEventModal(true);
   };
 
@@ -134,6 +186,12 @@ function Calendar({setRefresh = ()=>{}}) {
   // Replace the existing handleFormSubmit with this updated version
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    
+    // Check permission before allowing event modification
+    if (!hasCalendarPermission) {
+      toast.error("You don't have permission to modify calendar events");
+      return;
+    }
       
     const now = new Date();
     const startDate = new Date(eventForm.startDate);
@@ -211,6 +269,12 @@ function Calendar({setRefresh = ()=>{}}) {
   };
 
   const handleDeleteEvent = async () => {
+    // Check permission before allowing event deletion
+    if (!hasCalendarPermission) {
+      toast.error("You don't have permission to delete calendar events");
+      return;
+    }
+
     try {
       await dispatch(deleteEvent(selectedEvent.id)).unwrap();
       // Add this line to refresh events after delete
@@ -338,7 +402,8 @@ function Calendar({setRefresh = ()=>{}}) {
       <Modal show={showEventModal} onHide={handleModalClose} className="calendar-modal">
         <Modal.Header closeButton>
           <Modal.Title>
-            {eventAction === "create" ? "Add New Event" : "Edit Event"}
+            {eventAction === "create" ? "Add New Event" : 
+             eventAction === "edit" ? "Edit Event" : "View Event"}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body>
@@ -350,6 +415,7 @@ function Calendar({setRefresh = ()=>{}}) {
                 value={eventForm.name}
                 onChange={(e) => setEventForm({...eventForm, name: e.target.value})}
                 required
+                disabled={eventAction === "view"}
               />
             </Form.Group>
 
@@ -360,6 +426,7 @@ function Calendar({setRefresh = ()=>{}}) {
                 rows={3}
                 value={eventForm.description}
                 onChange={(e) => setEventForm({...eventForm, description: e.target.value})}
+                disabled={eventAction === "view"}
               />
             </Form.Group>
 
@@ -372,6 +439,7 @@ function Calendar({setRefresh = ()=>{}}) {
                 required
                 step="60"
                 min={getMinDateTime()} // Add minimum date-time
+                disabled={eventAction === "view"}
               />
             </Form.Group>
 
@@ -384,13 +452,14 @@ function Calendar({setRefresh = ()=>{}}) {
                 required
                 step="60"
                 min={eventForm.startDate || getMinDateTime()} // Add minimum date-time
+                disabled={eventAction === "view"}
               />
             </Form.Group>
 
             {renderMemberSelection()}
 
             <div className="d-flex justify-content-end gap-2 buttons">
-              {eventAction === "edit" && (
+              {eventAction === "edit" && hasCalendarPermission && (
                 <Button className="delete" type="button" onClick={handleDeleteEvent}>
                   Delete
                 </Button>
@@ -398,13 +467,23 @@ function Calendar({setRefresh = ()=>{}}) {
               <Button className="cancel"  type="button" onClick={handleModalClose}>
                 Cancel
               </Button>
-              <Button className="create" type="submit">
-                {eventAction === "create" ? "Add Event" : "Save Changes"}
-              </Button>
+              {hasCalendarPermission && eventAction !== "view" && (
+                <Button className="create" type="submit">
+                  {eventAction === "create" ? "Add Event" : "Save Changes"}
+                </Button>
+              )}
             </div>
           </Form>
         </Modal.Body>
       </Modal>
+
+      {/* Add a notification for users without permission */}
+      {!hasCalendarPermission && (
+        <div className="alert alert-info mt-3">
+          <i className="fa-solid fa-info-circle me-2"></i>
+          You can view the calendar, but you don't have permission to add, edit, or delete events.
+        </div>
+      )}
     </div>
   );
 }

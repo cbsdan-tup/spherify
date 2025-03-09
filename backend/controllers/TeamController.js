@@ -1028,3 +1028,104 @@ exports.getTeamRequestHistory = async (req, res) => {
   }
 };
 
+exports.getTeamConfiguration = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Team not found" 
+      });
+    }
+    
+    res.status(200).json({
+      success: true,
+      configuration: team.teamConfiguration
+    });
+  } catch (error) {
+    console.error("Error getting team configuration:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error", 
+      error: error.message 
+    });
+  }
+};
+
+exports.updateTeamConfiguration = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const { configuration } = req.body;
+    
+    // Find the team
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({ 
+        success: false, 
+        message: "Team not found" 
+      });
+    }
+    
+    // Find the requesting user in team members
+    const requestingUser = team.members.find(
+      member => 
+        member.user.toString() === req.user._id.toString() && 
+        member.leaveAt === null
+    );
+    
+    // Check if user has permission (must be leader or admin)
+    if (!requestingUser) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "You are not a member of this team" 
+      });
+    }
+    
+    if (!requestingUser.isAdmin && requestingUser.role !== "leader") {
+      return res.status(403).json({ 
+        success: false, 
+        message: "You don't have permission to update team configuration" 
+      });
+    }
+    
+    // Update specific configuration properties if they exist
+    if (configuration) {
+      if (configuration.AllowedRoleToModifyFiles) {
+        team.teamConfiguration.AllowedRoleToModifyFiles = configuration.AllowedRoleToModifyFiles;
+      }
+      if (configuration.AllowedRoleToModifyKanban) {
+        team.teamConfiguration.AllowedRoleToModifyKanban = configuration.AllowedRoleToModifyKanban;
+      }
+      if (configuration.AllowedRoleToModifyGantt) {
+        team.teamConfiguration.AllowedRoleToModifyGantt = configuration.AllowedRoleToModifyGantt;
+      }
+      if (configuration.AllowedRoleToCreateGroupMessage) {
+        team.teamConfiguration.AllowedRoleToCreateGroupMessage = configuration.AllowedRoleToCreateGroupMessage;
+      }
+      if (configuration.AllowedRoleToModifyCalendar) {
+        team.teamConfiguration.AllowedRoleToModifyCalendar = configuration.AllowedRoleToModifyCalendar;
+      }
+      if (configuration.AllowedRoleToModiyLiveEdit) {
+        team.teamConfiguration.AllowedRoleToModiyLiveEdit = configuration.AllowedRoleToModiyLiveEdit;
+      }
+    }
+    
+    await team.save();
+    
+    res.status(200).json({
+      success: true,
+      message: "Team configuration updated successfully",
+      configuration: team.teamConfiguration
+    });
+  } catch (error) {
+    console.error("Error updating team configuration:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error", 
+      error: error.message 
+    });
+  }
+};
+

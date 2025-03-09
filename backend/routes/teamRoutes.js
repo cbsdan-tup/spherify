@@ -21,7 +21,9 @@ const {
     updateTeamMember,
     removeTeamMember,
     getUserChatStatistics,
-    updateTeam 
+    updateTeam,
+    getTeamConfiguration,
+    updateTeamConfiguration
 } = require('../controllers/TeamController');
 
 router.post('/addTeam', upload.single('logo'), addTeam);
@@ -48,5 +50,9 @@ router.get('/getUserChatStatistics/:userId', isAuthenticatedUser, getUserChatSta
 
 // Add new route for updating team information (logo or name)
 router.put('/updateTeam/:teamId', isAuthenticatedUser, upload.single('logo'), updateTeam);
+
+// Team configuration routes
+router.get('/getTeamConfiguration/:teamId', isAuthenticatedUser, getTeamConfiguration);
+router.put('/updateTeamConfiguration/:teamId', isAuthenticatedUser, updateTeamConfiguration);
 
 module.exports = router
