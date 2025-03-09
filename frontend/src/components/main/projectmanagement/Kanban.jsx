@@ -284,13 +284,28 @@ function Kanban({isFull}) {
     return closestCenter(args);
   };
 
+  // Add refresh function to refetch lists and cards
+  const handleRefresh = () => {
+    dispatch(fetchLists(teamId))
+      .then(() => {
+        lists.forEach(list => {
+          dispatch(fetchCards({ teamId, listId: list._id }));
+        });
+      });
+  };
+
   return (
     <div className={`kanban-container ${isFull ? "full" : ""}`}>
       <div className="kanban-header">
         <h2 className="kanban-title" style={{fontSize: "2rem"}}>TEAM KANBAN BOARD</h2>
-        <button className="add-list-button" onClick={handleOpenDialog}>
-          <span className="add-icon">+</span> Add List
-        </button>
+        <div style={{display: "flex", alignItems: "center", gap: "0.5rem"}}>
+          <button className="refresh-button" onClick={handleRefresh} title="Refresh Board">
+            <i className="fas fa-refresh"></i>
+          </button>
+          <button className="add-list-button" onClick={handleOpenDialog}>
+            <span className="add-icon">+</span> Add List
+          </button>
+        </div>
       </div>
 
       <DndContext 

@@ -1308,6 +1308,7 @@ const FileUpload = () => {
         show={showRenameModal}
         onHide={handleRenameModalClose}
         className="rename-modal"
+        centered
       >
         <Modal.Header closeButton>
           <Modal.Title>Rename</Modal.Title>
@@ -1333,6 +1334,12 @@ const FileUpload = () => {
             Rename
           </Button>
         </Modal.Footer>
+        <style jsx>{`
+          :global(.rename-modal .modal-dialog) {
+            max-width: 400px;
+            margin: 1.75rem auto;
+          }
+        `}</style>
       </Modal>
       <UploadStatusModal
         show={showUploadStatusModal}

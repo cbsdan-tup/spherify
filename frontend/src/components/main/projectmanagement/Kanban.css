@@ -18,6 +18,18 @@
   margin: 0;
 }
 
+.kanban-container .refresh-button {
+  background-color: #0079bf;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-weight: 500;
+}
+.kanban-container .refresh-button:focus {
+  outline: none;
+}
 .add-list-button {
   background-color: #0079bf;
   color: white;

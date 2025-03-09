@@ -99,9 +99,9 @@ const FileHistoryModal = ({ isOpen, onClose, item }) => {
                   <div className="timeline-body">
                     {entry.performedBy && (
                       <div className="user-info">
-                        {entry.performedBy.avatar.url && (
+                        {entry.performedBy.avatar?.url && (
                           <img 
-                            src={entry.performedBy.avatar.url} 
+                            src={entry.performedBy.avatar?.url} 
                             alt="User avatar" 
                             className="user-avatar"
                           />
@@ -113,7 +113,7 @@ const FileHistoryModal = ({ isOpen, onClose, item }) => {
                     )}
                     
                     {entry.details?.comment && (
-                      <div className="comment">{entry.details.comment}</div>
+                      <div className="comment">{entry.details?.comment}</div>
                     )}
                     
                     {entry.action === 'renamed' && entry.details?.previousName && (

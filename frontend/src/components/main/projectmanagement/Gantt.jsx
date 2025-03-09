@@ -439,6 +439,14 @@ function Gantt() {
     return (yiq >= 128) ? '#000000' : '#ffffff';
   };
 
+  // Add refresh function to refetch tasks
+  const handleRefresh = () => {
+    if (currentTeamId) {
+      dispatch(fetchTasks(currentTeamId));
+      toast.info("Refreshing Gantt chart data...");
+    }
+  };
+
   return (
     <div className="gantt-container">
       <div className="d-flex justify-content-between align-items-center mb-3">
@@ -446,6 +454,9 @@ function Gantt() {
         <div className="d-flex align-items-center " style={{gap: "10px"}}>
           <Button variant="primary" onClick={() => setShowTaskModal(true)} className="me-2">
             Add Task
+          </Button>
+          <Button variant="info" onClick={handleRefresh} className="me-2">
+            <i className="fas fa-sync-alt me-1"></i> Refresh
           </Button>
           <Button variant="success" onClick={downloadGanttChart}>
             Download Chart

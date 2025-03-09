@@ -754,7 +754,7 @@ const TeamStorageModal = ({ show, onHide, team, token }) => {
         />
 
         {/* Rename Modal */}
-        <Modal show={showRenameModal} onHide={handleRenameModalClose} size="sm">
+        <Modal show={showRenameModal} onHide={handleRenameModalClose} size="sm" className="rename-modal">
           <Modal.Header closeButton>
             <Modal.Title>
               Rename {itemToRename?.type === "folder" ? "Folder" : "File"}
