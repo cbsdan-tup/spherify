@@ -732,13 +732,14 @@ const FileUpload = () => {
         </div>
         <div className={`fs-content ${showStorage ? "half-border" : ""}`}>
           <div className="search-container mb-3">
-            <div className="input-group">
+            <div className="input-group" style={{backgroundColor: "transparent"}}>
               <input 
                 type="text" 
                 className="form-control search-input" 
                 placeholder="Search files and folders..." 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                style={{backgroundColor: "transparent"}}
               />
               {searchTerm && (
                 <button 

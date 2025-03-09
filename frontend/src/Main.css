@@ -429,6 +429,17 @@ body {
   flex: 1;
 }
 
+.kanban-chart-dropdown {
+  color: white !important;
+  background-color: transparent;
+  border: none;
+  font-weight: 600;
+}
+.kanban-chart-dropdown:focus {
+  border: none;
+  outline: none;
+}
+
 .main-container .team-container .team-content .kanban-team-members .kanban-gantt .kanban-board  {
   flex: 1;
 }
@@ -1257,7 +1268,6 @@ body {
 .member-stats-list {
   flex: 1;
   overflow-y: auto;
-  padding-right: 0.5rem;
 }
 
 .member-stat-card {
@@ -1362,7 +1372,7 @@ body {
 }
 
 .member-stats-list {
-  max-height: 200px;
+  max-height: 300px;
   overflow-y: auto;
 }
 
@@ -1388,9 +1398,7 @@ body {
 
 /* Styles for member distribution tab */
 .member-distribution {
-  height: 550px;  /* Match height of other tab contents */
-  padding: 1rem;
-  overflow: hidden;
+  overflow: auto;
   display: flex;
   flex-direction: column;
 }
@@ -1398,7 +1406,6 @@ body {
 .member-distribution .member-stats-list {
   flex: 1;
   overflow-y: auto;
-  padding-right: 0.5rem;
 }
 
 .member-distribution .member-stats-list::-webkit-scrollbar {
@@ -1419,20 +1426,13 @@ body {
   background: #555;
 }
 
-/* Styles for member distribution tab */
-.member-distribution {
-  height: 100%;
-  padding: 1rem;
-  overflow-y: hidden;
-  display: flex;
-  flex-direction: column;
-}
+
 
 .member-distribution .member-stats-list {
   flex: 1;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #888 #f1f1f1;
+  scrollbar-color: #888 transparent;
 }
 
 .member-distribution .member-stats-list::-webkit-scrollbar {

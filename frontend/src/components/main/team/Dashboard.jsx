@@ -233,7 +233,7 @@ const Dashboard = () => {
     datasets: [
       {
         data: [priorityData.low, priorityData.medium, priorityData.high],
-        backgroundColor: ['#61bd4f', '#f2d600', '#eb5a46'], // Green, Yellow, Red
+        backgroundColor: ['#0B9C37', '#e3cc1a', '#B74714'], // Green, Yellow, Red
       },
     ],
   };
@@ -243,7 +243,7 @@ const Dashboard = () => {
     labels: ['Completed', 'In Progress', 'No Progress'],
     datasets: [{
       data: [completionData.completed, completionData.inProgress, completionData.noProgress],
-      backgroundColor: ['#36A2EB', '#FFCE56', '#FF6384']  // Blue, Yellow, Red
+      backgroundColor: ['#0d87d8', '#f2d600', '#B74714']  // Blue, Yellow, Red
     }]
   };
 
@@ -878,6 +878,7 @@ const Dashboard = () => {
               if (!memberTaskCounts[memberId]) {
                 memberTaskCounts[memberId] = {
                   name: `${member.firstName} ${member.lastName}`,
+                  avatar: member.avatar?.url || '/images/account.png',
                   total: 0,
                   completed: 0,
                   inProgress: 0,
@@ -911,8 +912,9 @@ const Dashboard = () => {
 
       // Convert memberTaskCounts object to array and sort by total tasks
       const memberTaskStats = Object.values(memberTaskCounts)
-        .sort((a, b) => b.total - a.total);
-
+      .sort((a, b) => b.total - a.total);
+      console.log("Members: ",memberTaskStats )
+      
       setMemberTaskData(memberTaskStats);
 
       setPriorityData(priorityCounts);
@@ -939,38 +941,57 @@ const Dashboard = () => {
         {/* Kanban Board */}
         <div className="kanban-gantt-live-editing">
           <div className="kanban-gantt">
-            <div className="card chart-bg kanban-board">
+            <div className="card chart-bg kanban-board" style={{position: "relative"}}>
               <div className="card-header">
-                <div className="d-flex justify-content-between align-items-center">
-                  <div className="d-flex">
-                    <div 
-                      className={`tab-link ${activeTab === 'priorities' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('priorities')}
+                <div className="d-flex justify-content-between align-items-center justify-content-between w-100">
+                  <div className="dropdown" style={{position: "absolute", left: "10px", top:"13px"}}>
+                    <button 
+                      className="text-white dropdown-toggle kanban-chart-dropdown" 
+                      type="button" 
+                      id="chartViewDropdown" 
+                      data-toggle="dropdown" 
+                      aria-expanded="false"
                     >
-                      Task Priorities
-                    </div>
-                    <div 
-                      className={`tab-link ${activeTab === 'completion' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('completion')}
-                    >
-                      Task Completion
-                    </div>
-                    <div 
-                      className={`tab-link ${activeTab === 'distribution' ? 'active' : ''}`}
-                      onClick={() => setActiveTab('distribution')}
-                    >
-                      Member Tasks
-                    </div>
+                      {activeTab === 'priorities' ? 'Task Priorities' : 
+                       activeTab === 'completion' ? 'Task Completion' : 'Member Tasks'}
+                    </button>
+                    <ul className="dropdown-menu" aria-labelledby="chartViewDropdown">
+                      <li>
+                        <button 
+                          className={`dropdown-item ${activeTab === 'priorities' ? 'active' : ''}`} 
+                          onClick={() => setActiveTab('priorities')}
+                        >
+                          Task Priorities
+                        </button>
+                      </li>
+                      <li>
+                        <button 
+                          className={`dropdown-item ${activeTab === 'completion' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('completion')}
+                        >
+                          Task Completion
+                        </button>
+                      </li>
+                      <li>
+                        <button 
+                          className={`dropdown-item ${activeTab === 'distribution' ? 'active' : ''}`}
+                          onClick={() => setActiveTab('distribution')}
+                        >
+                          Member Tasks
+                        </button>
+                      </li>
+                    </ul>
                   </div>
                   <Link
                     to={`/main/${currentTeamId}/kanban`}
                     className="gantt-link"
+                    style={{paddingBottom: "15px", paddingTop: "5px", marginLeft: "auto"}}
                   >
-                    <i className="fa-solid fa-right-from-bracket"></i>
+                    <i className="fa-solid fa-right-from-bracket" style={{fontSize: "1rem"}}></i>
                   </Link>
                 </div>
               </div>
-              <div className="card-body">
+              <div className="card-body" style={{alignItems: "unset", maxHeight: "345px"}}>
                 {activeTab === 'priorities' ? (
                   Object.values(priorityData).every(count => count === 0) ? (
                     <p className="text-center text-muted">No tasks available</p>
@@ -1022,15 +1043,18 @@ const Dashboard = () => {
                     </div>
                   </div>
                 ) : (
-                  <div className="member-distribution">
+                  <div className="member-distribution" style={{flex: 1}}>
                     <div className="member-stats-list">
                       {memberTaskData.map((member, index) => (
-                        <div key={index} className="member-stat-card mb-2 p-2 bg-light rounded">
-                          <div className="d-flex justify-content-between align-items-center">
+                        <div key={index} className="member-stat-card mb-2 p-2 bg-light rounded d-flex align-items-center" style={{gap: "10px"}} >
+                          <div className="avatar">
+                            <img src={member.avatar} alt={member.name} className="rounded-circle" width="30" />
+                          </div>
+                          <div className="d-flex flex-column" style={{alignItems: "unset", gap:"5px", flex: 1, width: "100%"}}>
                             <span className="fw-bold">{member.name}</span>
-                            <div className="d-flex gap-2">
-                              <span className="badge bg-primary">{member.total} tasks</span>
-                              <span className="badge bg-success">{member.completed} completed</span>
+                            <div className="d-flex" style={{gap: "5px"}}>
+                              <span className="badge bg-primary text-white">{member.total} tasks</span>
+                              <span className="badge bg-success text-white">{member.completed} completed</span>
                             </div>
                           </div>
                         </div>
@@ -1046,8 +1070,9 @@ const Dashboard = () => {
                 <Link
                   to={`/main/${currentTeamId}/gantt`}
                   className="gantt-link"
+                  
                 >
-                  <i className="fa-solid fa-right-from-bracket"></i>
+                  <i className="fa-solid fa-right-from-bracket" ></i>
                 </Link>
               </div>
               <div className="card-body">
