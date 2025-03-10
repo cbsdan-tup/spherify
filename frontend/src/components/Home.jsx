@@ -247,10 +247,30 @@ const Home = () => {
     </section>
 
 
-    {/* Developers Section */}
-    <section className="developers-section">
-        <h2>Developers</h2>
-        <div className="developers-grid">
+{/* Developers Section */}
+<section className="developers-section">
+    <h2>Developers</h2>
+    
+    {/* Organizational hierarchy structure */}
+    <div className="org-chart">
+        {/* Top level - Class Adviser */}
+        <div className="org-level adviser-level">
+            <div className="developer-card adviser-card">
+                <img
+                    src="/images/adviser.jpg"
+                    alt="Class Adviser"
+                    className="developer-img"
+                />
+                <p>Madriaga, Pops V.</p>
+                <p className="developer-description">Class Adviser</p>
+            </div>
+        </div>
+        
+        {/* Connecting line */}
+        <div className="org-connector"></div>
+        
+        {/* Team members level */}
+        <div className="org-level team-level">
             <div className="developer-card">
                 <img
                     src="/images/cabasa.png"
@@ -258,7 +278,7 @@ const Home = () => {
                     className="developer-img"
                 />
                 <p>Cabasa, Daniel</p>
-                <p className="developer-description">Full Stack Developer</p> {/* Added description */}
+                <p className="developer-description">Full Stack Developer</p>
             </div>
             <div className="developer-card">
                 <img
@@ -267,7 +287,7 @@ const Home = () => {
                     className="developer-img"
                 />
                 <p>Diaz, Romel</p>
-                <p className="developer-description">Front-End Specialist</p> {/* Added description */}
+                <p className="developer-description">Front-End Specialist</p>
             </div>
             <div className="developer-card">
                 <img
@@ -276,7 +296,7 @@ const Home = () => {
                     className="developer-img"
                 />
                 <p>Lebosada, Jury</p>
-                <p className="developer-description">Back-End Developer</p> {/* Added description */}
+                <p className="developer-description">Back-End Developer</p>
             </div>
             <div className="developer-card">
                 <img
@@ -285,10 +305,11 @@ const Home = () => {
                     className="developer-img"
                 />
                 <p>Esquivel, Cassley</p>
-                <p className="developer-description">UI/UX Designer</p> {/* Added description */}
+                <p className="developer-description">UI/UX Designer</p>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
     {/* Contact Section */}
     <Contact />
