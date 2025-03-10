@@ -145,7 +145,7 @@ exports.createCard = [
 
 // Update card
 exports.updateCard = [
-  body('title').optional().trim(),
+  body('cardTitle').optional().trim(),
   body('priority').optional().isIn(['low', 'medium', 'high']),
   body('checklist').optional().isArray(),
   body('assignedTo').optional().isArray(),
@@ -172,7 +172,7 @@ exports.updateCard = [
       }
 
       const updateData = {
-        ...(req.body.title && { title: req.body.title }),
+        ...(req.body.cardTitle && { cardTitle: req.body.cardTitle }),
         ...(req.body.priority && { priority: req.body.priority }),
         ...(req.body.checklist && { checklist: req.body.checklist }),
         ...(req.body.assignedTo && { assignedTo: req.body.assignedTo })
