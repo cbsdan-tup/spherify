@@ -4,9 +4,30 @@ import { authenticate, succesMsg, errMsg, socket } from "../../utils/helper";
 import axios from "axios";
 import { useDispatch } from "react-redux";
 import Swal from "sweetalert2";
+import { useState } from "react";
+import OtpVerification from "./OtpVerification";
 
 function SignWithGoogle({ method }) {
   const dispatch = useDispatch();
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [registeredUser, setRegisteredUser] = useState(null);
+  const [userIdToken, setUserIdToken] = useState(null);
+
+  const handleOtpSuccess = () => {
+    if (registeredUser && userIdToken) {
+      const userInfo = {
+        token: userIdToken,
+        user: registeredUser,
+      };
+      
+      succesMsg("Email verified successfully!");
+      authenticate(
+        userInfo,
+        dispatch,
+        () => (window.location = "/main")
+      );
+    }
+  };
 
   function googleLogin() {
     try {
@@ -17,6 +38,7 @@ function SignWithGoogle({ method }) {
 
         if (user) {
           const idToken = await user.getIdToken();
+          setUserIdToken(idToken);
 
           const config = {
             headers: {
@@ -34,39 +56,46 @@ function SignWithGoogle({ method }) {
             );
 
             if (response.success && response.user && !response.user.isDisable) {
-              const userInfo = {
-                token: idToken,
-                user: response.user,
-              };
+              // If user already exists and is verified
+              if (response.user.isVerified !== false) {
+                const userInfo = {
+                  token: idToken,
+                  user: response.user,
+                };
 
-              // Log the login activity
-              try {
-                await axios.post(
-                  `${import.meta.env.VITE_API}/logLogin/${response.user._id}`,
-                  {
-                    deviceInfo: navigator.userAgent,
-                    location: Intl.DateTimeFormat().resolvedOptions().timeZone
-                  },
-                  config
-                );
-              } catch (logError) {
-                console.error("Error logging login:", logError);
-              }
+                // Log the login activity
+                try {
+                  await axios.post(
+                    `${import.meta.env.VITE_API}/logLogin/${response.user._id}`,
+                    {
+                      deviceInfo: navigator.userAgent,
+                      location: Intl.DateTimeFormat().resolvedOptions().timeZone
+                    },
+                    config
+                  );
+                } catch (logError) {
+                  console.error("Error logging login:", logError);
+                }
 
-              // socket.emit("login", response.user._id)
+                // socket.emit("login", response.user._id)
 
-              succesMsg("Login Successfully!");
-              {
-                response?.user?.isAdmin
-                  ? authenticate(userInfo, dispatch, () => {
-                      window.location = "/admin";
-                    })
-                  : authenticate(userInfo, dispatch, () => {
-                      window.location = "/main";
-                    });
+                succesMsg("Login Successfully!");
+                {
+                  response?.user?.isAdmin
+                    ? authenticate(userInfo, dispatch, () => {
+                        window.location = "/admin";
+                      })
+                    : authenticate(userInfo, dispatch, () => {
+                        window.location = "/main";
+                      });
+                }
+              } else {
+                // User exists but is not verified - show OTP verification
+                setRegisteredUser(response.user);
+                setShowOtpVerification(true);
               }
             } else {
-              if (response.user.isDisable) {
+              if (response.user && response.user.isDisable) {
                 const disableEndTime = new Date(response.user.disableEndTime).toLocaleString("en-US", {
                   month: "2-digit",
                   day: "2-digit",
@@ -107,20 +136,26 @@ function SignWithGoogle({ method }) {
                   config
                 );
 
-                succesMsg("User Registered Successfully!");
+                if (registerResponse.data.requireOTP) {
+                  succesMsg("Registration initiated! Please verify your email with the OTP sent.");
+                  setRegisteredUser(registerResponse.data.user);
+                  setShowOtpVerification(true);
+                } else {
+                  succesMsg("User Registered Successfully!");
 
-                const newUser = registerResponse.data.user;
-                if (newUser) {
-                  const userInfo = {
-                    token: idToken,
-                    user: newUser,
-                  };
+                  const newUser = registerResponse.data.user;
+                  if (newUser) {
+                    const userInfo = {
+                      token: idToken,
+                      user: newUser,
+                    };
 
-                  authenticate(
-                    userInfo,
-                    dispatch,
-                    () => (window.location = "/main")
-                  );
+                    authenticate(
+                      userInfo,
+                      dispatch,
+                      () => (window.location = "/main")
+                    );
+                  }
                 }
               } catch (registerError) {
                 console.error("Error during registration:", registerError);
@@ -155,19 +190,25 @@ function SignWithGoogle({ method }) {
                 config
               );
 
-              succesMsg("User Registered Successfully!");
+              if (registerResponse.data.requireOTP) {
+                succesMsg("Registration initiated! Please verify your email with the OTP sent.");
+                setRegisteredUser(registerResponse.data.user);
+                setShowOtpVerification(true);
+              } else {
+                succesMsg("User Registered Successfully!");
 
-              const newUser = registerResponse.data.user;
-              if (newUser) {
-                const userInfo = {
-                  token: idToken,
-                  user: newUser,
-                };
-                authenticate(
-                  userInfo,
-                  dispatch,
-                  () => (window.location = "/main")
-                );
+                const newUser = registerResponse.data.user;
+                if (newUser) {
+                  const userInfo = {
+                    token: idToken,
+                    user: newUser,
+                  };
+                  authenticate(
+                    userInfo,
+                    dispatch,
+                    () => (window.location = "/main")
+                  );
+                }
               }
             } catch (registerError) {
               console.error("Error during registration:", registerError);
@@ -180,6 +221,14 @@ function SignWithGoogle({ method }) {
       console.log(error);
       errMsg("Error logging in");
     }
+  }
+
+  if (showOtpVerification) {
+    return <OtpVerification 
+      userId={registeredUser._id} 
+      email={registeredUser.email}
+      onSuccess={handleOtpSuccess}
+    />;
   }
 
   return (

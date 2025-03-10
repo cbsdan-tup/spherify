@@ -16,7 +16,9 @@ const {
     enableUser,
     getAllUsers,
     logUserLogin,
-    getUserDetails
+    getUserDetails,
+    verifyOTP,
+    resendOTP
 } = require('../controllers/UserController');
 
 router.get('/getUserByEmail/:email', getUserByEmail);
@@ -34,6 +36,8 @@ router.get('/users', isAdmin, getAllUsers);
 router.get('/isAdminExists', isAdminExists);
 router.post('/logLogin/:userId', logUserLogin);
 
+router.post("/verify-otp", verifyOTP);
+router.post("/resend-otp", resendOTP);
 // Add this new route for getting user by ID
 router.get('/user/:id', isAuthenticatedUser, getUserDetails);
 

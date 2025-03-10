@@ -9,9 +9,13 @@ import SignWithGoogle from "./SignWithGoogle";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import "../../index.css";
+import OtpVerification from "./OtpVerification";
 
 const Register = () => {
   const [loading, setLoading] = useState(false);
+  const [showOtpVerification, setShowOtpVerification] = useState(false);
+  const [registeredUser, setRegisteredUser] = useState(null);
+  const [token, setToken] = useState(null);
 
   const navigate = useNavigate();
 
@@ -61,17 +65,25 @@ const Register = () => {
       };
 
       // Send the form data to the backend
-      await axios.post(
+      const response = await axios.post(
         `${import.meta.env.VITE_API}/register`,
         formData,
         config
       );
-
-      toast.success("User Registered Successfully!", {
-        position: "bottom-right",
-      });
-
-      navigate("/login");
+      
+      if (response.data.requireOTP) {
+        toast.success("Registration initiated! Please verify your email with the OTP sent.", {
+          position: "bottom-right",
+        });
+        setRegisteredUser(response.data.user);
+        setToken(response.data.token);
+        setShowOtpVerification(true);
+      } else {
+        toast.success("User Registered Successfully!", {
+          position: "bottom-right",
+        });
+        navigate("/login");
+      }
     } catch (error) {
       if (
         error.response &&
@@ -97,6 +109,21 @@ const Register = () => {
     }
   };
 
+  const handleOtpSuccess = () => {
+    toast.success("Email verified successfully! You can now login.", {
+      position: "bottom-right",
+    });
+    navigate("/login");
+  };
+
+  if (showOtpVerification) {
+    return <OtpVerification 
+      userId={registeredUser._id} 
+      email={registeredUser.email}
+      onSuccess={handleOtpSuccess}
+    />;
+  }
+
   return (
     <div className="register-page">
       <div className="register-container">
@@ -113,7 +140,7 @@ const Register = () => {
                 <div className="register-input-group">
                   <label htmlFor="name">Name</label>
                   <div className="input-icon">
-                    <i className="fas fa-user"></i> {/* User Icon */}
+                    <i className="fas fa-user"></i>
                     <Field
                       type="text"
                       name="firstName"
