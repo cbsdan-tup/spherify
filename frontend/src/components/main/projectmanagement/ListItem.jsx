@@ -23,8 +23,6 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId, pe
   const [editingTitle, setEditingTitle] = useState(list.title);
   const [showCardModal, setShowCardModal] = useState(false);
   const [showAddCard, setShowAddCard] = useState(false);
-  const [newCardText, setNewCardText] = useState("");
-  const [cardPriority, setCardPriority] = useState("medium");
 
   const { hasPermission, onPermissionDenied } = permissionProps || { 
     hasPermission: false, 
@@ -127,23 +125,7 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId, pe
       onPermissionDenied();
       return;
     }
-    setShowAddCard(true);
-  };
-
-  const handleAddCardSubmit = (e) => {
-    e.preventDefault();
-    if (newCardText.trim()) {
-      dispatch(createCard({
-        cardTitle: newCardText.trim(),
-        teamId,
-        listId: id,
-        priority: cardPriority,
-        position: cards.length ? (cards[cards.length - 1].position + 16384) : 16384
-      }));
-      setNewCardText("");
-      setCardPriority("medium");
-      setShowAddCard(false);
-    }
+    setShowCardModal(true);
   };
 
   return (
@@ -220,69 +202,11 @@ const ListItem = memo(function ListItem({ list, id, onEdit, onDelete, teamId, pe
 
         {/* List Footer */}
         <div className="list-footer">
-          {showAddCard ? (
-            <div className="add-card-form">
-              <form onSubmit={handleAddCardSubmit}>
-                <textarea
-                  ref={cardInputRef}
-                  value={newCardText}
-                  onChange={(e) => setNewCardText(e.target.value)}
-                  placeholder="Enter a title for this card..."
-                  className="add-card-input"
-                />
-                <div className="card-priority-selector">
-                  <span>Priority:</span>
-                  <div className="priority-options">
-                    <label className="priority-option">
-                      <input
-                        type="radio"
-                        value="low"
-                        checked={cardPriority === "low"}
-                        onChange={() => setCardPriority("low")}
-                      />
-                      <span className="priority-label low">Low</span>
-                    </label>
-                    <label className="priority-option">
-                      <input
-                        type="radio"
-                        value="medium"
-                        checked={cardPriority === "medium"}
-                        onChange={() => setCardPriority("medium")}
-                      />
-                      <span className="priority-label medium">Medium</span>
-                    </label>
-                    <label className="priority-option">
-                      <input
-                        type="radio"
-                        value="high"
-                        checked={cardPriority === "high"}
-                        onChange={() => setCardPriority("high")}
-                      />
-                      <span className="priority-label high">High</span>
-                    </label>
-                  </div>
-                </div>
-                <div className="add-card-actions">
-                  <button type="submit" className="add-card-submit">
-                    Add Card
-                  </button>
-                  <button
-                    type="button"
-                    className="add-card-cancel"
-                    onClick={() => setShowAddCard(false)}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          ) : (
-            /* Only show add card button if user has permission */
-            hasPermission && (
-              <button className="add-card-button" onClick={handleAddCardClick}>
-                <span className="add-icon">+</span> Add Card
-              </button>
-            )
+          {/* Only show add card button if user has permission */}
+          {hasPermission && (
+            <button className="add-card-button" onClick={handleAddCardClick}>
+              <span className="add-icon">+</span> Add Card
+            </button>
           )}
         </div>
       </div>
