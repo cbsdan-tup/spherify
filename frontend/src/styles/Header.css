@@ -1,0 +1,814 @@
+/* Existing header styles... */
+
+/* Search Container Styles */
+.header-container .search-container {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  background-color: #f0f2f5;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+/* Dropdown Button Styles */
+.header-container .search-type-dropdown {
+  position: relative;
+}
+
+.header-container .search-type-btn {
+  background-color: transparent;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  transition: background-color 0.2s;
+}
+
+.header-container .search-type-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.header-container .search-type-btn i {
+  font-size: 12px;
+  color: #5067EB;
+  transition: transform 0.2s ease;
+}
+
+/* Dropdown Content Styles */
+.header-container .search-type-dropdown-content {
+  display: none;
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  background-color: white;
+  min-width: 160px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  z-index: 100;
+  overflow: hidden;
+  animation: headerDropdownIn 0.2s ease-out;
+}
+
+@keyframes headerDropdownIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Show dropdown ONLY when it has the dropdown-active class */
+.header-container .search-type-dropdown-content.dropdown-active {
+  display: block;
+}
+
+/* Remove ALL hover behaviors */
+/* .header-container .search-type-dropdown-content:hover {
+  display: none;
+}
+
+.header-container .search-type-dropdown:hover .search-type-dropdown-content {
+  display: none;
+} */
+
+.header-container .search-type-btn:focus {
+  outline: none;
+  border: none;
+}
+
+.header-container .search-type-dropdown-content .search-option {
+  color: var(--header-text-color) !important;
+}
+
+.header-container .search-type-dropdown-content div {
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.header-container .search-type-dropdown-content div:hover {
+  background-color: #f0f2f5;
+}
+
+/* Search Input Styles */
+.header-container .search-container input.search-team {
+  flex: 1;
+  background-color: transparent;
+  border: none;
+  padding: 8px 12px;
+  font-size: 14px;
+  outline: none;
+}
+
+.header-container .search-container .search-icon {
+  margin-right: 12px;
+  color: #5067EB;
+}
+
+/* Search Modal Button */
+.header-container .open-search-modal-btn {
+  flex: 1;
+  background-color: transparent;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+}
+
+.header-container .open-search-modal-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.header-container .open-search-modal-btn i {
+  color: #5067EB;
+}
+
+/* Search Modal Styles */
+.header-search-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 2000 !important;
+  animation: headerFadeIn 0.2s ease-out !important;
+}
+
+@keyframes headerFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.header-search-modal {
+  background-color: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  animation: headerSlideUp 0.3s ease-out;
+}
+
+@keyframes headerSlideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.header-search-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.header-search-modal-header h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #333;
+}
+
+.header-search-modal .close-button {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  color: #666;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.header-search-modal .close-button:hover {
+  background-color: #f0f2f5;
+  color: #333;
+}
+
+.header-search-modal-content {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Search Type Toggle */
+.header-search-modal .search-type-toggle {
+  display: flex;
+  gap: 10px;
+  padding: 4px;
+  background-color: #f0f2f5;
+  border-radius: 8px;
+}
+
+.header-search-modal .search-type-toggle .search-type-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 6px;
+  background-color: transparent;
+  transition: all 0.2s;
+  text-align: center;
+  font-weight: 500;
+}
+
+.header-search-modal .search-type-toggle .search-type-btn.active {
+  background-color: #5067EB;
+  color: white;
+  box-shadow: 0 2px 6px rgba(80, 103, 235, 0.3);
+}
+
+/* Search Input Container */
+.header-search-modal .search-input-container {
+  display: flex;
+  gap: 8px;
+}
+
+.header-search-modal .search-input-container input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.header-search-modal .search-input-container input:focus {
+  border-color: #5067EB;
+}
+
+.header-search-modal .search-input-container button {
+  padding: 12px 16px;
+  background-color: #5067EB;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.header-search-modal .search-input-container button:hover {
+  background-color: #4056d4;
+}
+
+.header-search-modal .search-input-container button:disabled {
+  background-color: #a0aef0;
+  cursor: not-allowed;
+}
+
+/* Search Results */
+.header-search-modal .search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.header-search-modal .results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.header-search-modal .result-item {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.header-search-modal .result-item:hover {
+  background-color: #f0f2f5;
+}
+
+.header-search-modal .result-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-right: 16px;
+  border: 1px solid #e0e0e0;
+}
+
+.header-search-modal .result-details {
+  flex: 1;
+}
+
+.header-search-modal .result-name {
+  font-weight: 500;
+  font-size: 16px;
+  color: #333;
+}
+
+.header-search-modal .result-email,
+.header-search-modal .result-team-info {
+  font-size: 14px;
+  color: #666;
+  margin-top: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 300px;
+}
+
+.header-search-modal .result-team-info div {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.header-search-modal .result-team-info div i {
+    font-size: 0.7rem;
+    color: #666;
+}
+
+.header-search-modal .no-results {
+  text-align: center;
+  color: #666;
+  padding: 40px 20px;
+}
+
+.header-search-modal .no-results p {
+  margin: 0;
+  font-size: 15px;
+}
+
+/* User Profile Modal Styles - Fixed z-index higher than search modal */
+.header-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  z-index: 2100 !important; /* Higher than search modal (was 1100) */
+  animation: headerFadeIn 0.2s ease-out !important;
+  pointer-events: auto !important; /* Ensures clicks register on this overlay */
+}
+
+.user-profile-modal {
+  background-color: white !important;
+  border-radius: 12px !important;
+  width: 90% !important;
+  max-width: 500px !important;
+  max-height: 80vh !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+  animation: headerSlideUp 0.3s ease-out !important;
+}
+
+.user-profile-modal .modal-header {
+  padding: 16px 20px !important;
+  border-bottom: 1px solid #e0e0e0 !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.user-profile-modal .modal-header h2 {
+  margin: 0 !important;
+  font-size: 20px !important;
+  color: var(--text-white) !important;
+}
+
+.user-profile-modal .close-button {
+  background: none !important;
+  border: none !important;
+  font-size: 18px !important;
+  cursor: pointer !important;
+  color: var(--danger-color) !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background-color 0.2s !important;
+}
+
+.user-profile-modal .close-button:hover {
+  background-color: #f0f2f5 !important;
+  color: #333 !important;
+}
+
+.user-profile-content {
+  padding: 20px !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+}
+
+.user-profile-info {
+  display: flex !important;
+  align-items: center !important;
+  padding: 10px !important;
+  border-radius: 10px !important;
+  background-color: #f8f9fa !important;
+}
+
+.user-profile-info .user-profile-avatar {
+  margin-right: 20px !important;
+}
+
+.user-profile-info .user-profile-avatar img {
+  width: 80px !important;
+  height: 80px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 2px solid #5067EB !important;
+  padding: 2px !important;
+}
+
+.user-profile-info .user-details {
+  flex: 1 !important;
+}
+
+.user-profile-info .user-details h3 {
+  margin: 0 0 5px !important;
+  font-size: 18px !important;
+  color: #333 !important;
+}
+
+.user-profile-info .user-details .user-email {
+  margin: 0 0 10px !important;
+  color: #666 !important;
+  font-size: 14px !important;
+}
+
+.user-profile-info .view-full-profile-btn {
+  padding: 8px 16px !important;
+  background-color: #5067EB !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  transition: background-color 0.2s !important;
+}
+
+.user-profile-info .view-full-profile-btn:hover {
+  background-color: #4056d4 !important;
+}
+
+.user-teams-section {
+  padding-top: 10px !important;
+  border-top: 1px solid #e0e0e0 !important;
+}
+
+.user-teams-section h3 {
+  margin: 0 0 15px !important;
+  font-size: 16px !important;
+  color: #333 !important;
+}
+
+.user-teams-list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 10px !important;
+  max-height: 250px !important;
+  overflow-y: auto !important;
+}
+
+.user-team-item {
+  display: flex !important;
+  align-items: center !important;
+  padding: 12px !important;
+  border-radius: 8px !important;
+  background-color: #f0f2f5 !important;
+  cursor: pointer !important;
+  transition: background-color 0.2s !important;
+  position: relative !important;  /* For positioning the icon */
+}
+
+.user-team-item:hover {
+  background-color: #e4e6e9 !important;
+}
+
+.view-team-icon {
+  position: absolute !important;
+  right: 12px !important;
+  color: #5067EB !important;
+  opacity: 0.7 !important;
+  transition: opacity 0.2s, transform 0.2s !important;
+}
+
+.user-team-item:hover .view-team-icon {
+  opacity: 1 !important;
+  transform: scale(1.1) !important;
+}
+
+.user-team-item .team-avatar {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 8px !important;
+  object-fit: cover !important;
+  margin-right: 12px !important;
+  border: 1px solid #ddd !important;
+}
+
+.user-team-item .team-info {
+  flex: 1 !important;
+}
+
+.user-team-item .team-info .team-name {
+  margin: 0 0 3px !important;
+  font-size: 16px !important;
+  font-weight: 500 !important;
+  color: #333 !important;
+}
+
+.user-team-item .team-info .member-role {
+  margin: 0 !important;
+  font-size: 12px !important;
+  color: #666 !important;
+}
+
+.user-teams-section .loading-teams {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  padding: 20px !important;
+  color: #666 !important;
+}
+
+.user-teams-section .loading-teams i {
+  font-size: 24px !important;
+  margin-bottom: 10px !important;
+  color: #5067EB !important;
+}
+
+.user-teams-section .no-teams {
+  padding: 20px !important;
+  text-align: center !important;
+  color: #666 !important;
+}
+
+.user-teams-section .invite-user-btn {
+  margin-top: 10px !important;
+  padding: 8px 16px !important;
+  background-color: #5067EB !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 4px !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  transition: background-color 0.2s !important;
+}
+
+.user-teams-section .invite-user-btn:hover {
+  background-color: #4056d4 !important;
+}
+
+/* Team Profile Modal Styles */
+.team-profile-modal {
+  background-color: white !important;
+  border-radius: 12px !important;
+  width: 90% !important;
+  max-width: 500px !important;
+  max-height: 80vh !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+  animation: headerSlideUp 0.3s ease-out !important;
+  max-height: 70vh !important;
+  width: 80% !important;
+  max-width: 450px !important;
+  position: relative !important;
+}
+
+.team-profile-modal h2 {
+    margin: 0 !important;
+    color: var(--text-white) !important;
+    font-size: 1.8rem;
+}
+
+.team-profile-modal .close-button {
+    color : var(--danger-color);
+}
+.team-profile-content {
+  padding: 20px !important;
+  overflow-y: auto !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 20px !important;
+}
+
+.team-profile-info {
+  display: flex !important;
+  align-items: flex-start !important;
+  padding: 15px !important;
+  border-radius: 10px !important;
+  background-color: #f8f9fa !important;
+  gap: 20px !important;
+}
+
+.team-profile-logo {
+  flex-shrink: 0 !important;
+}
+
+.team-profile-logo img {
+  width: 80px !important;
+  height: 80px !important;
+  object-fit: cover !important;
+  border-radius: 10px !important;
+  border: 1px solid #e0e0e0 !important;
+}
+
+.team-details {
+  flex: 1 !important;
+}
+
+.team-details h3 {
+  margin: 0 0 10px !important;
+  font-size: 20px !important;
+  color: #333 !important;
+}
+
+.team-description {
+  margin: 15px 0 0 !important;
+  color: #555 !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  padding: 10px !important;
+  background-color: #f0f2f5 !important;
+  border-radius: 6px !important;
+  border-left: 3px solid #5067EB !important;
+}
+
+.team-stats {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  color: #666 !important;
+  font-size: 13px !important;
+}
+
+.team-stats span {
+  display: flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+}
+
+.team-stats i {
+  color: #5067EB !important;
+  font-size: 12px !important;
+}
+
+.team-actions {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  margin-top: 10px !important;
+}
+
+.team-actions .view-team-btn,
+.team-actions .apply-team-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+}
+
+.view-team-btn, .apply-team-btn {
+  padding: 10px 20px !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  min-width: 150px !important;
+}
+
+.view-team-btn {
+  background-color: #5067EB !important;
+  color: white !important;
+}
+
+.view-team-btn:hover {
+  background-color: #4056d4 !important;
+}
+
+.view-team-btn:disabled {
+  background-color: #8d93c7 !important;
+  cursor: not-allowed !important;
+  opacity: 0.7 !important;
+}
+
+.apply-team-btn {
+  background-color: #28a745 !important;
+  color: white !important;
+}
+
+.apply-team-btn:hover:not(:disabled) {
+  background-color: #218838 !important;
+}
+
+.apply-team-btn:disabled {
+  background-color: #8FD19E !important;
+  cursor: not-allowed !important;
+}
+
+/* Improved team modal styles with higher z-index */
+.team-modal-overlay {
+  z-index: 2200 !important; /* Higher than user profile modal (2100) */
+  background-color: rgba(0, 0, 0, 0.3) !important; /* Slightly more transparent */
+  pointer-events: auto !important;
+}
+
+.team-creator-info {
+  background-color: #f8f9fa !important;
+  border-radius: 10px !important;
+  padding: 15px !important;
+  margin-top: 10px !important;
+}
+
+.team-creator-info h4 {
+  margin: 0 0 10px 0 !important;
+  font-size: 15px !important;
+  color: #666 !important;
+}
+
+.creator-profile {
+  display: flex !important;
+  align-items: center !important;
+}
+
+.creator-profile img {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  margin-right: 10px !important;
+  object-fit: cover !important;
+}
+
+.creator-name {
+  margin: 0 !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+}
+
+.creator-email {
+  margin: 3px 0 0 0 !important;
+  font-size: 12px !important;
+  color: #666 !important;
+}
+
+/* Modal overlay styles */
+.header-search-modal-overlay,
+.header-modal-overlay,
+.team-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  animation: headerFadeIn 0.2s ease-out !important;
+}
+
+/* Add pointer-events: none to prevent click handling on modal content */
+.header-search-modal,
+.user-profile-modal,
+.team-profile-modal {
+  pointer-events: auto !important; /* Explicitly enable pointer events */
+}

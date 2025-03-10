@@ -23,7 +23,9 @@ const {
     getUserChatStatistics,
     updateTeam,
     getTeamConfiguration,
-    updateTeamConfiguration
+    updateTeamConfiguration,
+    getUserTeams,
+    checkTeamMembership
 } = require('../controllers/TeamController');
 
 router.post('/addTeam', upload.single('logo'), addTeam);
@@ -54,5 +56,11 @@ router.put('/updateTeam/:teamId', isAuthenticatedUser, upload.single('logo'), up
 // Team configuration routes
 router.get('/getTeamConfiguration/:teamId', isAuthenticatedUser, getTeamConfiguration);
 router.put('/updateTeamConfiguration/:teamId', isAuthenticatedUser, updateTeamConfiguration);
+
+// Get all teams a user is member of
+router.get('/getUserTeams/:userId', isAuthenticatedUser, getUserTeams);
+
+// Add new route to check team membership
+router.get('/checkTeamMembership/:teamId', isAuthenticatedUser, checkTeamMembership);
 
 module.exports = router

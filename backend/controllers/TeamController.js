@@ -1129,3 +1129,74 @@ exports.updateTeamConfiguration = async (req, res) => {
   }
 };
 
+// Get all teams a user is member of
+exports.getUserTeams = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Find teams where the user is a member and has not left
+    const teams = await Team.find({
+      'members.user': userId,
+      'members.leaveAt': null
+    }).select('name description logo members createdAt createdBy');
+    
+    // Add user role to each team
+    const teamsWithRole = teams.map(team => {
+      const member = team.members.find(member => 
+        member.user.toString() === userId && member.leaveAt === null
+      );
+      
+      return {
+        _id: team._id,
+        name: team.name,
+        description: team.description,
+        logo: team.logo,
+        createdAt: team.createdAt,
+        userRole: member ? member.role : 'member'
+      };
+    });
+    
+    return res.status(200).json({
+      success: true,
+      teams: teamsWithRole
+    });
+  } catch (error) {
+    console.error('Error fetching user teams:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
+// Check if user is a member of a team
+exports.checkTeamMembership = async (req, res) => {
+  try {
+    const { teamId } = req.params;
+    const userId = req.user._id;
+    
+    const team = await Team.findById(teamId);
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: 'Team not found'
+      });
+    }
+    
+    const isMember = team.members.some(
+      member => member.user.toString() === userId.toString() && member.leaveAt === null
+    );
+    
+    res.status(200).json({
+      success: true,
+      isMember
+    });
+  } catch (error) {
+    console.error('Error checking team membership:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+};
+
