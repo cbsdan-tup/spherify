@@ -28,6 +28,8 @@ const {
     checkTeamMembership
 } = require('../controllers/TeamController');
 
+const { getTeamMemberHistory } = require('../controllers/TeamHistoryController');
+
 router.post('/addTeam', upload.single('logo'), addTeam);
 router.get('/getTeamByUser/:userId', getTeamByUser);
 router.get('/getTeamById/:teamId', getTeamById);
@@ -62,5 +64,8 @@ router.get('/getUserTeams/:userId', isAuthenticatedUser, getUserTeams);
 
 // Add new route to check team membership
 router.get('/checkTeamMembership/:teamId', isAuthenticatedUser, checkTeamMembership);
+
+// Add new route for team member history
+router.get('/getTeamMemberHistory/:teamId', isAuthenticatedUser, getTeamMemberHistory);
 
 module.exports = router

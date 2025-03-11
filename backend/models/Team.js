@@ -52,7 +52,8 @@ const TeamSchema = new mongoose.Schema(
         isAdmin: { type: Boolean, default: false },
         joinedAt: { type: Date, default: Date.now },
         leaveAt: { type: Date, default: null },
-        activeDays: [{ type: Date }] // Simplified to just store dates when user was active
+        joinThrough: { type: String, enum: ["invitation", "application"], default: "invitation" },
+        activeDays: [{ type: Date }] 
       },
     ],
     teamConfiguration: {

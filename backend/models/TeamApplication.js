@@ -8,11 +8,11 @@ const TeamApplicationSchema = new mongoose.Schema({
   actionTakenAt: { type: Date },
   status: { 
     type: String, 
-    enum: ["accepted", "denied", "pending"], 
+    enum: ["accepted", "denied", "pending", "cancelled"], 
     default: "pending",
     validate: {
       validator: function(v) {
-        return ["accepted", "denied", "pending"].includes(v);
+        return ["accepted", "denied", "pending", "cancelled"].includes(v);
       },
       message: props => `${props.value} is not a valid status.`
     }

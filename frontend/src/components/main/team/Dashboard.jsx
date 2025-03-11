@@ -23,7 +23,7 @@ import CreateNewFile from "../live-editing/CreateNewFile";
 import { Modal, Button, Form } from "react-bootstrap";
 import { fetchTeamMembers } from "../../../functions/TeamFunctions";
 import debounce from "lodash/debounce";
-import TeamRequestHistory from "./TeamRequestHistory";
+import TeamHistory from "./TeamHistory";
 
 // Register chart elements
 ChartJS.register(
@@ -1371,10 +1371,11 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <TeamRequestHistory 
+      <TeamHistory 
         show={showRequestHistory}
         onHide={() => setShowRequestHistory(false)}
         teamId={currentTeamId}
+        isCurrentUserAdmin={isCurrentUserAdmin}
       />
       
       <InviteMemberPopUp

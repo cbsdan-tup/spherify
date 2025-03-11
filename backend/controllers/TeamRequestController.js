@@ -54,6 +54,7 @@ const updateStatus = async (req, res) => {
         role: "member",
         isAdmin: false,
         joinedAt: new Date(),
+        joinThrough: "invitation"
       });
       await team.save();
     }
@@ -72,14 +73,16 @@ const getPendingRequests = async (req, res) => {
     const pendingRequests = await TeamRequest.find({
       invitee: userId,
       status: "pending",
-    }).populate("team inviter");
+    })
+    .populate("team")
+    .populate("inviter", "firstName lastName email avatar")
+    .populate("invitee", "firstName lastName email avatar") 
+    .sort({ invitedAt: -1 }); 
 
-    res
-      .status(200)
-      .json({
-        message: "Pending requests retrieved successfully",
-        pendingRequests,
-      });
+    res.status(200).json({
+      message: "Pending requests retrieved successfully",
+      pendingRequests,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -111,4 +114,39 @@ const getTeamRequestHistory = async (req, res) => {
   }
 };
 
-module.exports = { newTeamRequest, updateStatus, getPendingRequests, getTeamRequestHistory };
+// Get past team requests (accepted or denied)
+const getPastTeamRequests = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Find all requests where the user is the invitee and status is not pending
+    const pastRequests = await TeamRequest.find({
+      invitee: userId,
+      status: { $in: ["accepted", "denied"] }
+    })
+    .populate("team")
+    .populate("inviter")
+    .sort({ invitedAt: -1 }); // Sort newest to oldest
+
+    res.status(200).json({
+      success: true,
+      message: "Past requests retrieved successfully",
+      pastRequests,
+    });
+  } catch (error) {
+    console.error("Error retrieving past requests:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Server error", 
+      error: error.message 
+    });
+  }
+};
+
+module.exports = { 
+  newTeamRequest, 
+  updateStatus, 
+  getPendingRequests, 
+  getTeamRequestHistory,
+  getPastTeamRequests // Add this to exports
+};

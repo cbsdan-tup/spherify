@@ -197,7 +197,7 @@ exports.leaveTeam = async (req, res) => {
       return res.status(404).json({ message: "Team not found." });
     }
 
-    const memberIndex = team.members.findIndex((m) => m.user.toString() === userId);
+    const memberIndex = team.members.findIndex((m) => m.user.toString() === userId && m.leaveAt === null);
     if (memberIndex === -1) {
       return res
         .status(404)
@@ -282,7 +282,7 @@ exports.updateTeamMember = async (req, res) => {
     
     // Find the requesting user in the team to check permissions
     const requestingUser = team.members.find(
-      member => member.user.toString() === req.user._id.toString()
+      member => member.user.toString() === req.user._id.toString() && member.leaveAt === null
     );
     
     if (!requestingUser) {
@@ -296,7 +296,7 @@ exports.updateTeamMember = async (req, res) => {
     
     // Find the member to update
     const memberIndex = team.members.findIndex(
-      member => member.user.toString() === userId
+      member => member.user.toString() === userId && member.leaveAt === null
     );
     
     if (memberIndex === -1) {

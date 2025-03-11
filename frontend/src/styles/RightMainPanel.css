@@ -1,0 +1,298 @@
+/* RightMainPanel specific styles - all classes prefixed with rmp- to avoid conflicts */
+
+/* Header Section */
+.rmp-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 10px;
+}
+
+.rmp-header h3 {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+
+  margin: 0;
+  font-weight: 600;
+  font-size: 2rem;
+  color: var(--text-white);
+}
+
+.rmp-header h3 i {
+  padding-top: 0.4rem;
+  font-size: 1.5rem;
+}
+
+/* Divider */
+.rmp-divider {
+  border: none;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 10px 0;
+}
+
+/* Dropdown Filter */
+.rmp-filter-dropdown {
+  position: relative;
+  align-self: flex-end;
+}
+
+.rmp-dropdown-toggle:focus {
+  outline: none;
+  border: none;
+}
+
+.rmp-dropdown-toggle {
+  background-color: transparent;
+  color: var(--text-white);
+  opacity: 0.8;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  align-self: flex-end;
+  gap: 6px;
+  transition: background-color 0.2s;
+}
+
+.rmp-dropdown-toggle:hover {
+  opacity: 1;
+}
+
+.rmp-dropdown-toggle i {
+  color: var(--primary-color);
+  font-size: 10px;
+  transition: transform 0.2s;
+}
+
+.rmp-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 5px;
+  background-color: var(--text-white);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  width: 180px;
+  z-index: 10;
+  overflow: hidden;
+  animation: rmpDropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes rmpDropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.rmp-dropdown-item {
+  padding: 10px 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--header-text-color);
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.rmp-dropdown-item:hover {
+  background-color: rgba(80, 103, 235, 0.1);
+}
+
+.rmp-dropdown-item.active {
+  background-color: rgba(80, 103, 235, 0.2);
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.rmp-dropdown-item i {
+  color: var(--primary-color);
+  font-size: 14px;
+}
+
+/* Content Section */
+.rmp-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+  padding-right: 5px;
+}
+
+/* Request Item Styles */
+.rmp-request {
+  background-color: var(--text-white);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  color: var(--header-text-color) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.rmp-request:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.rmp-request-info {
+  display: flex;
+  gap: 10px;
+  color: var(--header-text-color) !important;
+}
+
+.rmp-inviter-avatar img,
+.rmp-team-avatar img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: #f5f5f5;
+}
+
+.rmp-request-team,
+.rmp-application-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rmp-invite-info,
+.rmp-team-name {
+  color: var(--header-text-color);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.rmp-invited-at,
+.rmp-application-date,
+.rmp-time-ago {
+  color: #777777;
+  font-size: 11px;
+}
+
+.rmp-request-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.rmp-accept,
+.rmp-deny,
+.rmp-cancel {
+  padding: 6px 12px;
+  font-size: 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.rmp-accept {
+  background-color: #4caf50;
+  color: white;
+}
+
+.rmp-accept:hover {
+  background-color: #43a047;
+  transform: scale(1.05);
+}
+
+.rmp-deny {
+  background-color: #f44336;
+  color: white;
+}
+
+.rmp-deny:hover {
+  background-color: #e53935;
+  transform: scale(1.05);
+}
+
+.rmp-cancel {
+  background-color: #f44336;
+  color: white;
+}
+
+.rmp-cancel:hover {
+  background-color: #e53935;
+  transform: scale(1.05);
+}
+
+/* Past Request/Application Styles */
+.rmp-past-request,
+.rmp-past-application {
+  opacity: 0.9;
+  background-color: #f9f9f9;
+}
+
+.rmp-status-info,
+.rmp-application-result {
+  display: flex;
+  flex-direction: column;
+}
+
+.rmp-status {
+  padding: 2px 0;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.rmp-status.rmp-accepted {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: #2e7d32;
+  padding: 2px 4px;
+}
+
+.rmp-status.rmp-denied {
+  background-color: rgba(244, 67, 54, 0.2);
+  color: #c62828;
+  padding: 2px 4px;
+}
+
+.rmp-action-by {
+  color: #777777;
+  font-size: 11px;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* No requests/applications message */
+.rmp-no-requests {
+  text-align: center;
+  color: #777777;
+  padding: 20px 0;
+  font-size: 14px;
+  background-color: var(--text-white);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Media query for smaller screens */
+@media (max-width: 768px) {
+  .rmp-dropdown-menu {
+    width: 160px;
+  }
+
+  .rmp-dropdown-item {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}

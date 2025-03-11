@@ -16,7 +16,7 @@ const TeamRequestSchema = new mongoose.Schema({
       message: props => `${props.value} is not a valid status.`
     }
   }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model("TeamRequest", TeamRequestSchema);
 

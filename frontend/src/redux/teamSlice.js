@@ -13,6 +13,9 @@ const teamSlice = createSlice({
   reducers: {
     setTeamId: (state, action) => {
       state.currentTeamId = action.payload;
+      state.currentFileId = null;
+      state.currentProjectManagementTool = null;
+      state.currentMessageGroupId = null;
     },
     clearTeamId: (state) => {
       state.currentTeamId = null;

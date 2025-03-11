@@ -74,14 +74,6 @@ exports.getTeamApplications = async (req, res) => {
   try {
     const { teamId } = req.params;
     const userId = req.user._id;
-    
-    // Validate user has permission to view applications
-    if (!(await isAdminOrLeader(userId, teamId))) {
-      return res.status(403).json({ 
-        success: false, 
-        message: "Only team leaders or admins can view applications" 
-      });
-    }
 
     const applications = await TeamApplication.find({ team: teamId })
       .populate("applicant", "firstName lastName email avatar")
@@ -102,6 +94,7 @@ exports.getUserApplications = async (req, res) => {
     const applications = await TeamApplication.find({ applicant: userId })
       .populate("team", "name logo description")
       .populate("actionTakenBy", "firstName lastName email avatar")
+      .populate("applicant", "firstName lastName email avatar")
       .sort({ appliedAt: -1 });
 
     res.status(200).json({ success: true, data: applications });
@@ -149,10 +142,10 @@ exports.updateApplicationStatus = async (req, res) => {
     const { status } = req.body;
     const userId = req.user._id;
 
-    if (!["accepted", "denied"].includes(status)) {
+    if (!["accepted", "denied", "cancelled"].includes(status)) {
       return res.status(400).json({ 
         success: false, 
-        message: "Status must be either 'accepted' or 'denied'" 
+        message: "Status must be either 'accepted' or 'denied', or 'cancelled'" 
       });
     }
 
@@ -160,14 +153,6 @@ exports.updateApplicationStatus = async (req, res) => {
     
     if (!application) {
       return res.status(404).json({ success: false, message: "Application not found" });
-    }
-
-    // Validate user has permission to update application
-    if (!(await isAdminOrLeader(userId, application.team))) {
-      return res.status(403).json({ 
-        success: false, 
-        message: "Only team leaders or admins can update applications" 
-      });
     }
 
     // If already processed, don't allow changes
@@ -199,7 +184,8 @@ exports.updateApplicationStatus = async (req, res) => {
           user: application.applicant,
           role: "member",
           isAdmin: false,
-          joinedAt: new Date()
+          joinedAt: new Date(),
+          joinThrough: "application"
         });
         await team.save();
       }

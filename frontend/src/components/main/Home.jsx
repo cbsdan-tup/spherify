@@ -307,7 +307,6 @@ function Home({
                           <i className="fa-solid fa-user-tie"></i>{" "}
                           {(() => {
                             const leader = team?.members?.find(member => member.role === "leader" && !member.leaveAt);
-                            console.log("Leader:", leader);
                             if (leader) {
                               return `${leader.user?.firstName} ${leader.user?.lastName}`;
                             } else {

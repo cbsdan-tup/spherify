@@ -47,11 +47,6 @@ export const logUserStatusChange = (userId, userName, prevStatus, newStatus) => 
     }
   };
   
-  console.log(
-    `%c[${timestamp}] ${userName} (${userId.slice(-4)}): ${prevStatus || '?'} → ${newStatus}`,
-    `color: ${getStatusColor(newStatus)}; font-weight: bold`
-  );
-  
   // Also log to server if needed
   if (socket.connected) {
     socket.emit("logStatusChange", { userId, userName, prevStatus, newStatus, timestamp });
@@ -89,12 +84,13 @@ export const setupActivityTracking = (userId) => {
   const handleVisibility = () => {
     isPageVisible = document.visibilityState === 'visible';
     
-    if (isPageVisible) {
-      updateUserStatus(userId, 'active');
-      resetInactivityTimer(userId);
-    } else {
-      updateUserStatus(userId, 'inactive');
-    }
+    updateUserStatus(userId, 'active');
+    // if (isPageVisible) {
+    //   updateUserStatus(userId, 'active');
+    //   resetInactivityTimer(userId);
+    // } else {
+    //   updateUserStatus(userId, 'inactive');
+    // }
   };
 
   const handleActivity = () => {

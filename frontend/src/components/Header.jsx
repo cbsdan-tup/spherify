@@ -11,7 +11,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { errMsg, logout, succesMsg } from "../utils/helper";
 import { clearTeamId, clearMsgGroupId } from "../redux/teamSlice";
 import axios from "axios";
+import moment from "moment";
 import "../styles/Header.css";
+import { setTeamId } from "../redux/teamSlice";
 
 // Create SearchModal as a separate component outside the main component
 const SearchModal = React.memo(
@@ -229,7 +231,8 @@ const UserProfileModal = React.memo(
                 <h3>
                   {user.firstName} {user.lastName}
                 </h3>
-                <p className="user-email">{user.email}</p>
+                <p className="user-email mb-1" style={{marginBottom: 0}}>{user.email}</p>
+                <p className="user-email m-0">Joined since {moment(user.createdAt).format("MMM DD, YYYY")}</p>
               </div>
             </div>
 
@@ -299,6 +302,7 @@ const TeamProfileModal = React.memo(
     isApplying,
     handleApplyToTeam,
     navigateToTeam,
+    dispatch
   }) => {
     if (!team) return null;
 
@@ -386,7 +390,7 @@ const TeamProfileModal = React.memo(
                   disabled={team.isDisabled}
                   onClick={
                     !team.isDisabled
-                      ? () => dispatch(setTeamId(team._id))
+                      ? () => {dispatch(setTeamId(team._id)); closeAllModal();}
                       : () =>
                           Swal.fire(
                             "Team is disabled",
@@ -454,6 +458,11 @@ const Header = ({ setIsLoading, setTeams }) => {
   const [isUserTeamMember, setIsUserTeamMember] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
 
+  const closeAllModal = () => {
+    setShowSearchModal(false);
+    setShowUserModal(false);
+    setShowTeamModal(false);
+  };
   // Handle search input change for current teams
   const handleSearchChange = (e) => {
     const value = e.target.value;
@@ -1062,6 +1071,7 @@ const Header = ({ setIsLoading, setTeams }) => {
           isApplying={isApplying}
           handleApplyToTeam={handleApplyToTeam}
           navigateToTeam={navigateToTeam}
+          dispatch={dispatch}
         />
       )}
     </div>

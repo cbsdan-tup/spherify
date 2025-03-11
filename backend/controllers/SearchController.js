@@ -24,7 +24,7 @@ exports.searchUsers = async (req, res) => {
       ],
       isAdmin: false, // Exclude admin users
       isDisable: false // Exclude disabled users
-    }).select('firstName lastName email avatar');
+    }).select('firstName lastName email avatar createdAt');
 
     return res.status(200).json({
       success: true,
