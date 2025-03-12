@@ -1580,6 +1580,7 @@ exports.getStorageInfo = async (req, res) => {
 
     const data = response.data.ocs.data;
 
+    console.log("Storage info:", data.quota);
     // Extract storage details
     const storageInfo = {
       totalStorage: data.quota.total / (1024 * 1024),

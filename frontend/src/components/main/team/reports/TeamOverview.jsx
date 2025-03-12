@@ -53,6 +53,70 @@ const TeamOverview = ({ teamId }) => {
     fetchData();
   }, [teamId, token]);
 
+  // Helper function to get pie chart options with center label
+  const getPieChartOptions = (centerText, subText) => {
+    return {
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const label = context.label || '';
+              const value = context.raw || 0;
+              const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+              const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+              return `${label}: ${value} (${percentage}%)`;
+            }
+          }
+        }
+      },
+      elements: {
+        arc: {
+          borderWidth: 0
+        }
+      },
+      // Add center text using afterDraw hook
+      plugins: [{
+        id: 'centerText',
+        afterDraw: (chart) => {
+          const width = chart.width;
+          const height = chart.height;
+          const ctx = chart.ctx;
+          const total = parseInt(centerText);
+          
+          // Don't display if total is 0
+          if (total <= 0) return;
+          
+          ctx.restore();
+          const fontSize = (height / 160).toFixed(2);
+          ctx.font = `bold ${fontSize}em sans-serif`;
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = "#555";
+          
+          const text = centerText;
+          const textX = Math.round((width - ctx.measureText(text).width) / 2);
+          const textY = height / 2 - 15;
+          
+          ctx.fillText(text, textX, textY);
+          
+          // Add subtitle with descriptive text
+          ctx.font = `${fontSize * 0.6}em sans-serif`;
+          ctx.fillStyle = "#777";
+          
+          const subTextX = Math.round((width - ctx.measureText(subText).width) / 2);
+          const subTextY = height / 2 + 10;
+          
+          ctx.fillText(subText, subTextX, subTextY);
+          
+          ctx.save();
+        }
+      }]
+    };
+  };
+
   if (loading) {
     return <div className="text-center p-5">Loading team overview...</div>;
   }
@@ -72,6 +136,11 @@ const TeamOverview = ({ teamId }) => {
       },
     ],
   };
+
+  // Calculate total members for the center label
+  const totalMembers = (teamDetails?.activeMembers || 0) + 
+                      (teamDetails?.newMembersThisMonth || 0) - 
+                      (teamDetails?.leftMembersThisMonth || 0);
 
   // Prepare chart data for member activity
   const memberActivityData = memberActivity
@@ -105,6 +174,9 @@ const TeamOverview = ({ teamId }) => {
         ],
       }
     : null;
+    
+  // Calculate total tasks
+  const totalTasks = taskData ? taskData.completed + taskData.inProgress + taskData.pending : 0;
 
   return (
     <div className="team-overview">
@@ -156,15 +228,22 @@ const TeamOverview = ({ teamId }) => {
               <div style={{ height: "250px", display: "flex", justifyContent: "center" }}>
                 <Pie 
                   data={memberStatusData} 
-                  options={{ 
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        position: 'bottom',
-                      }
-                    }
-                  }} 
+                  options={getPieChartOptions(totalMembers.toString(), 'Total Members')} 
                 />
+              </div>
+              
+              {/* Add summary section */}
+              <div style={{ textAlign: 'center', marginTop: '10px', padding: '5px' }}>
+                <p style={{ margin: '0' }}>
+                  <span style={{ fontWeight: 'bold', color: "#4CAF50" }}>Active: </span>
+                  <span>{teamDetails?.activeMembers || 0}</span>
+                  <span style={{ margin: '0 10px' }}>|</span>
+                  <span style={{ fontWeight: 'bold', color: "#2196F3" }}>New: </span>
+                  <span>{teamDetails?.newMembersThisMonth || 0}</span>
+                  <span style={{ margin: '0 10px' }}>|</span>
+                  <span style={{ fontWeight: 'bold', color: "#F44336" }}>Left: </span>
+                  <span>{teamDetails?.leftMembersThisMonth || 0}</span>
+                </p>
               </div>
             </div>
           </div>
@@ -215,15 +294,29 @@ const TeamOverview = ({ teamId }) => {
                 <div style={{ height: "250px", display: "flex", justifyContent: "center" }}>
                   <Pie 
                     data={taskChartData} 
-                    options={{ 
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: 'bottom',
-                        }
-                      }
-                    }}
+                    options={getPieChartOptions(totalTasks.toString(), 'Total Tasks')} 
                   />
+                  
+                  {/* Add summary section */}
+                  <div style={{ 
+                    position: 'absolute',
+                    bottom: '5px',
+                    left: '0',
+                    right: '0',
+                    textAlign: 'center', 
+                    padding: '5px'
+                  }}>
+                    <p style={{ margin: '0', fontSize: '0.8rem' }}>
+                      <span style={{ fontWeight: 'bold', color: "#4CAF50" }}>Completed: </span>
+                      <span>{taskData.completed}</span>
+                      <span style={{ margin: '0 5px' }}>|</span>
+                      <span style={{ fontWeight: 'bold', color: "#FFC107" }}>In Progress: </span>
+                      <span>{taskData.inProgress}</span>
+                      <span style={{ margin: '0 5px' }}>|</span>
+                      <span style={{ fontWeight: 'bold', color: "#F44336" }}>Pending: </span>
+                      <span>{taskData.pending}</span>
+                    </p>
+                  </div>
                 </div>
               ) : (
                 <p className="text-center mt-5">No task data available</p>
