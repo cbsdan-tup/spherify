@@ -16,6 +16,7 @@ import {
   BarElement,
   Title,
 } from "chart.js";
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
 import moment from "moment";
@@ -31,7 +32,8 @@ ChartJS.register(
   PointElement,
   LineElement,
   BarElement,
-  Title
+  Title,
+  ChartDataLabels
 );
 
 const TeamReportModal = ({ show, onHide, team }) => {
@@ -278,6 +280,38 @@ const TeamReportModal = ({ show, onHide, team }) => {
               }
             }
           }
+        },
+        // Add datalabels plugin configuration for labels on the pie slices
+        datalabels: {
+          formatter: (value, ctx) => {
+            const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+            const percentage = (value / sum * 100).toFixed(1) + '%';
+            
+            // Only show label if the slice is big enough to fit text
+            if (value / sum < 0.05) return '';
+            
+            let sizeLabel = '';
+            if (value >= 1024 * 1024 * 1024) {
+              sizeLabel = `${(value / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+            } else if (value >= 1024 * 1024) {
+              sizeLabel = `${(value / (1024 * 1024)).toFixed(1)} MB`;
+            } else if (value >= 1024) {
+              sizeLabel = `${(value / 1024).toFixed(1)} KB`;
+            }
+            
+            return `${percentage}\n${sizeLabel}`;
+          },
+          color: '#fff',
+          font: {
+            weight: 'bold',
+            size: 12
+          },
+          textStrokeColor: 'rgba(0, 0, 0, 0.5)',
+          textStrokeWidth: 2,
+          textShadowBlur: 5,
+          textShadowColor: 'rgba(0, 0, 0, 0.5)',
+          align: 'center',
+          anchor: 'center'
         }
       },
     },
@@ -607,7 +641,10 @@ const TeamReportModal = ({ show, onHide, team }) => {
                   <div className="col-md-5">
                     <div className="chart-container" style={{ height: "280px" }}>
                       {cloudUsage ? (
-                        <Pie data={cloudUsageChartConfig.data} options={cloudUsageChartConfig.options} />
+                        <Pie 
+                          data={cloudUsageChartConfig.data} 
+                          options={cloudUsageChartConfig.options}
+                        />
                       ) : (
                         <div className="chart-placeholder">
                           <i className="fa-solid fa-circle-notch fa-spin"></i>

@@ -494,7 +494,7 @@ const Dashboard = () => {
                   <div className="label">Cloud Usage</div>
                   <div className="value">
                     {fileSharingStorage
-                      ? (fileSharingStorage.freeStorage / 1024).toFixed(2)
+                      ? (fileSharingStorage.usedStorage / 1024).toFixed(2)
                       : 0}{" "}
                     GB /{" "}
                     {fileSharingStorage

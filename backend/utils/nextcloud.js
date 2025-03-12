@@ -15,16 +15,16 @@ let BASE_URL = "";
 async function getNextcloudConfig() {
   try {
     const config = await AdminConfigurations.findOne({}, "nextcloud");
-    if (!config) {
-      console.error("Nextcloud configuration not found in database.");
-      return false; // Return false to indicate failure
-    }
+    // if (!config) {
+    //   console.error("Nextcloud configuration not found in database.");
+    //   return false; // Return false to indicate failure
+    // }
 
-    NEXTCLOUD_URL = `${config.nextcloud.url || "https://spherify-cloud.mooo.com"}/remote.php/dav/files`;
-    NEXTCLOUD_REST_URL = config.nextcloud.url || "https://spherify-cloud.mooo.com";
-    NEXTCLOUD_USER = config.nextcloud.adminUser || "";
-    NEXTCLOUD_PASSWORD = config.nextcloud.adminPassword || "";
-    NEXTCLOUD_API = `${config.nextcloud.url || "https://spherify-cloud.mooo.com"}/ocs/v2.php/apps/files_sharing/api/v1/shares`;
+    NEXTCLOUD_URL = `${config?.nextcloud?.url || "https://spherify-cloud.mooo.com"}/remote.php/dav/files`;
+    NEXTCLOUD_REST_URL = config?.nextcloud?.url || "https://spherify-cloud.mooo.com";
+    NEXTCLOUD_USER = config?.nextcloud?.adminUser || "spherify";
+    NEXTCLOUD_PASSWORD = config?.nextcloud?.adminPassword || "spherify";
+    NEXTCLOUD_API = `${config?.nextcloud?.url || "https://spherify-cloud.mooo.com"}/ocs/v2.php/apps/files_sharing/api/v1/shares`;
     BASE_URL = `${NEXTCLOUD_URL}/${NEXTCLOUD_USER}/Spherify_Data`;
 
     return true; 
