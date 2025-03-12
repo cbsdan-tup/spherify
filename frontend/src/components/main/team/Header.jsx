@@ -335,7 +335,7 @@ function Header({
             backgroundColor: "rgb(90, 120, 165)", 
             color: "white", 
             borderRadius: "4px", 
-            padding: "3.5px 12px", 
+            padding: "6px 12px", 
             transition: "background-color 0.2s"
           }}
           onClick={() => {
@@ -346,12 +346,12 @@ function Header({
           {showChats ? (
             <>
               <i className="fa-solid fa-wrench"></i>
-              <span>Show Tools</span>
+              <span>MENU</span>
             </>
           ) : (
             <>
               <i className="fa-solid fa-comments"></i>
-              <span>Show Chats</span>
+              <span>CHATS</span>
             </>
           )}
         </div>

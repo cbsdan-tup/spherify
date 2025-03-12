@@ -381,7 +381,7 @@ const RightMainPanel = ({ refresh, setRefresh }) => {
       <div className="rmp-header">
         <h3>
           <i className="fas fa-envelope"></i>
-          <span>Team Invitations & Applications</span>
+          <span>Team {(filterType === "currentRequests" || filterType === "pastRequests") ? "Requests" : "Applications"}</span>
         </h3>
         <div className="rmp-filter-dropdown" ref={dropdownRef}>
           <button

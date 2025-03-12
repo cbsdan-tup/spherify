@@ -232,7 +232,7 @@ const UserProfileModal = React.memo(
                   {user.firstName} {user.lastName}
                 </h3>
                 <p className="user-email mb-1" style={{marginBottom: 0}}>{user.email}</p>
-                <p className="user-email m-0">Joined since {moment(user.createdAt).format("MMM DD, YYYY")}</p>
+                <p className="text-muted mb-1" style={{fontSize: "0.7rem"}}>{user.status === "active" ? "Active Now" : `Last seen ${moment(user.statusUpdatedAt).fromNow()}`} {" "} | {" "} Joined since {moment(user.createdAt).format("MMM DD, YYYY")}</p>
               </div>
             </div>
 

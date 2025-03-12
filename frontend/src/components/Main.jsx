@@ -218,12 +218,21 @@ function Main() {
       <div
         className={`toggle-show ${showRightPanel && "leftmargin"}`}
         onClick={handleToggleShow}
-      >
-        {showRightPanel ? (
-          <i className="fa-solid fa-arrow-right"></i>
+      >{
+        location.pathname === "/main" ? (
+          <>
+            <i className="fa-solid fa-wrench"></i>
+          </>
         ) : (
-          <i className="fa-solid fa-arrow-left"></i>
-        )}
+          <>
+          {showChats ? (
+            <i className="fa-solid fa-comments"></i>
+          ) : (
+            <i className="fa-solid fa-wrench"></i>
+          )}
+          </>
+        )
+      }
       </div>
 
       {/* Render right panel based on route */}
