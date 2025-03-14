@@ -24,6 +24,7 @@ import { Modal, Button, Form } from "react-bootstrap";
 import { fetchTeamMembers } from "../../../functions/TeamFunctions";
 import debounce from "lodash/debounce";
 import TeamHistory from "./TeamHistory";
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
 // Register chart elements
 ChartJS.register(
@@ -32,7 +33,8 @@ ChartJS.register(
   Legend,
   CategoryScale,
   LinearScale,
-  BarElement
+  BarElement,
+  ChartDataLabels
 );
 
 // New component for editing team members
@@ -1002,13 +1004,21 @@ const Dashboard = () => {
                   Object.values(priorityData).every(count => count === 0) ? (
                     <p className="text-center text-muted">No tasks available</p>
                   ) : (
-                    <div className="d-flex justify-content-center align-items-center">
+                    <div className="d-flex justify-content-center align-items-center" style={{ height: '300px' }}>
                       <Pie 
                         data={kanbanData}
                         options={{
                           maintainAspectRatio: false,
                           plugins: {
-                            legend: { position: 'bottom' },
+                            legend: { 
+                              position: 'bottom',
+                              labels: {
+                                padding: 20,
+                                font: {
+                                  size: 12
+                                }
+                              }
+                            },
                             tooltip: {
                               callbacks: {
                                 label: (context) => {
@@ -1017,6 +1027,35 @@ const Dashboard = () => {
                                   return `${context.label}: ${context.raw} (${percentage}%)`;
                                 }
                               }
+                            },
+                            datalabels: {
+                              formatter: (value, ctx) => {
+                                const total = Object.values(priorityData).reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                const label = ctx.chart.data.labels[ctx.dataIndex];
+                                return `${label}: ${percentage}%`;
+                              },
+                              color: '#fff',
+                              font: {
+                                weight: 'bold',
+                                size: 11
+                              },
+                              padding: 4,
+                              textAlign: 'center',
+                              anchor: 'end',       // Position at the outer edge of slice
+                              align: 'outer',      // Align the text outward from the center
+                              offset: 8,           // Distance from anchor point
+                              backgroundColor: function(context) {
+                                return context.dataset.backgroundColor[context.dataIndex];
+                              },
+                              borderRadius: 4,
+                              display: function(context) {
+                                const value = context.dataset.data[context.dataIndex];
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = value / total * 100;
+                                // Only show labels for segments that are large enough
+                                return percentage > 5;
+                              }
                             }
                           }
                         }}
@@ -1024,29 +1063,64 @@ const Dashboard = () => {
                     </div>
                   )
                 ) : activeTab === 'completion' ? (
-                  <div className="completion-stats d-flex justify-content-center align-items-center" >
-                    <div className="h-100">
-                      <Pie 
-                        data={completionChartData}
-                        options={{
-                          maintainAspectRatio: false,
-                          plugins: {
-                            legend: { position: 'bottom' },
-                            tooltip: {
-                              callbacks: {
-                                label: (context) => {
-                                  const total = Object.values(completionData).reduce((a, b) => a + b, 0);
-                                  const percentage = ((context.raw / total) * 100).toFixed(1);
-                                  let status = context.label === 'Completed' ? 'Finished' : 
-                                              context.label === 'In Progress' ? 'Ongoing' : 'Not Started';
-                                  return `${status}: ${context.raw} (${percentage}%)`;
-                                }
+                  <div className="d-flex justify-content-center align-items-center" style={{ height: '300px' }}>
+                    <Pie 
+                      data={completionChartData}
+                      options={{
+                        maintainAspectRatio: false,
+                        plugins: {
+                          legend: { 
+                            position: 'bottom',
+                            labels: {
+                              padding: 20,
+                              font: {
+                                size: 12
                               }
                             }
+                          },
+                          tooltip: {
+                            callbacks: {
+                              label: (context) => {
+                                const total = Object.values(completionData).reduce((a, b) => a + b, 0);
+                                const percentage = ((context.raw / total) * 100).toFixed(1);
+                                let status = context.label === 'Completed' ? 'Finished' : 
+                                            context.label === 'In Progress' ? 'Ongoing' : 'Not Started';
+                                return `${status}: ${context.raw} (${percentage}%)`;
+                              }
+                            }
+                          },
+                          datalabels: {
+                            formatter: (value, ctx) => {
+                              const total = Object.values(completionData).reduce((a, b) => a + b, 0);
+                              const percentage = ((value / total) * 100).toFixed(1);
+                              const label = ctx.chart.data.labels[ctx.dataIndex];
+                              return `${label}: ${percentage}%`;
+                            },
+                            color: '#fff',
+                            font: {
+                              weight: 'bold',
+                              size: 11
+                            },
+                            padding: 4,
+                            textAlign: 'center',
+                            anchor: 'end',        // Position at the outer edge of slice
+                            align: 'outer',       // Align the text outward from the center
+                            offset: 8,            // Distance from anchor point
+                            backgroundColor: function(context) {
+                              return context.dataset.backgroundColor[context.dataIndex];
+                            },
+                            borderRadius: 4,
+                            display: function(context) {
+                              const value = context.dataset.data[context.dataIndex];
+                              const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                              const percentage = value / total * 100;
+                              // Only show labels for segments that are large enough
+                              return percentage > 5;
+                            }
                           }
-                        }}
-                      />
-                    </div>
+                        }
+                      }}
+                    />
                   </div>
                 ) : (
                   <div className="member-distribution" style={{flex: 1}}>
