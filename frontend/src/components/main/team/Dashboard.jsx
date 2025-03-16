@@ -215,6 +215,8 @@ const EditMemberModal = ({
 const Dashboard = () => {
   // Update state for tab control to include distribution
   const [activeTab, setActiveTab] = useState('priorities');
+  // Add state for Gantt chart view
+  const [activeGanttView, setActiveGanttView] = useState('all');
   
   // Add state for card completion data
   const [completionData, setCompletionData] = useState({
@@ -941,6 +943,245 @@ const Dashboard = () => {
     setShowRequestHistory(true);
   };
 
+  // Function to render mini Gantt timeline
+  const renderMiniGanttTimeline = () => {
+    if (!ganttTasks || ganttTasks.length === 0) {
+      return <p className="text-center text-muted">No tasks</p>;
+    }
+    
+    // Use current year's full range instead of task-based range
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const yearStart = new Date(currentYear, 0, 1); // January 1st of current year
+    const yearEnd = new Date(currentYear, 11, 31); // December 31st of current year
+    
+    // Function to calculate position percentage based on the full year
+    const getPositionPercentage = (date) => {
+      const totalYearMs = yearEnd - yearStart;
+      const positionMs = date - yearStart;
+      return Math.max(0, Math.min(100, (positionMs / totalYearMs) * 100));
+    };
+    
+    return (
+      <div className="mini-gantt-container">
+        {/* Timeline header with today marker */}
+        <div className="mini-gantt-header">
+          <div className="mini-gantt-today" 
+               style={{ left: `calc(80px + (100% - 80px) * ${getPositionPercentage(now) / 100})` }}
+               title={now.toLocaleDateString()}>
+            <div className="today-marker"></div>
+            <span>Today</span>
+          </div>
+          <div className="mini-gantt-start">
+            {yearStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+          </div>
+          <div className="mini-gantt-end">
+            {yearEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+          </div>
+        </div>
+        
+        {/* Grid container that properly accounts for label width */}
+        <div className="mini-gantt-grid-container">
+          {/* Fixed-width area for task labels */}
+          <div className="mini-gantt-label-column"></div>
+          
+          {/* Month grid lines in the timeline area */}
+          <div className="mini-gantt-grid">
+            {Array.from({ length: 12 }, (_, i) => {
+              const month = new Date(currentYear, i, 1);
+              const position = getPositionPercentage(month);
+              return (
+                <div key={i} className="mini-gantt-grid-line" style={{ left: `${position}%` }}>
+                  <div className="month-label">{month.toLocaleDateString(undefined, { month: 'short' })}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        
+        {/* Task rows */}
+        <div className="mini-gantt-tasks">
+          {ganttTasks.map((task, index) => {
+            const startDate = new Date(task.startDate);
+            const endDate = new Date(task.endDate);
+            
+            // Clamp dates to current year range for visualization
+            const clampedStart = new Date(Math.max(yearStart, startDate));
+            const clampedEnd = new Date(Math.min(yearEnd, endDate));
+            
+            const startPos = getPositionPercentage(clampedStart);
+            const endPos = getPositionPercentage(clampedEnd);
+            const width = Math.max(0.5, endPos - startPos); // Ensure minimum width for visibility
+            
+            const isPartiallyOutOfRange = startDate < yearStart || endDate > yearEnd;
+            
+            return (
+              <div className="mini-gantt-task-row" key={index}>
+                <div className="mini-gantt-task-label">{task.title}</div>
+                <div className="mini-gantt-timeline">
+                  <div 
+                    className={`mini-gantt-bar ${isPartiallyOutOfRange ? 'partial' : ''}`}
+                    style={{
+                      left: `${startPos}%`,
+                      width: `${width}%`,
+                      backgroundColor: task.color || '#007bff'
+                    }}
+                    title={`${task.title}: ${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}${
+                      isPartiallyOutOfRange ? ' (extends outside current year)' : ''
+                    }`}
+                  ></div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Add CSS styles directly in your component
+  useEffect(() => {
+    // Add styles for the mini Gantt chart
+    const style = document.createElement('style');
+    style.textContent = `
+      .mini-gantt-container {
+        width: 100%;
+        padding: 10px 0;
+        position: relative;
+      }
+      .mini-gantt-header {
+        height: 20px;
+        position: relative;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #eee;
+      }
+      .mini-gantt-today {
+        position: absolute;
+        transform: translateX(-50%);
+        text-align: center;
+        z-index: 5;
+        top: -20px; /* Move the today marker higher up */
+      }
+      .today-marker {
+        height: 15px; /* Increase the height for better visibility */
+        width: 2px;
+        background-color: #dc3545;
+        margin: 0 auto;
+      }
+      .mini-gantt-start {
+        position: absolute;
+        left: 0;
+        font-size: 0.7rem;
+        color: #666;
+      }
+      .mini-gantt-end {
+        position: absolute;
+        right: 0;
+        font-size: 0.7rem;
+        color: #666;
+      }
+      .mini-gantt-grid-container {
+        display: flex;
+        position: relative;
+        height: 20px;
+        margin-bottom: 10px;
+      }
+      .mini-gantt-label-column {
+        width: 80px;
+        flex-shrink: 0;
+      }
+      .mini-gantt-grid {
+        flex: 1;
+        position: relative;
+        height: 100%;
+      }
+      .mini-gantt-grid-line {
+        position: absolute;
+        height: 100%;
+        width: 1px;
+        background-color: rgba(0,0,0,0.1);
+        top: 0;
+        bottom: 0;
+        z-index: 1;
+      }
+      .month-label {
+        position: absolute;
+        top: -15px;
+        transform: translateX(-50%);
+        font-size: 0.65rem;
+        color: #888;
+        white-space: nowrap;
+      }
+      .mini-gantt-tasks {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        position: relative;
+      }
+      .mini-gantt-task-row {
+        display: flex;
+        height: 25px;
+        align-items: center;
+        position: relative;
+        z-index: 2;
+      }
+      .mini-gantt-task-label {
+        width: 80px;
+        flex-shrink: 0;
+        font-size: 0.8rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        padding-right: 5px;
+      }
+      .mini-gantt-timeline {
+        flex: 1;
+        height: 15px;
+        position: relative;
+        background-color: #f5f5f5;
+        border-radius: 4px;
+      }
+      .mini-gantt-bar {
+        position: absolute;
+        height: 100%;
+        border-radius: 4px;
+        transition: all 0.2s;
+        z-index: 3;
+      }
+      .mini-gantt-bar.partial::before,
+      .mini-gantt-bar.partial::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        height: 100%;
+        width: 3px;
+        background: repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 2px,
+          rgba(0,0,0,0.2) 2px,
+          rgba(0,0,0,0.2) 4px
+        );
+        z-index: 4;
+      }
+      .mini-gantt-bar.partial::before {
+        left: 0;
+      }
+      .mini-gantt-bar.partial::after {
+        right: 0;
+      }
+      .mini-gantt-bar:hover {
+        transform: scaleY(1.2);
+        z-index: 5;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   return (
     <div className="team-content container">
       <FileShare />
@@ -1146,14 +1387,53 @@ const Dashboard = () => {
             </div>
             <div className="card chart-bg gantt-chart">
               <div className="card-header fw-semibold">
-                <span>Gantt Chart</span>
-                <Link
-                  to={`/main/${currentTeamId}/gantt`}
-                  className="gantt-link"
-                  
-                >
-                  <i className="fa-solid fa-right-from-bracket" ></i>
-                </Link>
+                <div className="d-flex justify-content-between align-items-center w-100">
+                  <div className="dropdown" style={{position: "relative"}}>
+                    <button 
+                      className="text-white dropdown-toggle kanban-chart-dropdown" 
+                      type="button" 
+                      id="ganttViewDropdown" 
+                      data-toggle="dropdown" 
+                      aria-expanded="false"
+                    >
+                      {activeGanttView === 'all' ? 'All Tasks' : 
+                       activeGanttView === 'timeline' ? 'Timeline View' : 
+                       activeGanttView === 'upcoming' ? 'Upcoming Tasks' : 'All Tasks'}
+                    </button>
+                    <ul className="dropdown-menu" aria-labelledby="ganttViewDropdown">
+                      <li>
+                        <button 
+                          className={`dropdown-item ${activeGanttView === 'all' ? 'active' : ''}`} 
+                          onClick={() => setActiveGanttView('all')}
+                        >
+                          All Tasks
+                        </button>
+                      </li>
+                      <li>
+                        <button 
+                          className={`dropdown-item ${activeGanttView === 'upcoming' ? 'active' : ''}`}
+                          onClick={() => setActiveGanttView('upcoming')}
+                        >
+                          Upcoming Tasks
+                        </button>
+                      </li>
+                      <li>
+                        <button 
+                          className={`dropdown-item ${activeGanttView === 'timeline' ? 'active' : ''}`}
+                          onClick={() => setActiveGanttView('timeline')}
+                        >
+                          Timeline View
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                  <Link
+                    to={`/main/${currentTeamId}/gantt`}
+                    className="gantt-link"
+                  >
+                    <i className="fa-solid fa-right-from-bracket"></i>
+                  </Link>
+                </div>
               </div>
               <div className="card-body">
                 <div className="title">Tasks</div>
@@ -1161,21 +1441,39 @@ const Dashboard = () => {
                   {ganttTasks.length === 0 && (
                     <p className="text-center text-muted">No tasks</p>
                   )}
-                  {ganttTasks.length > 0 &&
-                    ganttTasks.map((task, index) => (
-                      <div className="task" key={index}>
-                        <div className="label">{task?.title}</div>
-                        <div className="date">
-                          <div className="start">
-                            {moment(task?.startDate).format("MM/DD")}
+                  
+                  {activeGanttView === 'timeline' ? (
+                    renderMiniGanttTimeline()
+                  ) : (
+                    ganttTasks.length > 0 &&
+                      ganttTasks
+                        .filter(task => {
+                          const now = new Date();
+                          const taskStart = new Date(task.startDate);
+                          const taskEnd = new Date(task.endDate);
+                          
+                          if (activeGanttView === 'all') return true;
+                          if (activeGanttView === 'upcoming') {
+                            // Show upcoming and ongoing tasks
+                            return taskEnd >= now;
+                          }
+                          return true;
+                        })
+                        .map((task, index) => (
+                          <div className="task" key={index}>
+                            <div className="label">{task?.title}</div>
+                            <div className="date">
+                              <div className="start">
+                                {moment(task?.startDate).format("MM/DD")}
+                              </div>
+                              <div>-</div>
+                              <div className="end">
+                                {moment(task?.endDate).format("MM/DD")}
+                              </div>
+                            </div>
                           </div>
-                          <div>-</div>
-                          <div className="end">
-                            {moment(task?.endDate).format("MM/DD")}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                        ))
+                  )}
                 </div>
               </div>
             </div>
