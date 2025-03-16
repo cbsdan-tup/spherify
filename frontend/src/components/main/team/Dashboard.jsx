@@ -215,8 +215,8 @@ const EditMemberModal = ({
 const Dashboard = () => {
   // Update state for tab control to include distribution
   const [activeTab, setActiveTab] = useState('priorities');
-  // Add state for Gantt chart view
-  const [activeGanttView, setActiveGanttView] = useState('all');
+  // Change default Gantt chart view to 'timeline' instead of 'all'
+  const [activeGanttView, setActiveGanttView] = useState('timeline');
   
   // Add state for card completion data
   const [completionData, setCompletionData] = useState({
@@ -972,12 +972,7 @@ const Dashboard = () => {
             <div className="today-marker"></div>
             <span>Today</span>
           </div>
-          <div className="mini-gantt-start">
-            {yearStart.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-          </div>
-          <div className="mini-gantt-end">
-            {yearEnd.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-          </div>
+          {/* Removed start/end date indicators */}
         </div>
         
         {/* Grid container that properly accounts for label width */}
@@ -985,14 +980,17 @@ const Dashboard = () => {
           {/* Fixed-width area for task labels */}
           <div className="mini-gantt-label-column"></div>
           
-          {/* Month grid lines in the timeline area */}
+          {/* Month grid lines in the timeline area - modified to show only alternate months */}
           <div className="mini-gantt-grid">
             {Array.from({ length: 12 }, (_, i) => {
               const month = new Date(currentYear, i, 1);
               const position = getPositionPercentage(month);
               return (
                 <div key={i} className="mini-gantt-grid-line" style={{ left: `${position}%` }}>
-                  <div className="month-label">{month.toLocaleDateString(undefined, { month: 'short' })}</div>
+                  {/* Only show labels for alternate months (0=Jan, 2=Mar, 4=May, etc.) */}
+                  {i % 2 === 0 && (
+                    <div className="month-label">{month.toLocaleDateString(undefined, { month: 'short' })}</div>
+                  )}
                 </div>
               );
             })}
