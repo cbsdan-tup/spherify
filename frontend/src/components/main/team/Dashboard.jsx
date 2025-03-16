@@ -302,6 +302,9 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showRequestHistory, setShowRequestHistory] = useState(false);
 
+  // Add a refresh trigger for Gantt tasks
+  const [ganttRefresh, setGanttRefresh] = useState(false);
+
   const handleShowCreateFileClose = () => {
     setShowCreateFileModal(false);
   };
@@ -487,16 +490,19 @@ const Dashboard = () => {
         config
       );
       console.log("tasks", res.data);
-      setGanttTasks(res.data.slice(0, 5));
+      // Don't limit to only 5 tasks - display all tasks
+      setGanttTasks(res.data);
     } catch (error) {
-      console.error("Error fetching files:", error);
-      errMsg("Error fetching files", error);
+      console.error("Error fetching Gantt tasks:", error);
+      errMsg("Error fetching Gantt tasks", error);
     }
   };
+
+  // Add dependency on ganttRefresh to allow manual refresh
   useEffect(() => {
     fetchFiles();
     fetchGanttTasks();
-  }, [currentTeamId]);
+  }, [currentTeamId, ganttRefresh]);
 
   const handleMemberClick = (member) => {
     setSelectedMember(member);
@@ -972,7 +978,6 @@ const Dashboard = () => {
             <div className="today-marker"></div>
             <span>Today</span>
           </div>
-          {/* Removed start/end date indicators */}
         </div>
         
         {/* Grid container that properly accounts for label width */}
@@ -980,14 +985,13 @@ const Dashboard = () => {
           {/* Fixed-width area for task labels */}
           <div className="mini-gantt-label-column"></div>
           
-          {/* Month grid lines in the timeline area - modified to show only alternate months */}
+          {/* Month grid lines in the timeline area */}
           <div className="mini-gantt-grid">
             {Array.from({ length: 12 }, (_, i) => {
               const month = new Date(currentYear, i, 1);
               const position = getPositionPercentage(month);
               return (
                 <div key={i} className="mini-gantt-grid-line" style={{ left: `${position}%` }}>
-                  {/* Only show labels for alternate months (0=Jan, 2=Mar, 4=May, etc.) */}
                   {i % 2 === 0 && (
                     <div className="month-label">{month.toLocaleDateString(undefined, { month: 'short' })}</div>
                   )}
@@ -997,7 +1001,7 @@ const Dashboard = () => {
           </div>
         </div>
         
-        {/* Task rows */}
+        {/* Task rows - all tasks are displayed in timeline view */}
         <div className="mini-gantt-tasks">
           {ganttTasks.map((task, index) => {
             const startDate = new Date(task.startDate);
@@ -1115,6 +1119,24 @@ const Dashboard = () => {
         flex-direction: column;
         gap: 8px;
         position: relative;
+        max-height: 200px; /* Set a fixed height for the container */
+        overflow-y: auto; /* Enable vertical scrolling */
+        padding-right: 8px; /* Add some padding for the scrollbar */
+      }
+      /* Custom scrollbar styling */
+      .mini-gantt-tasks::-webkit-scrollbar {
+        width: 6px;
+      }
+      .mini-gantt-tasks::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+      .mini-gantt-tasks::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+      }
+      .mini-gantt-tasks::-webkit-scrollbar-thumb:hover {
+        background: #a1a1a1;
       }
       .mini-gantt-task-row {
         display: flex;
@@ -1171,6 +1193,28 @@ const Dashboard = () => {
       .mini-gantt-bar:hover {
         transform: scaleY(1.2);
         z-index: 5;
+      }
+      /* Add scrolling to the list view */
+      .gantt-list-view {
+        max-height: 200px;
+        overflow-y: auto;
+        padding-right: 8px; /* Add padding for scrollbar */
+      }
+
+      /* Custom scrollbar styling for list view */
+      .gantt-list-view::-webkit-scrollbar {
+        width: 6px;
+      }
+      .gantt-list-view::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+      }
+      .gantt-list-view::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 4px;
+      }
+      .gantt-list-view::-webkit-scrollbar-thumb:hover {
+        background: #a1a1a1;
       }
     `;
     document.head.appendChild(style);
@@ -1425,12 +1469,14 @@ const Dashboard = () => {
                       </li>
                     </ul>
                   </div>
-                  <Link
-                    to={`/main/${currentTeamId}/gantt`}
-                    className="gantt-link"
-                  >
-                    <i className="fa-solid fa-right-from-bracket"></i>
-                  </Link>
+                  <div className="d-flex align-items-center">
+                    <Link
+                      to={`/main/${currentTeamId}/gantt`}
+                      className="gantt-link"
+                    >
+                      <i className="fa-solid fa-right-from-bracket"></i>
+                    </Link>
+                  </div>
                 </div>
               </div>
               <div className="card-body">
@@ -1443,34 +1489,37 @@ const Dashboard = () => {
                   {activeGanttView === 'timeline' ? (
                     renderMiniGanttTimeline()
                   ) : (
-                    ganttTasks.length > 0 &&
-                      ganttTasks
-                        .filter(task => {
-                          const now = new Date();
-                          const taskStart = new Date(task.startDate);
-                          const taskEnd = new Date(task.endDate);
-                          
-                          if (activeGanttView === 'all') return true;
-                          if (activeGanttView === 'upcoming') {
-                            // Show upcoming and ongoing tasks
-                            return taskEnd >= now;
-                          }
-                          return true;
-                        })
-                        .map((task, index) => (
-                          <div className="task" key={index}>
-                            <div className="label">{task?.title}</div>
-                            <div className="date">
-                              <div className="start">
-                                {moment(task?.startDate).format("MM/DD")}
-                              </div>
-                              <div>-</div>
-                              <div className="end">
-                                {moment(task?.endDate).format("MM/DD")}
+                    <div className="gantt-list-view">
+                      {ganttTasks.length > 0 &&
+                        ganttTasks
+                          .filter(task => {
+                            const now = new Date();
+                            const taskStart = new Date(task.startDate);
+                            const taskEnd = new Date(task.endDate);
+                            
+                            if (activeGanttView === 'all') return true;
+                            if (activeGanttView === 'upcoming') {
+                              // Show upcoming and ongoing tasks
+                              return taskEnd >= now;
+                            }
+                            return true;
+                          })
+                          .map((task, index) => (
+                            <div className="task" key={index}>
+                              <div className="label">{task?.title}</div>
+                              <div className="date">
+                                <div className="start">
+                                  {moment(task?.startDate).format("MM/DD")}
+                                </div>
+                                <div>-</div>
+                                <div className="end">
+                                  {moment(task?.endDate).format("MM/DD")}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))
+                          ))
+                      }
+                    </div>
                   )}
                 </div>
               </div>
