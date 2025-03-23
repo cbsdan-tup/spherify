@@ -36,57 +36,55 @@ export const refreshFirebaseToken = async () => {
   }
 };
 
-// export const generateToken = async () => {
-//   const permission = await Notification.requestPermission();
-//   console.log(permission);
+export const generateToken = async (user, authToken) => {
+  const permission = await Notification.requestPermission();
+  console.log(permission);
 
-//   const user = getUser();
+  if (permission === "granted") {
+    const token = await getToken(messaging, {
+      vapidKey:
+        "BC-dERAfUj5DTLIg4RCiazTIEm1JQ1QqvY1qGHkpnzSDZLUIxCVxX0yEcZkHQbUjkrQprjypW-OLj7bpO-LD_0Q",
+    });
 
-//   if (permission === "granted") {
-//     const token = await getToken(messaging, {
-//       vapidKey:
-//         "BC-dERAfUj5DTLIg4RCiazTIEm1JQ1QqvY1qGHkpnzSDZLUIxCVxX0yEcZkHQbUjkrQprjypW-OLj7bpO-LD_0Q",
-//     });
+    if (user && token) {
+      console.log(token);
+      try {
+        const config = {
+            headers: {
+                'Authorization': `Bearer ${authToken}`,
+                "Content-Type": "application/json",
+            }
+        }
 
-//     if (user) {
-//       console.log(token);
-//       try {
-//         const config = {
-//             headers: {
-//                 'Authorization': `Bearer ${getHelperToken()}`,
-//                 "Content-Type": "application/json",
-//             }
-//         }
-
-//         const data = await axios.put(
-//           `${import.meta.env.VITE_API}/update-user/${user._id}`,
-//           {
-//             permissionToken: token,
-//           },
-//           config
-//         );
-//         console.log(data);
-//         console.log("Successfully stored the permission token!");
-//       } catch (error) {
-//         errMsg("Error inserting the permission token!");
-//         console.log(error);
-//       }
-//     }
-//   } else {
-//     if (user) {
-//       try {
-//         const data = await axios.put(
-//           `${import.meta.env.VITE_API}/remove-permission-token/${user._id}`, {
-//             "Authorization": `Bearer ${getHelperToken()}`
-//           }
-//         );
-//         console.log(data);
-//         console.log("Successfully removed the permission token!");
-//       } catch (error) {
-//         errMsg("Error removing the permission token!");
-//         console.log(error);
-//       }
-//     }
-//   }
-// };
+        const data = await axios.put(
+          `${import.meta.env.VITE_API}/updateUser/${user._id}`,
+          {
+            permissionToken: token,
+          },
+          config
+        );
+        console.log(data);
+        console.log("Successfully stored the permission token!");
+      } catch (error) {
+        errMsg("Error inserting the permission token!");
+        console.log(error);
+      }
+    }
+  } else {
+    if (user) {
+      try {
+        const data = await axios.put(
+          `${import.meta.env.VITE_API}/remove-permission-token/${user._id}`, {
+            "Authorization": `Bearer ${getHelperToken()}`
+          }
+        );
+        console.log(data);
+        console.log("Successfully removed the permission token!");
+      } catch (error) {
+        errMsg("Error removing the permission token!");
+        console.log(error);
+      }
+    }
+  }
+};
 export default app;

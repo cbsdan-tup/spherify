@@ -23,7 +23,7 @@ const mongoose = require("mongoose");
 const PORT = process.env.PORT || 8000;
 
 const cloudinary = require("cloudinary");
-const {getCloudinaryConfig} = require("./config/cloudinary");
+const { getCloudinaryConfig } = require("./config/cloudinary");
 const { initializeNextcloudAPI } = require("./utils/nextcloud");
 
 // Import routes
@@ -43,8 +43,10 @@ const ganttRoutes = require("./routes/gantt/ganttRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const teamReportRoutes = require("./routes/teamReportRoutes");
 const contactRoutes = require("./routes/contactRoutes"); // Add this line
-const searchRoutes = require('./routes/searchRoutes');
-const teamApplicationRoutes = require('./routes/teamApplicationRoutes');
+const searchRoutes = require("./routes/searchRoutes");
+const teamApplicationRoutes = require("./routes/teamApplicationRoutes");
+
+const sendNotification = require("./config/sendNotification");
 
 // Import and start the scheduler
 require("./scheduler/enableUsers");
@@ -96,8 +98,8 @@ app.use("/api/v1", ganttRoutes);
 app.use("/api/v1", adminRoutes);
 app.use("/api/v1", teamReportRoutes);
 app.use("/api/v1/contact", contactRoutes); // Add this line
-app.use('/api/v1', searchRoutes);
-app.use('/api/v1', teamApplicationRoutes);
+app.use("/api/v1", searchRoutes);
+app.use("/api/v1", teamApplicationRoutes);
 
 // 404 not found routes
 app.all("*", (req, res) => {
@@ -123,16 +125,56 @@ const io = new Server(server, {
 function getUniqueColorForUser(userId) {
   if (!userId) return "#ccc";
   const colors = [
-    "#FF6633", "#FFB399", "#FF33FF", "#FFFF99", "#00B3E6",
-    "#E6B333", "#3366E6", "#999966", "#99FF99", "#B34D4D",
-    "#80B300", "#809900", "#E6B3B3", "#6680B3", "#66991A",
-    "#FF99E6", "#CCFF1A", "#FF1A66", "#E6331A", "#33FFCC",
-    "#66994D", "#B366CC", "#4D8000", "#B33300", "#CC80CC",
-    "#66664D", "#991AFF", "#E666FF", "#4DB3FF", "#1AB399",
-    "#E666B3", "#33991A", "#CC9999", "#B3B31A", "#00E680",
-    "#4D8066", "#809980", "#E6FF80", "#1AFF33", "#999933",
-    "#FF3380", "#CCCC00", "#66E64D", "#4D80CC", "#9900B3",
-    "#E64D66", "#4DB380", "#FF4D4D", "#99E6E6", "#6666FF"
+    "#FF6633",
+    "#FFB399",
+    "#FF33FF",
+    "#FFFF99",
+    "#00B3E6",
+    "#E6B333",
+    "#3366E6",
+    "#999966",
+    "#99FF99",
+    "#B34D4D",
+    "#80B300",
+    "#809900",
+    "#E6B3B3",
+    "#6680B3",
+    "#66991A",
+    "#FF99E6",
+    "#CCFF1A",
+    "#FF1A66",
+    "#E6331A",
+    "#33FFCC",
+    "#66994D",
+    "#B366CC",
+    "#4D8000",
+    "#B33300",
+    "#CC80CC",
+    "#66664D",
+    "#991AFF",
+    "#E666FF",
+    "#4DB3FF",
+    "#1AB399",
+    "#E666B3",
+    "#33991A",
+    "#CC9999",
+    "#B3B31A",
+    "#00E680",
+    "#4D8066",
+    "#809980",
+    "#E6FF80",
+    "#1AFF33",
+    "#999933",
+    "#FF3380",
+    "#CCCC00",
+    "#66E64D",
+    "#4D80CC",
+    "#9900B3",
+    "#E64D66",
+    "#4DB380",
+    "#FF4D4D",
+    "#99E6E6",
+    "#6666FF",
   ];
   let hash = 5381;
   for (let i = 0; i < userId.length; i++) {
@@ -151,8 +193,10 @@ async function updateUserStatusOnLogin(userId) {
       user.status = "active";
       user.statusUpdatedAt = new Date();
       await user.save();
-      
-      console.log(`[LOGIN] User ${user.firstName} ${user.lastName} (${userId}) logged in: ${previousStatus} → active`);
+
+      console.log(
+        `[LOGIN] User ${user.firstName} ${user.lastName} (${userId}) logged in: ${previousStatus} → active`
+      );
       return { user, previousStatus };
     }
   } catch (error) {
@@ -169,8 +213,10 @@ async function updateUserStatusOnLogout(userId) {
       user.status = "offline";
       user.statusUpdatedAt = new Date();
       await user.save();
-      
-      console.log(`[LOGOUT] User ${user.firstName} ${user.lastName} (${userId}) logged out: ${previousStatus} → offline`);
+
+      console.log(
+        `[LOGOUT] User ${user.firstName} ${user.lastName} (${userId}) logged out: ${previousStatus} → offline`
+      );
       return { user, previousStatus };
     }
   } catch (error) {
@@ -188,7 +234,7 @@ const MAX_STATUS_LOGS = 1000;
 
 io.on("connection", (socket) => {
   console.log("User Connected:", socket.id);
-  
+
   socket.setMaxListeners(20);
 
   // Add error handler
@@ -203,7 +249,7 @@ io.on("connection", (socket) => {
         console.error("Invalid userId received during login:", userId);
         return;
       }
-      
+
       // Store the userId in the socket object
       socket.userId = userId;
 
@@ -216,10 +262,10 @@ io.on("connection", (socket) => {
       // Update the user's status to "active" if this is their first connection
       if (activeConnections[userId].size === 1) {
         const result = await updateUserStatusOnLogin(userId);
-        
+
         if (result) {
           const { user, previousStatus } = result;
-          
+
           // Broadcast the status change
           io.emit("userStatusChanged", {
             userId: user._id,
@@ -229,11 +275,13 @@ io.on("connection", (socket) => {
             avatar: user.avatar,
             previousStatus,
             currentStatus: "active",
-            statusUpdatedAt: user.statusUpdatedAt
+            statusUpdatedAt: user.statusUpdatedAt,
           });
         }
       } else {
-        console.log(`[RECONNECTION] User ${userId} reconnected. Active connections: ${activeConnections[userId].size}`);
+        console.log(
+          `[RECONNECTION] User ${userId} reconnected. Active connections: ${activeConnections[userId].size}`
+        );
       }
     } catch (error) {
       console.error("Error handling login event:", error);
@@ -247,25 +295,27 @@ io.on("connection", (socket) => {
         console.error("Invalid userId received during status update:", userId);
         return;
       }
-      
+
       if (!["active", "inactive", "offline"].includes(status)) {
         console.error("Invalid status received:", status);
         return;
       }
-      
+
       const user = await User.findById(userId);
       if (user) {
         const previousStatus = user.status;
-        
+
         // Only update if status actually changed
         if (previousStatus !== status) {
           user.status = status;
           user.statusUpdatedAt = new Date();
           await user.save();
-          
+
           // Enhanced logging for status changes
-          console.log(`[STATUS CHANGE] User ${user.firstName} ${user.lastName} (${userId}): ${previousStatus} → ${status}`);
-          
+          console.log(
+            `[STATUS CHANGE] User ${user.firstName} ${user.lastName} (${userId}): ${previousStatus} → ${status}`
+          );
+
           // Broadcast status change to all connected clients
           io.emit("userStatusChanged", {
             userId: user._id,
@@ -275,14 +325,16 @@ io.on("connection", (socket) => {
             avatar: user.avatar,
             previousStatus,
             currentStatus: status,
-            statusUpdatedAt: user.statusUpdatedAt
+            statusUpdatedAt: user.statusUpdatedAt,
           });
-          
+
           // Log active connections count
           const activeUsers = Object.keys(activeConnections).length;
           console.log(`[ACTIVE USERS] Current active users: ${activeUsers}`);
         } else {
-          console.log(`[STATUS UNCHANGED] User ${user.firstName} ${user.lastName} (${userId}) remains ${status}`);
+          console.log(
+            `[STATUS UNCHANGED] User ${user.firstName} ${user.lastName} (${userId}) remains ${status}`
+          );
         }
       } else {
         console.error(`User not found for ID: ${userId}`);
@@ -299,12 +351,12 @@ io.on("connection", (socket) => {
         console.error("Invalid userId received during logout:", userId);
         return;
       }
-      
+
       const result = await updateUserStatusOnLogout(userId);
-      
+
       if (result) {
         const { user, previousStatus } = result;
-        
+
         // Broadcast the status change
         io.emit("userStatusChanged", {
           userId: user._id,
@@ -314,7 +366,7 @@ io.on("connection", (socket) => {
           avatar: user.avatar,
           previousStatus,
           currentStatus: "offline",
-          statusUpdatedAt: user.statusUpdatedAt
+          statusUpdatedAt: user.statusUpdatedAt,
         });
       }
     } catch (error) {
@@ -325,19 +377,25 @@ io.on("connection", (socket) => {
   // Handle disconnect event
   socket.on("disconnect", async () => {
     const userId = socket.userId;
-    console.log(`[DISCONNECT] Socket ${socket.id} disconnected. User: ${userId || 'Unknown'}`);
+    console.log(
+      `[DISCONNECT] Socket ${socket.id} disconnected. User: ${
+        userId || "Unknown"
+      }`
+    );
 
     if (userId) {
       if (activeConnections[userId]) {
         activeConnections[userId].delete(socket.id);
-        console.log(`[CONNECTION COUNT] User ${userId} connections remaining: ${activeConnections[userId].size}`);
+        console.log(
+          `[CONNECTION COUNT] User ${userId} connections remaining: ${activeConnections[userId].size}`
+        );
 
         if (activeConnections[userId].size === 0) {
           const result = await updateUserStatusOnLogout(userId);
-          
+
           if (result) {
             const { user, previousStatus } = result;
-            
+
             // Broadcast the status change
             io.emit("userStatusChanged", {
               userId: user._id,
@@ -347,10 +405,10 @@ io.on("connection", (socket) => {
               avatar: user.avatar,
               previousStatus,
               currentStatus: "offline",
-              statusUpdatedAt: user.statusUpdatedAt
+              statusUpdatedAt: user.statusUpdatedAt,
             });
           }
-          
+
           delete activeConnections[userId];
         }
       }
@@ -358,7 +416,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("joinGroup", (groupId) => {
-    const validGroupId = mongoose.Types.ObjectId.isValid(groupId) ? groupId : null;
+    const validGroupId = mongoose.Types.ObjectId.isValid(groupId)
+      ? groupId
+      : null;
     if (!validGroupId) {
       console.log("Invalid Group ID");
       return;
@@ -370,30 +430,41 @@ io.on("connection", (socket) => {
 
   socket.on("join-document", (documentId, user) => {
     try {
-      if (!documentId || !user || !user.id || !user.firstName || !user.lastName) {
+      if (
+        !documentId ||
+        !user ||
+        !user.id ||
+        !user.firstName ||
+        !user.lastName
+      ) {
         console.error("Invalid documentId or user data:", documentId, user);
         return;
       }
-  
-      socket.join(documentId); 
-      console.log(`User ${user.firstName} ${user.lastName} joined document room: ${documentId}`);
-  
+
+      socket.join(documentId);
+      console.log(
+        `User ${user.firstName} ${user.lastName} joined document room: ${documentId}`
+      );
+
       const userId = user.id || user._id;
-  
+
       if (!usersEditing[documentId]) {
         usersEditing[documentId] = {};
       }
-  
+
       usersEditing[documentId][userId] = {
         ...user,
         id: userId,
         _id: userId,
         socketId: socket.id,
-        color: getUniqueColorForUser(userId)
+        color: getUniqueColorForUser(userId),
       };
-  
-      console.log(`User added to document ${documentId}:`, usersEditing[documentId][userId]);
-  
+
+      console.log(
+        `User added to document ${documentId}:`,
+        usersEditing[documentId][userId]
+      );
+
       io.to(documentId).emit("user-editing", {
         documentId,
         users: Object.values(usersEditing[documentId]),
@@ -402,102 +473,118 @@ io.on("connection", (socket) => {
       console.error("Error in join-document:", error);
     }
   });
-  
-  socket.on("update-cursor-position", async ({ documentId, userId, cursorPosition }) => {
-    try {
-      console.log(`[CURSOR] Received cursor update for user ${userId} in doc ${documentId}`);
-      
-      if (!documentId || !userId || !cursorPosition) {
-        console.error("[CURSOR] Invalid data for cursor position update");
-        return;
-      }
 
-      if (!usersEditing[documentId]) {
-        console.log(`[CURSOR] Creating new document entry: ${documentId}`);
-        usersEditing[documentId] = {};
-      }
+  socket.on(
+    "update-cursor-position",
+    async ({ documentId, userId, cursorPosition }) => {
+      try {
+        console.log(
+          `[CURSOR] Received cursor update for user ${userId} in doc ${documentId}`
+        );
 
-      let userData = usersEditing[documentId][userId];
-      
-      if (!userData) {
-        console.log(`[CURSOR] User ${userId} not found in document ${documentId}, fetching from DB`);
-        try {
-          const dbUser = await User.findById(userId)
-            .select("firstName lastName avatar")
-            .lean();
-          
-          if (dbUser) {
+        if (!documentId || !userId || !cursorPosition) {
+          console.error("[CURSOR] Invalid data for cursor position update");
+          return;
+        }
+
+        if (!usersEditing[documentId]) {
+          console.log(`[CURSOR] Creating new document entry: ${documentId}`);
+          usersEditing[documentId] = {};
+        }
+
+        let userData = usersEditing[documentId][userId];
+
+        if (!userData) {
+          console.log(
+            `[CURSOR] User ${userId} not found in document ${documentId}, fetching from DB`
+          );
+          try {
+            const dbUser = await User.findById(userId)
+              .select("firstName lastName avatar")
+              .lean();
+
+            if (dbUser) {
+              userData = {
+                ...dbUser,
+                id: userId,
+                _id: userId,
+                socketId: socket.id,
+                color: getUniqueColorForUser(userId),
+              };
+              usersEditing[documentId][userId] = userData;
+              console.log(
+                `[CURSOR] User added from DB: ${dbUser.firstName} ${dbUser.lastName}`
+              );
+            } else {
+              userData = {
+                id: userId,
+                _id: userId,
+                firstName: "Anonymous",
+                lastName: "User",
+                socketId: socket.id,
+                color: getUniqueColorForUser(userId),
+              };
+              usersEditing[documentId][userId] = userData;
+              console.log(`[CURSOR] Created fallback user data for ${userId}`);
+            }
+          } catch (err) {
+            console.error(`[CURSOR] DB error for ${userId}:`, err);
             userData = {
-              ...dbUser,
               id: userId,
               _id: userId,
-              socketId: socket.id,
-              color: getUniqueColorForUser(userId)
-            };
-            usersEditing[documentId][userId] = userData;
-            console.log(`[CURSOR] User added from DB: ${dbUser.firstName} ${dbUser.lastName}`);
-          } else {
-            userData = {
-              id: userId,
-              _id: userId,
-              firstName: "Anonymous",
+              firstName: "Unknown",
               lastName: "User",
               socketId: socket.id,
-              color: getUniqueColorForUser(userId)
+              color: getUniqueColorForUser(userId),
             };
             usersEditing[documentId][userId] = userData;
-            console.log(`[CURSOR] Created fallback user data for ${userId}`);
           }
-        } catch (err) {
-          console.error(`[CURSOR] DB error for ${userId}:`, err);
-          userData = {
-            id: userId,
-            _id: userId,
-            firstName: "Unknown",
-            lastName: "User",
-            socketId: socket.id,
-            color: getUniqueColorForUser(userId)
-          };
+        } else {
+          userData.socketId = socket.id;
           usersEditing[documentId][userId] = userData;
         }
-      } else {
-        userData.socketId = socket.id;
-        usersEditing[documentId][userId] = userData;
+
+        const name =
+          `${userData.firstName || ""} ${userData.lastName || ""}`.trim() ||
+          "Anonymous";
+        const color = userData.color || getUniqueColorForUser(userId);
+
+        io.to(documentId).emit("cursor-position-updated", {
+          userId,
+          name,
+          range: cursorPosition,
+          color,
+        });
+
+        io.to(documentId).emit("user-editing", {
+          documentId,
+          users: Object.values(usersEditing[documentId] || {}),
+        });
+
+        console.log(
+          `[CURSOR] Broadcast complete: ${name}'s cursor position in ${documentId}`
+        );
+      } catch (error) {
+        console.error("[CURSOR] Error in update-cursor-position:", error);
       }
-
-      const name = `${userData.firstName || ''} ${userData.lastName || ''}`.trim() || 'Anonymous';
-      const color = userData.color || getUniqueColorForUser(userId);
-
-      io.to(documentId).emit("cursor-position-updated", {
-        userId,
-        name,
-        range: cursorPosition,
-        color
-      });
-      
-      io.to(documentId).emit("user-editing", {
-        documentId,
-        users: Object.values(usersEditing[documentId] || {})
-      });
-      
-      console.log(`[CURSOR] Broadcast complete: ${name}'s cursor position in ${documentId}`);
-    } catch (error) {
-      console.error("[CURSOR] Error in update-cursor-position:", error);
     }
-  });
+  );
 
   socket.on("update-user-status", ({ documentId, user }) => {
     try {
       if (!documentId || !user || !user.id) {
-        console.error("Invalid data for user status update:", { documentId, user });
+        console.error("Invalid data for user status update:", {
+          documentId,
+          user,
+        });
         return;
       }
 
       const userId = user.id || user._id;
-      
+
       if (usersEditing[documentId] && usersEditing[documentId][userId]) {
         usersEditing[documentId][userId].lastActive = new Date();
-        
+
         io.to(documentId).emit("user-editing", {
           documentId,
           users: Object.values(usersEditing[documentId]),
@@ -514,59 +601,72 @@ io.on("connection", (socket) => {
         console.error("Invalid documentId or user data:", documentId, user);
         return;
       }
-  
+
       socket.leave(documentId);
-      console.log(`User ${user.firstName} ${user.lastName} left document room: ${documentId}`);
-  
+      console.log(
+        `User ${user.firstName} ${user.lastName} left document room: ${documentId}`
+      );
+
       if (usersEditing[documentId] && usersEditing[documentId][user.id]) {
         delete usersEditing[documentId][user.id];
-  
+
         if (Object.keys(usersEditing[documentId]).length === 0) {
           delete usersEditing[documentId];
         }
       }
-  
+
       console.log("Emitting user-editing:", {
         documentId,
-        users: usersEditing[documentId] ? Object.values(usersEditing[documentId]) : [],
+        users: usersEditing[documentId]
+          ? Object.values(usersEditing[documentId])
+          : [],
       });
       io.to(documentId).emit("user-editing", {
         documentId,
-        users: usersEditing[documentId] ? Object.values(usersEditing[documentId]) : [],
+        users: usersEditing[documentId]
+          ? Object.values(usersEditing[documentId])
+          : [],
       });
     } catch (error) {
       console.error("Error in leave-document:", error);
     }
   });
-  
+
   socket.on("disconnect", () => {
     try {
       console.log(`User disconnected: ${socket.id}`);
-  
+
       for (const documentId in usersEditing) {
         if (usersEditing[documentId]) {
           const initialLength = Object.keys(usersEditing[documentId]).length;
-  
+
           for (const userId in usersEditing[documentId]) {
             if (usersEditing[documentId][userId].socketId === socket.id) {
               delete usersEditing[documentId][userId];
             }
           }
-  
+
           if (Object.keys(usersEditing[documentId]).length !== initialLength) {
             if (Object.keys(usersEditing[documentId]).length === 0) {
               delete usersEditing[documentId];
             }
-  
+
             console.log("Emitting user-editing:", {
               documentId,
-              users: usersEditing[documentId] ? Object.values(usersEditing[documentId]) : [],
+              users: usersEditing[documentId]
+                ? Object.values(usersEditing[documentId])
+                : [],
             });
             io.to(documentId).emit("user-editing", {
               documentId,
-              users: usersEditing[documentId] ? Object.values(usersEditing[documentId]) : [],
+              users: usersEditing[documentId]
+                ? Object.values(usersEditing[documentId])
+                : [],
             });
-            console.log(`Removed user from document ${documentId}:`, usersEditing[documentId]);
+            console.log(
+              `Removed user from document ${documentId}:`,
+              usersEditing[documentId]
+            );
           }
         }
       }
@@ -575,19 +675,88 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("sendMessage", async ({ groupId, sender, content, images }) => {
+  socket.on("sendMessage", async ({ groupId, sender, content, images, teamId }) => {
     try {
       const messageGroup = await MessageGroup.findById(groupId);
       if (!messageGroup) return;
 
       const senderDetails = await User.findById(sender).select(
-        "firstName lastName email avatar"
+        "firstName lastName email avatar permissionToken"
       );
+
       if (!senderDetails) {
         console.log("Sender not found");
         return;
       }
+      console.log("Receiving message");
+      
+      // Remove the sender notification code - don't notify the sender about their own message
+      
+      // Get the team to find all members with permission tokens
+      const { Team } = require("./models/Team");
+      const team = await Team.findById(teamId).populate({
+        path: 'members.user',
+        select: 'permissionToken'
+      });
+      
+      if (team) {
+        console.log(`Sending notifications to team ${team.name} members (excluding sender)`);
+        
+        // Get all team members with permission tokens (excluding sender)
+        const teamMembersWithTokens = team.members
+          .filter(member => 
+            member.user && 
+            member.user._id.toString() !== sender.toString() && 
+            member.user.permissionToken
+          );
+        
+        // Send notifications to all team members with tokens
+        teamMembersWithTokens.forEach(async (member) => {
+          try {
+            const notifResult = await sendNotification(
+              member.user.permissionToken,
+              {
+                title: `Spherify: New Message`,
+                body: `${senderDetails.firstName} ${senderDetails.lastName} sent a message to ${team?.name} in ${messageGroup.name}: ${content}`,
+                image: senderDetails?.avatar?.url,
+                tag: "new-message",
+                url: `https://spherify.vercel.app/main/${teamId}`,
+              }
+            );
+            notifResult &&
+              console.log("Notification sent successfully to team member:", member.user._id);
+          } catch (error) {
+            console.error("Error sending notification to team member:", error);
+          }
+        });
+      } else {
+        // Fallback to previous behavior - only notify message group members
+        const recipients = await User.find({
+          _id: { $in: messageGroup.members, $ne: senderDetails._id },
+          permissionToken: { $exists: true, $ne: null },
+        }).select("permissionToken");
+        
+        recipients.forEach(async (recipient) => {
+          try {
+            const notifResult = await sendNotification(
+              recipient.permissionToken,
+              {
+                title: `${senderDetails.firstName} ${senderDetails.lastName} sent a message`,
+                body: content,
+                image: senderDetails.avatar,
+                tag: "new-message",
+                url: `https://spherify.vercel.app/main/${teamId}`,
+              }
+            );
+            notifResult &&
+              console.log("Notification sent successfully to:", recipient._id);
+          } catch (error) {
+            console.error("Error sending notification to recipient:", error);
+          }
+        });
+      }
 
+      // ...existing code for handling images...
       let uploadedImages = [];
 
       if (Array.isArray(images) && images.length > 0) {
@@ -609,19 +778,20 @@ io.on("connection", (socket) => {
         content,
         createdAt: new Date(),
         images: uploadedImages,
-        seenBy: [{ user: senderDetails._id, seenAt: new Date() }] 
+        seenBy: [{ user: senderDetails._id, seenAt: new Date() }],
       };
 
       messageGroup.messages.push(newMessage);
       await messageGroup.save();
 
-      const savedMessage = messageGroup.messages[messageGroup.messages.length - 1];
+      const savedMessage =
+        messageGroup.messages[messageGroup.messages.length - 1];
 
       socket.emit("messageSentConfirmation");
-      
+
       io.to(groupId).emit("receiveMessage", {
         ...savedMessage.toObject(),
-        _id: savedMessage._id, 
+        _id: savedMessage._id,
         sender: {
           _id: senderDetails._id,
           firstName: senderDetails.firstName,
@@ -629,16 +799,18 @@ io.on("connection", (socket) => {
           email: senderDetails.email,
           avatar: senderDetails.avatar,
         },
-        seenBy: [{
-          user: {
-            _id: senderDetails._id,
-            firstName: senderDetails.firstName,
-            lastName: senderDetails.lastName,
-            email: senderDetails.email,
-            avatar: senderDetails.avatar,
+        seenBy: [
+          {
+            user: {
+              _id: senderDetails._id,
+              firstName: senderDetails.firstName,
+              lastName: senderDetails.lastName,
+              email: senderDetails.email,
+              avatar: senderDetails.avatar,
+            },
+            seenAt: new Date(),
           },
-          seenAt: new Date()
-        }]
+        ],
       });
     } catch (error) {
       console.error("Error sending message:", error);
@@ -647,29 +819,37 @@ io.on("connection", (socket) => {
 
   socket.on("messageSeen", async ({ messageId, groupId, userId }) => {
     try {
-      if (!mongoose.Types.ObjectId.isValid(groupId) || !mongoose.Types.ObjectId.isValid(userId)) {
+      if (
+        !mongoose.Types.ObjectId.isValid(groupId) ||
+        !mongoose.Types.ObjectId.isValid(userId)
+      ) {
         console.error("Invalid groupId or userId in messageSeen event");
         return;
       }
-      
+
       const messageGroup = await MessageGroup.findById(groupId);
       if (!messageGroup) return;
-      
+
       const message = messageGroup.messages.id(messageId);
       if (!message) return;
-      
-      const alreadySeen = message.seenBy.some(seen => seen.user.toString() === userId);
-      
+
+      const alreadySeen = message.seenBy.some(
+        (seen) => seen.user.toString() === userId
+      );
+
       if (!alreadySeen) {
         message.seenBy.push({ user: userId, seenAt: new Date() });
         await messageGroup.save();
-        
+
         const updatedGroup = await MessageGroup.findById(groupId)
-          .populate("messages.sender", "firstName lastName email avatar status statusUpdatedAt")
+          .populate(
+            "messages.sender",
+            "firstName lastName email avatar status statusUpdatedAt"
+          )
           .populate("messages.seenBy.user", "firstName lastName email avatar");
-        
+
         const updatedMessage = updatedGroup.messages.id(messageId);
-        
+
         io.to(groupId).emit("messageSeenUpdate", updatedMessage);
       }
     } catch (err) {
@@ -688,7 +868,11 @@ io.on("connection", (socket) => {
     const document = await findOrCreateDocument(documentId);
     socket.join(documentId);
 
-    if (!document.data || typeof document.data !== "object" || !document.data.ops) {
+    if (
+      !document.data ||
+      typeof document.data !== "object" ||
+      !document.data.ops
+    ) {
       document.data = { ops: [] };
     }
 
@@ -726,12 +910,12 @@ io.on("connection", (socket) => {
             console.log(`Removed user ${userId} from document ${documentId}`);
           }
         }
-        
+
         io.to(documentId).emit("user-editing", {
           documentId,
           users: Object.values(usersEditing[documentId]),
         });
-        
+
         if (Object.keys(usersEditing[documentId]).length === 0) {
           delete usersEditing[documentId];
         }
@@ -740,17 +924,16 @@ io.on("connection", (socket) => {
   });
 
   socket.on("logStatusChange", (logData) => {
-    statusLogs.unshift(logData); 
-    
+    statusLogs.unshift(logData);
+
     if (statusLogs.length > MAX_STATUS_LOGS) {
-      statusLogs.pop(); 
+      statusLogs.pop();
     }
   });
 });
 
 app.get("/api/v1/admin/status-logs", async (req, res) => {
   try {
-    
     res.json({ logs: statusLogs });
   } catch (error) {
     console.error("Error retrieving status logs:", error);

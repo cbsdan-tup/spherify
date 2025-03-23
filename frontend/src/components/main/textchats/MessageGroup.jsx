@@ -17,6 +17,8 @@ const MessageGroup = ({ groupId }) => {
   const [messageGroupInfo, setMessageGroupInfo] = useState(null);
 
   const authState = useSelector((state) => state.auth);
+  const teamId = useSelector((state) => state.team?.currentTeamId);
+
   const user = getUser(authState);
   const messagesEndRef = useRef(null);
 
@@ -143,6 +145,7 @@ const MessageGroup = ({ groupId }) => {
       sender: user._id,
       content: newMessage,
       images: base64Images,
+      teamId: teamId
     });
 
     setNewMessage("");

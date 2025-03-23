@@ -6,7 +6,13 @@ import NotFound404 from "./components/NotFound404";
 import Header from "./components/layout/Header";
 import FeaturesPage from "./components/FeaturesPage";
 import AboutPage from "./components/AboutPage";
-import { isAuthenticated, getToken, getUser, errMsg, socket } from "./utils/helper";
+import {
+  isAuthenticated,
+  getToken,
+  getUser,
+  errMsg,
+  socket,
+} from "./utils/helper";
 import Main from "./components/Main";
 import "./Variables.css";
 import "./App.css";
@@ -22,13 +28,26 @@ import { refreshFirebaseToken } from "./config/firebase-config";
 import { updateToken } from "./redux/authSlice";
 import AdminPage from "./components/AdminPage";
 import { fetchConfigurations } from "./redux/configurationSlice";
-import { setupTokenRefresh } from "./utils/tokenService"; // We'll create this file
+import { setupTokenRefresh } from "./utils/tokenService"; 
+import { generateToken, messaging } from "./config/firebase-config";
+import { onMessage } from "firebase/messaging";
+import toast, { Toaster } from "react-hot-toast";
 
 function App() {
   const authState = useSelector((state) => state.auth);
   const dispatch = useDispatch();
   const favIcon = useSelector((state) => state.configurations.site?.favicon);
   const userId = authState?.user?._id;
+  const user = useSelector((state) => state.auth?.user);
+  const token = useSelector((state) => state.auth?.token);
+
+  useEffect(() => {
+    generateToken(user, token);
+    onMessage(messaging, (payload) => {
+      console.log(payload);
+      toast(payload.notification.body);
+    });
+  }, []);
 
   // Set up favicon
   useEffect(() => {
@@ -54,7 +73,6 @@ function App() {
   useEffect(() => {
     dispatch(fetchConfigurations());
   }, [dispatch]);
-
 
   const LandingRoutes = () => {
     return (
@@ -110,6 +128,7 @@ function App() {
 
   return (
     <>
+      <Toaster />
       <Routes>
         <Route path="/*" element={<LandingRoutes />} />
         <Route path="/main/*" element={<MainRoutes />} />

@@ -57,22 +57,22 @@ const TeamOverview = ({ teamId }) => {
   const getPieChartOptions = (centerText, subText) => {
     return {
       maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'bottom',
-        },
-        tooltip: {
-          callbacks: {
-            label: function(context) {
-              const label = context.label || '';
-              const value = context.raw || 0;
-              const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-              const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
-              return `${label}: ${value} (${percentage}%)`;
-            }
-          }
-        }
-      },
+      // plugins: {
+      //   legend: {
+      //     position: 'bottom',
+      //   },
+      //   tooltip: {
+      //     callbacks: {
+      //       label: function(context) {
+      //         const label = context.label || '';
+      //         const value = context.raw || 0;
+      //         const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+      //         const percentage = total > 0 ? Math.round((value / total) * 100) : 0;
+      //         return `${label}: ${value} (${percentage}%)`;
+      //       }
+      //     }
+      //   }
+      // },
       elements: {
         arc: {
           borderWidth: 0

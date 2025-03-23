@@ -18,7 +18,8 @@ const {
     logUserLogin,
     getUserDetails,
     verifyOTP,
-    resendOTP
+    resendOTP,
+    deletePermissionToken
 } = require('../controllers/UserController');
 
 router.get('/getUserByEmail/:email', getUserByEmail);
@@ -40,5 +41,7 @@ router.post("/verify-otp", verifyOTP);
 router.post("/resend-otp", resendOTP);
 // Add this new route for getting user by ID
 router.get('/user/:id', isAuthenticatedUser, getUserDetails);
+router.put('/remove-permission-token/:userId', deletePermissionToken);
+
 
 module.exports = router
