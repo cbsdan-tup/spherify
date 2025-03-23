@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import axios from "axios";
 import { errMsg } from "../../../utils/helper";
 import { Modal, Button, Spinner } from "react-bootstrap";
-import { Pie, Line, Bar } from "react-chartjs-2";
+import { Pie, Line, Bar, Doughnut } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -42,6 +42,7 @@ const TeamReportModal = ({ show, onHide, team }) => {
   const [cloudUsage, setCloudUsage] = useState(null);
   const [memberActivity, setMemberActivity] = useState(null);
   const [chatEngagement, setChatEngagement] = useState(null);
+  const [contributionData, setContributionData] = useState(null);
   const [exportingPdf, setExportingPdf] = useState(false);
   
   const token = useSelector((state) => state.auth.token);
@@ -63,11 +64,12 @@ const TeamReportModal = ({ show, onHide, team }) => {
       console.log("API Endpoints:", {
         teamDetails: `${apiBase}/getTeamDetails/${teamId}`,
         memberActivity: `${apiBase}/getTeamMemberActivity/${teamId}`, 
-        chatEngagement: `${apiBase}/getTeamChatEngagement/${teamId}`
+        chatEngagement: `${apiBase}/getTeamChatEngagement/${teamId}`,
+        contributions: `${apiBase}/contributions/${teamId}`
       });
       
       // Fetch all the required data in parallel for efficiency
-      const [teamDataRes, memberActivityRes, chatEngagementRes] = 
+      const [teamDataRes, memberActivityRes, chatEngagementRes, contributionsRes] = 
         await Promise.all([
           axios.get(`${apiBase}/getTeamDetails/${teamId}`, {
             headers: { Authorization: `Bearer ${token}` },
@@ -78,15 +80,20 @@ const TeamReportModal = ({ show, onHide, team }) => {
           axios.get(`${apiBase}/getTeamChatEngagement/${teamId}`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
+          axios.get(`${apiBase}/contributions/${teamId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
         ]);
 
       console.log("Team data response:", teamDataRes.data);
       console.log("Member activity response:", memberActivityRes.data);
       console.log("Chat engagement response:", chatEngagementRes.data);
+      console.log("Contributions response:", contributionsRes.data);
 
       setTeamData(teamDataRes.data);
       setMemberActivity(memberActivityRes.data);
       setChatEngagement(chatEngagementRes.data);
+      setContributionData(contributionsRes.data);
       
       // Specifically fetch the cloud usage using the endpoint from FileShare component
       const cloudUsageRes = await axios.get(
@@ -567,6 +574,68 @@ const TeamReportModal = ({ show, onHide, team }) => {
     return analysisText;
   };
 
+  // Prepare task metrics chart for contribution data
+  const taskChartConfig = contributionData?.taskMetrics
+    ? {
+        data: {
+          labels: ["Completed", "In Progress", "Not Started"],
+          datasets: [
+            {
+              data: [
+                contributionData.taskMetrics.completed,
+                contributionData.taskMetrics.inProgress,
+                contributionData.taskMetrics.notStarted,
+              ],
+              backgroundColor: ["#4CAF50", "#FFC107", "#F44336"],
+              borderWidth: 1,
+              hoverOffset: 4,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 20,
+                boxWidth: 15,
+                font: {
+                  size: 13
+                }
+              }
+            },
+            title: {
+              display: true,
+              text: 'Task Status Distribution',
+              font: {
+                size: 16,
+                weight: 'bold',
+              },
+              color: '#2c3e50',
+              padding: {
+                top: 10,
+                bottom: 20
+              }
+            },
+            datalabels: {
+              formatter: (value, ctx) => {
+                const sum = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                const percentage = (value / sum * 100).toFixed(1) + '%';
+                return percentage;
+              },
+              color: '#fff',
+              font: {
+                weight: 'bold',
+                size: 12
+              }
+            }
+          },
+        },
+    }
+    : null;
+
   return (
     <Modal 
       show={show} 
@@ -888,6 +957,135 @@ const TeamReportModal = ({ show, onHide, team }) => {
               </div>
             </div>
 
+            <div className="data-card contribution-section">
+            <div className="card-header">
+              <h3>
+                <i className="fa-solid fa-award me-2"></i>
+                Team Contributions
+              </h3>
+            </div>
+            <div className="card-body">
+              <div className="row">
+                <div className="col-md-8">
+                  <h4 className="mb-3">Member Contributions</h4>
+                  <div className="table-responsive">
+                    <table className="table">
+                      <thead>
+                        <tr>
+                          <th>Member</th>
+                          <th>Files Created</th>
+                          <th>Files Edited</th>
+                          <th>Tasks</th>
+                          <th>Completion %</th>
+                          <th>Messages</th>
+                          <th>Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {contributionData?.userContributions?.map((user) => (
+                          <tr key={user.userId}>
+                            <td className="member-name">
+                              <div className="member-avatar">
+                                {user.avatar ? (
+                                  <img src={user.avatar} alt="Avatar" />
+                                ) : (
+                                  <span>
+                                    {user.name.charAt(0)}
+                                  </span>
+                                )}
+                              </div>
+                              <div>
+                                {user.name} {" "}
+                                <span className="role-badge">({user.role})</span>
+                              </div>
+                            </td>
+                            <td>{user.files.created}</td>
+                            <td>{user.files.edited}</td>
+                            <td>
+                              {user.tasks.completed}/{user.tasks.assigned}
+                            </td>
+                            <td>
+                              <div className="progress custom-progress">
+                                <div 
+                                  className="progress-bar" 
+                                  style={{ width: `${user.completionRate}%` }}
+                                ></div>
+                              </div>
+                              <span className="completion-rate">{user.completionRate}%</span>
+                            </td>
+                            <td>{user.messages}</td>
+                            <td>
+                              <strong>
+                                {user.files.created + user.files.edited + user.messages + user.tasks.assigned}
+                              </strong>
+                            </td>
+                          </tr>
+                        ))}
+                        {(!contributionData?.userContributions || contributionData.userContributions.length === 0) && (
+                          <tr>
+                            <td colSpan="7" className="text-center">No contribution data available</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                
+                <div className="col-md-4">
+                  <h4 className="mb-3">Task Status</h4>
+                  <div className="chart-container" style={{ height: "270px" }}>
+                    {contributionData?.taskMetrics ? (
+                      <Doughnut 
+                        data={taskChartConfig.data} 
+                        options={taskChartConfig.options} 
+                      />
+                    ) : (
+                      <div className="chart-placeholder">
+                        <i className="fa-solid fa-circle-notch fa-spin"></i>
+                        <span>Loading task data...</span>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="task-stats mt-3">
+                    <div className="row">
+                      <div className="col-6">
+                        <div className="stat-box">
+                          <span className="stat-label">Total Tasks</span>
+                          <span className="stat-value">{contributionData?.taskMetrics?.total || 0}</span>
+                        </div>
+                      </div>
+                      <div className="col-6">
+                        <div className="stat-box">
+                          <span className="stat-label">Completion</span>
+                          <span className="stat-value">
+                            {contributionData?.taskMetrics?.total ? 
+                              `${Math.round((contributionData.taskMetrics.completed / contributionData.taskMetrics.total) * 100)}%` : 
+                              '0%'
+                            }
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="analysis-section mt-3">
+                <h4 className="analysis-title">
+                  <i className="fa-solid fa-lightbulb me-2"></i>
+                  Contribution Analysis
+                </h4>
+                <p className="analysis-text">
+                  {contributionData ? 
+                    generateContributionAnalysis(contributionData) : 
+                    'No contribution data available for analysis.'
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+
             <div className="data-card members-section">
               <div className="card-header">
                 <h3>
@@ -1052,6 +1250,56 @@ const TeamReportModal = ({ show, onHide, team }) => {
       </Modal.Footer>
     </Modal>
   );
+};
+
+// Add this new helper function
+const generateContributionAnalysis = (contributionData) => {
+  if (!contributionData || !contributionData.userContributions || contributionData.userContributions.length === 0) {
+    return "No contribution data available for analysis.";
+  }
+
+  const totalUsers = contributionData.userContributions.length;
+  const totalTasks = contributionData.taskMetrics?.total || 0;
+  const completedTasks = contributionData.taskMetrics?.completed || 0;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  
+  let totalFiles = 0;
+  let totalMessages = 0;
+  let mostActiveUser = { name: "N/A", contributions: 0 };
+  
+  contributionData.userContributions.forEach(user => {
+    const userContributions = user.files.created + user.files.edited + user.messages + user.tasks.assigned;
+    totalFiles += user.files.created + user.files.edited;
+    totalMessages += user.messages;
+    
+    if (userContributions > mostActiveUser.contributions) {
+      mostActiveUser = {
+        name: user.name,
+        contributions: userContributions
+      };
+    }
+  });
+
+  let analysisText = `This team has ${totalUsers} contributing members who have collectively created or modified ${totalFiles} files and exchanged ${totalMessages} messages. `;
+  
+  if (totalTasks > 0) {
+    analysisText += `The team has completed ${completedTasks} out of ${totalTasks} assigned tasks, achieving a ${completionRate}% completion rate. `;
+  }
+  
+  if (mostActiveUser.name !== "N/A") {
+    analysisText += `${mostActiveUser.name} is the most active contributor with ${mostActiveUser.contributions} total contributions. `;
+  }
+  
+  // Team collaboration analysis
+  if (totalUsers >= 3) {
+    analysisText += `With ${totalUsers} active contributors, this is a collaborative team with distributed participation across members.`;
+  } else if (totalUsers === 2) {
+    analysisText += `With only two active contributors, this team shows a paired collaboration pattern.`;
+  } else if (totalUsers === 1) {
+    analysisText += `With only one active contributor, this team may benefit from encouraging more member participation.`;
+  }
+  
+  return analysisText;
 };
 
 export default TeamReportModal;
