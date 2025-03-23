@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Rnd } from "react-rnd";
 import { useDispatch, useSelector } from "react-redux";
 import { clearCurrentMeetingRoomName } from "../../../redux/teamSlice";
+import { setMeetingStatus } from '../../../utils/tokenService';
 
 const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
   const jitsiContainer = useRef(null);
@@ -92,9 +93,14 @@ const JitsiMeeting = ({ roomName, displayName, chatName = "General" }) => {
       });
     };
 
+    // Set meeting as active when component mounts
+    setMeetingStatus(true);
+    
     loadJitsi();
 
     return () => {
+      // Set meeting as inactive when component unmounts
+      setMeetingStatus(false);
       if (jitsiApi.current) {
         jitsiApi.current.dispose();
       }
