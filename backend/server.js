@@ -6,6 +6,7 @@ const { Server } = require("socket.io");
 
 const { MessageGroup } = require("./models/Team");
 const User = require("./models/User");
+const {Team} = require("./models/Team");
 
 const Document = require("./models/Document");
 const AdminConfigurations = require("./models/AdminConfiguration");
@@ -930,6 +931,67 @@ io.on("connection", (socket) => {
       statusLogs.pop();
     }
   });
+
+  // Handle conference start event
+  socket.on("startConference", async ({ groupId, teamId, initiator }) => {
+    try {
+      console.log("Starting conference")
+      if (!mongoose.Types.ObjectId.isValid(groupId)) {
+        console.error("Invalid group ID for conference:", groupId);
+        return;
+      }
+
+      // Find the message group
+      const messageGroup = await MessageGroup.findById(groupId);
+      if (!messageGroup) {
+        console.error("Message group not found:", groupId);
+        return;
+      }
+
+      // Get the team details
+      const team = await Team.findById(teamId).populate({
+        path: 'members.user',
+        select: 'permissionToken firstName lastName'
+      });
+      
+      if (!team) {
+        console.error("Team not found:", teamId);
+        return;
+      }
+      
+      console.log(`Conference initiated in ${messageGroup.name} by ${initiator.firstName} ${initiator.lastName}`);
+      
+      // Find members with permission tokens (excluding the initiator)
+      const membersWithTokens = team.members.filter(member => 
+        member.user && 
+        member.user._id.toString() !== initiator._id.toString() &&
+        member.user.permissionToken
+      );
+      
+      // Send notifications to all members with tokens
+      membersWithTokens.forEach(async (member) => {
+        try {
+          await sendNotification(member.user.permissionToken, {
+            title: `${team.name}: Video Call Started`,
+            body: `${initiator.firstName} ${initiator.lastName} started a video call in ${messageGroup.name}`,
+            tag: 'video-call',
+            url: `https://spherify.vercel.app/main/${teamId}`,
+            image: initiator.avatar?.url || initiator.avatar
+          });
+          console.log(`Video call notification sent to ${member.user.firstName} ${member.user.lastName}`);
+        } catch (error) {
+          console.error("Error sending video call notification:", error);
+        }
+      });
+      
+      // Join the socket to the conference room
+      socket.join(`conference:${groupId}`);
+      
+    } catch (error) {
+      console.error("Error processing conference start event:", error);
+    }
+  });
+
 });
 
 app.get("/api/v1/admin/status-logs", async (req, res) => {

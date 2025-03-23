@@ -28,7 +28,7 @@ router.post('/getUserInfo', getUser);
 router.get('/getUserStatistics', isAdmin, getUserStatistics);
 router.get('/getPastUsersChartData', isAdmin, getPastUsersChartData);
 router.put("/updateAvatar/:id", isAuthenticatedUser, upload.single('avatar'), updateUserAvatar);
-router.put("/updateUser/:id", isAuthenticatedUser, updateUser);
+router.put("/updateUser/:id", updateUser);
 
 router.put('/disableUser/:id', isAdmin, disableUser);
 router.put('/enableUser/:id', isAdmin, enableUser);

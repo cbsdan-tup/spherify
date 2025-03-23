@@ -11,7 +11,7 @@ const CardModal = ({ onClose, listId, teamId, mode = "create", initialData = {} 
     cardTitle: initialData.cardTitle || "",
     checklist: initialData.checklist || [],
     priority: initialData.priority || "low",
-    assignedTo: initialData.assignedTo?.map(member => member._id || member) || [],
+    assignedTo: initialData.assignedTo?.map(member => member) || [],
     listId,
     teamId
   });
@@ -195,7 +195,7 @@ const CardModal = ({ onClose, listId, teamId, mode = "create", initialData = {} 
                   src={member.avatar?.url || "/images/account.png"}
                   alt={member.firstName}
                 />
-                <span>{member.firstName} {member.lastName}</span>
+                <span style={{color: "#1d559e"}}>{member.firstName} {member.lastName}</span>
               </div>
             ))}
           </div>

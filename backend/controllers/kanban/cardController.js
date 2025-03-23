@@ -1,6 +1,8 @@
 const Card = require('../../models/kanban/Card');
 const List = require('../../models/kanban/List');
 const Team = require('../../models/Team').Team;
+const User = require('../../models/User');
+const sendNotification = require('../../config/sendNotification');
 const { body, validationResult } = require('express-validator');
 
 // Get card
@@ -41,7 +43,7 @@ exports.getAllCardsByList = async (req, res) => {
     const team = await Team.findOne({
       _id: teamId,
       'members.user': req.user._id
-    });
+    }).populate('members.user', 'firstName lastName avatar');
 
     if (!team) {
       return res.status(403).json({ 
@@ -130,6 +132,53 @@ exports.createCard = [
       });
 
       const savedCard = await card.save();
+      
+      // Get the creator's details for notification
+      const creator = await User.findById(req.user._id)
+        .select('firstName lastName')
+        .lean();
+        
+      // Find the list name for better context in notifications
+      const list = await List.findById(req.body.listId)
+        .select('name')
+        .lean();
+        
+      // Send notifications to assigned users who have permission tokens
+      if (savedCard.assignedTo && savedCard.assignedTo.length > 0) {
+        try {
+          // Find users with permission tokens - EXCLUDING the card creator
+          const assignedUsers = await User.find({
+            _id: { 
+              $in: savedCard.assignedTo,
+              $ne: req.user._id  // Exclude the creator
+            },
+            permissionToken: { $exists: true, $ne: null }
+          }).select('firstName lastName permissionToken');
+          
+          // Get team name from the team object we already fetched
+          const teamName = team.name || 'Unnamed Team';
+          
+          // Send notifications to each assigned user (excluding creator)
+          assignedUsers.forEach(async (user) => {
+            try {
+              await sendNotification(user.permissionToken, {
+                title: `${teamName}: New Task Assignment`,
+                body: `${creator.firstName} ${creator.lastName} assigned you to "${savedCard.cardTitle}" in ${list?.name || 'a list'}`,
+                tag: 'task-assignment',
+                url: `https://spherify.vercel.app/main/${req.body.teamId}/kanban`,
+              });
+              console.log(`Notification sent to ${user.firstName} ${user.lastName} about card assignment in ${teamName}`);
+            } catch (notifError) {
+              // Log error but don't stop execution
+              console.error(`Error sending notification to user ${user._id}:`, notifError);
+            }
+          });
+        } catch (notifError) {
+          console.error('Error processing notifications for card assignments:', notifError);
+          // Continue with the response - don't fail the card creation if notifications fail
+        }
+      }
+
       const populatedCard = await Card.findById(savedCard._id)
         .populate('assignedTo', 'firstName lastName avatar');
 
@@ -194,7 +243,7 @@ exports.updateCard = [
 // Delete card
 exports.deleteCard = async (req, res) => {
   try {
-    const card = await Card.findById(req.params.cardId); // Changed from req.params.id
+    const card = await Card.findById(req.params.cardId); 
     if (!card) {
       return res.status(404).json({ message: "Card not found" });
     }

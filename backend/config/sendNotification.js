@@ -56,7 +56,7 @@ const sendNotification = async (permissionToken, notificationData) => {
             link: notificationData.url || 'https://spherify.vercel.app/', 
           },
           notification: {
-            icon: notificationData.image || undefined,
+            icon: notificationData.image || '/images/white-logo.png',
             tag: notificationData.tag || '/images/white-logo.png',
           }
         },

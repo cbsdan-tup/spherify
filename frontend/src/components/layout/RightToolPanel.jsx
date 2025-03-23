@@ -9,6 +9,7 @@ import {
   setMsgGroupId,
   setCurrentMeetingRoomName,
 } from "../../redux/teamSlice";
+import { io } from "socket.io-client"; // Add this import
 
 import TextChatTool from "../main/textchats/TextChatTool";
 import ProjectManagementTool from "../main/projectmanagement/ProjectManagementTool";
@@ -32,6 +33,21 @@ function RightToolPanel({ showChats }) {
   const currentTeamId = useSelector((state) => state.team.currentTeamId);
   const authState = useSelector((state) => state.auth);
   const user = useSelector((state) => state.auth.user);
+
+  // Add a socket ref
+  const [socket, setSocket] = useState(null);
+  
+  // Initialize socket connection
+  useEffect(() => {
+    if (authState.isAuthenticated && authState.token) {
+      const newSocket = io(import.meta.env.VITE_SOCKET_API);
+      setSocket(newSocket);
+      
+      return () => {
+        if (newSocket) newSocket.disconnect();
+      };
+    }
+  }, [authState.isAuthenticated, authState.token]);
 
   // Fetch team configuration directly
   useEffect(() => {
@@ -120,7 +136,28 @@ function RightToolPanel({ showChats }) {
   };
 
   const handleConferenceClick = () => {
-    dispatch(setCurrentMeetingRoomName(currentGroupChat?._id));
+    if (!currentGroupChat || !currentGroupChat._id) {
+      console.error("No active group chat selected");
+      return;
+    }
+    
+    // Set the meeting room name in Redux
+    dispatch(setCurrentMeetingRoomName(currentGroupChat._id));
+    
+    // Notify group members about the conference
+    if (socket && currentGroupChat) {
+      socket.emit("startConference", {
+        groupId: currentGroupChat._id,
+        teamId: currentTeamId,
+        initiator: {
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          avatar: user.avatar?.url || user.avatar
+        }
+      });
+      console.log(`Initiated conference in ${currentGroupChat.name} and sent notifications`);
+    }
   };
 
   useEffect(() => {
